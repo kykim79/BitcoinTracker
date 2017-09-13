@@ -1,0 +1,32 @@
+{
+  "name": "chat-example",
+  "version": "0.0.0",
+  "description": "A chat example to showcase how to use `socket.io` with a static `express` server with `async` for control flow.",
+  "main": "btc_now.js",
+  "repository": "",
+  "author": "Mostafa Eweda <mo.eweda@gmail.com>",
+  "dependencies": {
+    "async": "~0.2.8",
+    "body-parser": "^1.18.0",
+    "d3": "^4.10.2",
+    "dateformat": "^2.0.0",
+    "express": "~3.2.4",
+    "fixedqueue": "0.0.1",
+    "fs": "0.0.1-security",
+    "moment": "^2.18.1",
+    "moment-timezone": "^0.5.13",
+    "node-stringbuilder": "^2.1.1",
+    "node-telegram-bot-api": "^0.28.0",
+    "ns-string-builder": "^1.2.1",
+    "numeral": "^2.0.6",
+    "pad": "^1.1.0",
+    "react-stockcharts": "^0.7.0-beta.17",
+    "request": "^2.81.0",
+    "socket.io": "~0.9.14",
+    "string-builder": "^0.1.4",
+    "stringbuilder": "0.0.11",
+    "sync-request": "^4.1.0",
+    "techan": "^0.8.0",
+    "util": "^0.10.3"
+  }
+}
