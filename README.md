@@ -78,7 +78,7 @@ kill -9 9340
 - bitcoin을 mointoring하기 위한 변수들 모음.
 - btcCrawler.js, btcOhlcBuilder.js, btcEmaBuilder.js, btcAnalyzer.js 의 수행시 외부 변수로 설정된다.
 ### json에 포함된 내용들
-```
+```json
 {
   "crawler": {                    // btcCrawler.js 에서 사용
     "cron": "*/30 * * * * *",     // crawler를 얼마마다 수행할 지 설정
