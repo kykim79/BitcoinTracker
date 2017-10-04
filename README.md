@@ -80,7 +80,7 @@ kill -9 9340
 ### json에 포함된 내용들
 ```
 {
-  "crawler": {                    // *btcCrawler.js* 에서 사용
+  "crawler": {                    // btcCrawler.js 에서 사용
     "cron": "*/30 * * * * *",     // crawler를 얼마마다 수행할 지 설정
     "maxCount": 4000              // crawler 결과를 얼마나 보관할 지 
   },
@@ -107,5 +107,4 @@ kill -9 9340
     }
   }
 }
-
 ```
