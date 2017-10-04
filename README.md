@@ -56,19 +56,18 @@ kill -9 9114
 ```
 ----
 
-## btcSelector.js
-- redis에 저장된 bithumb 시세정보를 조회한다.
-- btcOhlcBuilder.js, btcEmaBuilder.js, btcAnalyzer.js 등이 내부에서 수행된다.
+## btcTracker.js
+- btcSelector.js btcOhlcBuilder.js, btcEmaBuilder.js, btcAnalyzer.js 등이 내부에서 수행된다.
 ### start
 ```
 cd ~/workspace
-node btcSelector.js &
+node btcTracker.js &
 ```
 ### stop
 ```
-ps -ef | grep Selector
-ubuntu      9340    7659  0 13:08 pts/9    00:00:01 node btcSelector.js
-ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto Selector
+ps -ef | grep Tracker
+ubuntu      9340    7659  0 13:08 pts/9    00:00:01 node btcTracker.js
+ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto Tracker
 kill -9 9340
 ```
 
