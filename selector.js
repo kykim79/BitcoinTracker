@@ -16,16 +16,18 @@ var logger = log4js.getLogger('selector');
 
 // CONFIG
 const CRON = 'selector:cron';
-const Config = require("config-watch");
-const CONFIG_FILE = './config/btcConfig.json';
-let configWatch = new Config(CONFIG_FILE);
+var cronJob;
+const ConfigWatch = require("config-watch");
+const CONFIG_FILE = './config/trackerConfig.json';
+let configWatch = new ConfigWatch(CONFIG_FILE);
 let cronSchedule = configWatch.get(CRON);
 
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
     if(config.hasChanged(CRON)) {
       cronSchedule = config.get(CRON);
-      logger.info("cronSchedule for selector has been changed to " + cronSchedule);
+      cronJob.time = cronSchedule;
+      logger.info("cronSchedule for selector has been changed to " + cronJob.time);
     }
 });
 
@@ -33,10 +35,7 @@ var emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
 
-var redis = require("redis");
-var redisClient = redis.createClient();
-
-redisClient.on('error', (err) => logger.error(err) );
+var redisClient = require("./redisClient.js");
 
 const TIMEZONE = 'Asia/Seoul';
 const BITHUMB_CURRENCY = 'BTC';
@@ -55,9 +54,7 @@ var heartbeat = (res) => {
 var select = () => {
   try {
     redisClient.zrange(BITHUMB_CURRENCY, 0, -1, (err, res) => {
-      if(err) {
-        logger.error(err);
-      }
+    if(err) { throw err; }
       emitter.emit('event', res);
       heartbeat(res);
     });
@@ -66,4 +63,4 @@ var select = () => {
   }
 };
 
-new CronJob(cronSchedule, select, null, true, TIMEZONE);
+cronJob = new CronJob(cronSchedule, select, null, true, TIMEZONE);

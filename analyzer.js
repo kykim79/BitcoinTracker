@@ -31,7 +31,7 @@ configWatch.on("change", (err, config) => {
 
 let npad = (number) => pad(9, numeral((number)).format('0,0'));
 
-let alert = require('./btcNotifier.js');
+let alert = require('./notifier.js');
 
 let TradeStatus = require('./tradeStatus.js');
 
@@ -41,20 +41,24 @@ let notiType = require('./notiType.js');
 
 let isRestarted = true;
 
-var emaBuilder = require('./btcEmaBuilder.js');
-emaBuilder.getEmitter().on('event', listener);
+// var emaBuilder = require('./char.js');
+// emaBuilder.getEmitter().on('event', listener);
 
-function listener(args) { // args  [ ohlc , ema]
-    if (args.length <= 4) {
-        return;
+function chartListener(args) {
+    // if (args.length <= 4) {
+    //     return;
+    // }
+    if (isRestarted) {
+        logger.debug('length : ' + args.length);
+        logger.debug('[0] ' + args[0]);         // for understand candle data structure
+        isRestarted = false;
     }
-    
-    try {
-        analyzeTimeToTrade(args);
-        saveConfig();
-    } catch (exception) {
-        logger.error(exception);
-    }
+    // try {
+    //     analyzeTimeToTrade(args);
+    //     saveConfig();
+    // } catch (exception) {
+    //     logger.error(exception);
+    // }
 }
 
 // claculate timing thru ema, nowPrice, buy/sell

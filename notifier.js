@@ -37,7 +37,7 @@ const IconURL = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitco
 let post = slackPost.post(WEBHOOK_URL);
 post.setUsername('BITCOIN-BOT').setChannel('#bitcoin').enableFieldMarkdown().setIconURL(IconURL);
 
-const CHART_URL = 'http://bit-coin-riopapa.c9users.io';
+const CHART_URL = 'http://bithumb-kykim791.c9users.io';
 
 const EOL = require('os').EOL;
 

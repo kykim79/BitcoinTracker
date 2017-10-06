@@ -5,15 +5,14 @@ var logger = log4js.getLogger('ohlc-builder');
 
 // CONFIG
 const SPLIT_SIZE = 'ohlc:splitSize';
-const Config = require("config-watch");
-const CONFIG_FILE = './config/btcConfig.json';
-let configWatch = new Config(CONFIG_FILE);
+const ConfigWatch = require("config-watch");
+const CONFIG_FILE = './config/trackerConfig.json';
+let configWatch = new ConfigWatch(CONFIG_FILE);
 let splitSize = configWatch.get(SPLIT_SIZE);
 
 var moment = require('moment');
 require('moment-timezone');
 var minuteString = (epoch) => moment(new Date(epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm');
-
 
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
@@ -23,19 +22,38 @@ configWatch.on("change", (err, config) => {
     }
 });
 
-var selector = require('./btcSelector.js');
+var selector = require('./selector.js');
 selector.getEmitter().on('event', listener);
 
 var emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
+// 1st: 1,2,3,4,5,6,7,8,10 =>     [1,2] [3,4] [5,6] 
+// 2nd: 4,5,6,7,8,10,11,12,13 =>  [5,6] [7,8] [9,10]
+// 3nd: 6,7,8,10,11,12,13 =>      [7,8] [9,10] [11,12] 
 
 function listener(args) {
   try {
-    var argsResized = args.slice(args.length % splitSize + splitSize);
-
-    // var coinChunks = splitArray(args, splitSize);
-    var coinChunks = splitArray(argsResized, splitSize);
+    var heads = [];
+    
+    // var coins = args;
+    var coins;  
+    var headFound = false;
+    if(heads.length > 0) {
+      coins = args.map(e => {
+        if(heads.includes(e)) {
+          headFound = true;
+        }
+        if(headFound) {
+          return e;
+        }
+      }).filter(e => e != undefined);
+    } else {
+      coins = args;
+    }
+    
+    var coinChunks = splitArray(coins, splitSize);
+    heads = coinChunks.map(e => e[0]);
     
     // coinChunks = 
     // [

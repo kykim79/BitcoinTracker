@@ -56,9 +56,7 @@ var redisClient = require("./redisClient.js");
 
 var resize = (max) => {
   redisClient.zcard(BITHUMB_CURRENCY, (err, res) => {
-    if(err) {
-      logger.error(err);
-    }
+    if(err) { throw err; }
     if(res > max) {
       redisClient.zremrangebyrank(BITHUMB_CURRENCY, 0, res - max - 1);
     }
