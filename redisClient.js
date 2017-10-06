@@ -1,1 +1,46 @@
-{"filter":false,"title":"bash - \"riopapa-bit-coin-5364093\" ","tooltip":"bash - \"riopapa-bit-coin-5364093\" ","undoManager":{"mark":-1,"position":-1,"stack":[]},"terminal":{"id":"riopapa@bit_coin_868","cwd":"","width":1206,"height":432,"scrollTop":-1},"hash":"da39a3ee5e6b4b0d3255bfef95601890afd80709"}
+var redis = require("redis");
+
+var redisConfig = require("./config/redisConfig")
+
+// LOGGER
+var log4js = require('log4js');
+log4js.configure('./config/loggerConfig.json');
+var log4js_extend = require("log4js-extend");
+log4js_extend(log4js, {
+  path: __dirname,
+  format: "(@name:@line:@column)"
+});
+
+var logger = log4js.getLogger('redisClient');
+
+var option = {
+  host: redisConfig.host,
+  port: redisConfig.port,
+  retry_strategy: function(options) {
+    logger.error('error: ' + option.error + ', error.code: ' + options.error.code);
+    if (options.total_retry_time > 1000 * 60 * 60) {
+      // End reconnecting after a specific timeout and flush all commands 
+      // with a individual error 
+      return new Error('Retry time exhausted');
+    }
+    // reconnect after 
+    return 5000;
+  }
+};
+
+var client = redis.createClient(option);
+
+client.on("connect", () => {
+  logger.warn("redis connected.");
+});
+
+client.on("end", () => {
+  logger.warn("redis connection is closed.");
+});
+
+client.on("error", (err) => {
+  logger.error(err);
+});
+
+
+module.exports = client;
