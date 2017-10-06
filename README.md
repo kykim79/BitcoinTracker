@@ -22,7 +22,7 @@
 ----
 
 ## StockChart
-- csv파일을 읽어들여 차트를 렌더링한다. (stockcart/public/chart.js)
+- csv파일을 읽어들여 차트를 렌더링한다. (cart/public/chart.js)
 - chatChart 그리기 위해 계산된 값들 (..., MACD, signals,histogram) 을 Analyzer.js 에 넘겨 준다
 - 렌더링된 차트는 웹 서비스로 제공되며 지정된 URL을 통해 차트를 확인할 수 있다.
 
