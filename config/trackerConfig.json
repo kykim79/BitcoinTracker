@@ -1,0 +1,22 @@
+{
+  "selector": {
+    "cron": "0 */4 * * * *"
+  },
+  "ohlc": {
+    "splitSize": 16,
+    "splitTime": 300000
+  },
+  "ema": {
+    "emaSize": 16
+  },
+  "analyzer": {
+    "gapAmount": 20000,
+    "buyPrice": 4350300,
+    "sellPrice": 5074580,
+    "volumeHigh": 1300,
+    "buyCount": 18,
+    "sellCount": 7,
+    "macdGap": 1245,
+    "maxCount": 25
+  }
+}

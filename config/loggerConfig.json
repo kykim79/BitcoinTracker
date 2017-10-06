@@ -1,0 +1,23 @@
+{
+  "replaceConsole": true,
+  "appenders": {
+    "console": { 
+      "type": "console",
+      "layout": {
+        "type": "pattern",
+        "pattern": "%[[%r] [%5.5p] %c -%] %m%n"
+      }
+    },
+    "file": { 
+      "type": "file", 
+      "filename": "./log/btc.log", 
+      "maxLogSize": 200000
+    }
+  },
+  "categories": {
+    "default": { 
+      "appenders": [ "file" ], 
+      "level": "debug"
+    }
+  }      
+}

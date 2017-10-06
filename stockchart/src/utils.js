@@ -1,6 +1,4 @@
-
-
-import { tsvParse, csvParse } from  "d3-dsv";
+import { csvParse } from  "d3-dsv";
 import { timeParse } from "d3-time-format";
 
 function parseData(parse) {
@@ -16,11 +14,12 @@ function parseData(parse) {
 	};
 }
 
-const parseDate = timeParse("%Y-%m-%d");
+//const parseDate = timeParse("%Y-%m-%d");
+const parseDate = timeParse("%Y-%m-%d %H:%M");
 
 export function getData() {
-	const promiseMSFT = fetch("//rrag.github.io/react-stockcharts/data/MSFT.tsv")
+	const promiseMSFT = fetch("CandleData2.csv")
 		.then(response => response.text())
-		.then(data => tsvParse(data, parseData(parseDate)))
+	 	.then(data => csvParse(data, parseData(parseDate)));
 	return promiseMSFT;
 }

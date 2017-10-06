@@ -1,0 +1,28 @@
+{
+  "crawler": {
+    "cron": "*/30 * * * * *",
+    "maxCount": 10000
+  },
+  "selector": {
+    "cron": "5 */4 * * * *"
+  },
+  "ohlc": {
+    "splitSize": 16
+  },
+  "ema": {
+    "emaSize": 15
+  },
+  "analyzer": {
+    "target": {
+      "gapAmount": 20000,
+      "buy": 4350300,
+      "sell": 5074580,
+      "volumeHigh": 1300,
+      "Want2Sell": true,
+      "Want2Buy": true,
+      "buyCount": 14,
+      "sellCount": 11,
+      "maxCount": 25
+    }
+  }
+}
