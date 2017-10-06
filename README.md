@@ -58,8 +58,8 @@ node crawler.js &
 ### stop
 ```
 ps -ef | grep crawler
-ubuntu      9114    7659  0 13:07 pts/9    00:00:01 node ./Crawler.js
-ubuntu     10337    8121  0 13:36 pts/11   00:00:00 grep --color=auto Crawler
+ubuntu      9114    7659  0 13:07 pts/9    00:00:01 node ./crawler.js
+ubuntu     10337    8121  0 13:36 pts/11   00:00:00 grep --color=auto crawler
 kill -9 9114
 ```
 ----
@@ -91,7 +91,7 @@ kill -9 9340
 
 ### chart/src/chart.js
 - csv file을 받아 MACDIndicator를 계산하고 rendering 한다
-- 계산된 MACDIndicator 를 Analyzer로 넘겨 준다
+- 계산된 MACDIndicator를 analyzer로 넘겨 준다
 
 ### analyzer.js
 - OHLC, MACD, sequence, histogram 등의 값을 이용해 buy,sell time을 포착한다
@@ -103,8 +103,8 @@ kill -9 9340
 ### Minor Files
 
 *_coinInfo.js_*
--  OHLC_Builder.js 에서 불려짐
-- Crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
+-  ohlcBuilder.js 에서 불려짐
+- crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
 
 *_notiType.js_*
 - notify type enum (info, warn, danger)
