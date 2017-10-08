@@ -23,10 +23,7 @@
 
 ## StockChart
 - csv파일을 읽어들여 차트를 렌더링한다. (cart/public/chart.js)
-<<<<<<< Updated upstream
 - chatChart 그리기 위해 계산된 값들 (..., MACD, signals,histogram) 을 Analyzer.js 에 넘겨 준다
-=======
->>>>>>> Stashed changes
 - 렌더링된 차트는 웹 서비스로 제공되며 지정된 URL을 통해 차트를 확인할 수 있다.
 
 ### start
@@ -66,13 +63,8 @@ kill -9 9114
 ```
 ----
 
-<<<<<<< Updated upstream
 ## tracker.js
 - selector.js ohlcBuilder.js, candleFeeder.js, analyzer.js 등이 내부에서 수행된다.
-=======
-## Tracker.js
-- selector.js ohlcBuilder.js, chartFeeder.js, analyzer.js 등이 내부에서 수행된다.
->>>>>>> Stashed changes
 
 ### start
 ```
@@ -91,16 +83,11 @@ kill -9 9340
 - redis table을 시세 array 로 만들어 둔다
 
 ### ohlcBuilder.js
-<<<<<<< Updated upstream
 - selector 에서 넘겨준 array를 splitSize 단위로 나누어서 OHLC를 계산한 array를 만든다
-=======
-- Selector 에서 넘겨준 array를 splitSize 단위로 나누어서 OHLC를 계산한 array를 만든다
->>>>>>> Stashed changes
 
 ### chartFeeder.js
 - OHLC 결과를 chart로 그리기 위해 csv file을 만든다
 
-<<<<<<< Updated upstream
 ### chart/src/chart.js
 - csv file을 받아 MACDIndicator를 계산하고 rendering 한다
 - 계산된 MACDIndicator를 analyzer로 넘겨 준다
@@ -111,25 +98,12 @@ kill -9 9340
 
 ### notifier.js
 - analyzer의 작업 결과에 따라 slack에 message를 보내준다
-=======
-### analyzer.js
-- MACD, sequence, histogram(=divergence) 등의 값을 이용해 buy,sell time을 포착한다
-- 필요시 Notifier를 통해 alert한다
-
-### notifier.js
-- Analyzer의 작업 결과에 따라 slack에 message를 보내준다
->>>>>>> Stashed changes
 
 ### Minor Files
 
 *_coinInfo.js_*
-<<<<<<< Updated upstream
 -  ohlcBuilder.js 에서 불려짐
 - crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
-=======
-- ohlcBuilder.js 에서 불려짐
-- Crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
->>>>>>> Stashed changes
 
 *_notiType.js_*
 - notify type enum (info, warn, danger)
