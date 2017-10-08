@@ -1,6 +1,7 @@
 var syncRequest = require('sync-request');
 
-require('moment-timezone');
+var momnent = require('moment');
+var Map = require('hashmap');
 
 var CoinInfo = require('./coinInfo.js');
 var CronJob = require('cron').CronJob;
@@ -31,6 +32,14 @@ let configWatch = new ConfigWatch(CONFIG_FILE);
 let cronSchedule = configWatch.get(CRON);
 let maxCount = configWatch.get(MAX_COUNT);
 
+// Stream Roller
+var rollers = require('streamroller');
+var stream = new rollers.RollingFileStream('./log/crawler.log', 100000, 2);
+
+
+// var events = require('events');
+// var emitter = new events.EventEmitter();
+// exports.getEmitter = () => emitter;
 
 var cronJob;
 configWatch.on("change", (err, config) => { // great !! 
@@ -66,24 +75,69 @@ var resize = (max) => {
 let lastepoch = 0;
 const TEN_MINUTE = 600;
 
-var heartbeat = (coinInfo) => {
+var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
   if (epoch - lastepoch > TEN_MINUTE) {
     lastepoch = epoch;
-    logger.debug("crawler is running. cron: " + cronSchedule + ", coinInfo: "+ coinInfo.toString());
+    logger.debug("crawler is running. cron: " + cronSchedule);
   } 
 };
 
+var writtenKeys = [];
+var isFirst = true;
+
 var crawl = () => {
   try {    
-    var res = syncRequest('GET', BITHUMB_URL);
-    const coinInfo = new CoinInfo(JSON.parse(res.getBody()));
-    redisClient.zadd(BITHUMB_CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
+    
+    var content = JSON.parse(syncRequest('GET', BITHUMB_URL).getBody());
+
+    var coinMap = new Map();    
+    content.data.forEach(e => {
+      const minKey = momnent(new Date(e.transaction_date)).second(0).milliseconds(0).unix();
+      if(coinMap.has(minKey)){
+        coinMap.get(minKey).push(e);
+      } else {
+        coinMap.set(minKey, [e]);
+      }
+    });
+
+    var coins = [];    
+    coins = coinMap.keys();
+    coins.sort();
+    if(isFirst) {
+      coins.shift();
+      isFirst = false;
+    } else {
+      writtenKeys = writtenKeys.filter(e => e >= coins[0]);
+      coins = coins.filter(e => !writtenKeys.includes(e));
+    } 
+    
+    coins.pop();
+    coins.forEach(e => {
+      const t = coinMap.get(e);
+      const coinInfo = new CoinInfo(t);
+      if(coinInfo.volume != 0 && coinInfo.price != null) {
+        redisClient.zadd(BITHUMB_CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
+        writtenKeys.push(momnent(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
+        
+        writeLog(t, coinInfo);
+      }       
+    });
+    
     resize(maxCount);
-    heartbeat(coinInfo);
+    heartbeat();
   } catch (exception) {
     logger.error("[crawl] exception: " + exception);
   }    
 };
 
 cronJob = new CronJob(cronSchedule, crawl, null, true, TIMEZONE);
+
+function writeLog(transactions, coinInfo) {
+  try {
+    stream.write(coinInfo.toString() + " " + JSON.stringify(transactions) + require('os').EOL);
+  } catch (exception) {
+    logger.error(exception);
+  }
+    
+}
