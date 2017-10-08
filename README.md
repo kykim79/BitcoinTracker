@@ -1,8 +1,8 @@
 # How to manage BitcoinTracker
 
 ## redis 
-- Crawler에서 crawl된 ticker 데이터가 저장되는 storage.
-- Selector에서 이곳에 저장된 데이터를 주기적으로 조회한다.
+- crawler에서 crawl된 ticker 데이터가 저장되는 storage.
+- celector에서 이곳에 저장된 데이터를 주기적으로 조회한다.
 
 ### start
 ```
@@ -22,7 +22,7 @@
 ----
 
 ## StockChart
-- csv파일을 읽어들여 차트를 렌더링한다. (stockcart/public/chart.js)
+- csv파일을 읽어들여 차트를 렌더링한다. (cart/public/chart.js)
 - chatChart 그리기 위해 계산된 값들 (..., MACD, signals,histogram) 을 Analyzer.js 에 넘겨 준다
 - 렌더링된 차트는 웹 서비스로 제공되며 지정된 URL을 통해 차트를 확인할 수 있다.
 
@@ -46,65 +46,65 @@ ubuntu     10293    8121  0 13:32 pts/11   00:00:00 grep --color=auto stoc
 ```
 ----
 
-## Crawler.js
+## crawler.js
 - bithumb 의 시세정보를 크롤링해서 Redis에 저장한다.
 
 ### start
 ```
 cd ~/workspace
-node Crawler.js &
+node crawler.js &
 ```
 
 ### stop
 ```
-ps -ef | grep Crawler
-ubuntu      9114    7659  0 13:07 pts/9    00:00:01 node ./Crawler.js
-ubuntu     10337    8121  0 13:36 pts/11   00:00:00 grep --color=auto Crawler
+ps -ef | grep crawler
+ubuntu      9114    7659  0 13:07 pts/9    00:00:01 node ./crawler.js
+ubuntu     10337    8121  0 13:36 pts/11   00:00:00 grep --color=auto crawler
 kill -9 9114
 ```
 ----
 
-## Tracker.js
-- Selector.js OHLC_Builder.js, CandleFeeder.js, Analyzer.js 등이 내부에서 수행된다.
+## tracker.js
+- selector.js ohlcBuilder.js, candleFeeder.js, analyzer.js 등이 내부에서 수행된다.
 
 ### start
 ```
 cd ~/workspace
-node Tracker.js &
+node tracker.js &
 ```
 ### stop
 ```
-ps -ef | grep Tracker
-ubuntu      9340    7659  0 13:08 pts/9    00:00:01 node Tracker.js
-ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto Tracker
+ps -ef | grep tracker
+ubuntu      9340    7659  0 13:08 pts/9    00:00:01 node tracker.js
+ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto tracker
 kill -9 9340
 ```
 
-### Selector.js
+### selector.js
 - redis table을 시세 array 로 만들어 둔다
 
-### OHLC_Builder.js
-- Selector 에서 넘겨준 array를 splitSize 단위로 나누어서 OHLC를 계산한 array를 만든다
+### ohlcBuilder.js
+- selector 에서 넘겨준 array를 splitSize 단위로 나누어서 OHLC를 계산한 array를 만든다
 
-### ChartFeeder.js
+### chartFeeder.js
 - OHLC 결과를 chart로 그리기 위해 csv file을 만든다
 
-### stockchart/src/chart.js
+### chart/src/chart.js
 - csv file을 받아 MACDIndicator를 계산하고 rendering 한다
-- 계산된 MACDIndicator 를 Analyzer로 넘겨 준다
+- 계산된 MACDIndicator를 analyzer로 넘겨 준다
 
-### Analyzer.js
+### analyzer.js
 - OHLC, MACD, sequence, histogram 등의 값을 이용해 buy,sell time을 포착한다
-- 필요시 Notifier를 통해 alert한다
+- 필요시 notifier를 통해 alert한다
 
-### Notifier.js
-- Analyzer의 작업 결과에 따라 slack에 message를 보내준다
+### notifier.js
+- analyzer의 작업 결과에 따라 slack에 message를 보내준다
 
 ### Minor Files
 
 *_coinInfo.js_*
--  OHLC_Builder.js 에서 불려짐
-- Crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
+-  ohlcBuilder.js 에서 불려짐
+- crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
 
 *_notiType.js_*
 - notify type enum (info, warn, danger)
