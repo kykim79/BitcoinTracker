@@ -8,16 +8,11 @@ module.exports = class CoinInfo {
     if(empty(content)) {
       throw new Error('empty content');      
     }
-
-    if (empty(content.data)) {
-      throw new Error('empty content.data');
-    }
     
     try {
-      const data = content.data;
-      this.epoch = new Date(data[0].transaction_date).getTime();
-      this.volume = roundTo(data.map((e) => Number(e.units_traded)).reduce(add), 2);
-      this.price = roundTo(data.map((e) => Number(e.total)).reduce(add) / this.volume, -2);      
+      this.epoch = new Date(content[0].transaction_date).getTime();
+      this.volume = roundTo(content.map((e) => Number(e.units_traded)).reduce(add), 8);
+      this.price = roundTo(content.map((e) => Number(e.total)).reduce(add) / this.volume, 0);      
     } catch(exception) {
       throw new Error('Failed to make object. ' + exception);
     }
