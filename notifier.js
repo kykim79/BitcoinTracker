@@ -6,9 +6,15 @@ var moment = require('moment');
 var format = require('string-format');
 format.extend(String.prototype);
 
+const CURRENCY = 'selector:currency';
+const ConfigWatch = require("config-watch");
+const CONFIG_FILE = './config/trackerConfig.json';
+let configWatch = new ConfigWatch(CONFIG_FILE);
+let currency = configWatch.get(CURRENCY);
 
-const BITHUMB_CURRENCY = 'BTC';
-const BITHUMB_URL = "https://api.bithumb.com/public/ticker/" + BITHUMB_CURRENCY;
+
+// const BITHUMB_CURRENCY = 'BTC';
+// const BITHUMB_URL = "https://api.bithumb.com/public/ticker/" + BITHUMB_CURRENCY;
 const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
@@ -17,17 +23,16 @@ var logger = log4js.getLogger('notifier');
 
 let notiType = require('./notiType.js');
 
-exports.info = (line,msg='Info') => {
-  sendToSlack(line, notiType.INFO,msg);
+exports.info = (line, msg) => {
+  sendToSlack(line, notiType.INFO, msg);
 };
 
-exports.warn = (line,msg='Warn') => {
-  sendToSlack(line, notiType.WARN,msg);
+exports.warn = (line, msg) => {
+  sendToSlack(line, notiType.WARN, msg);
 };
 
-exports.danger = (line,msg='Danger') => {
-  sendToSlack(line, notiType.DANGER,msg);
-  
+exports.danger = (line, msg) => {
+  sendToSlack(line, notiType.DANGER, msg);
 };
 
 let slackPost = require('slackpost');
@@ -45,7 +50,7 @@ function sendToSlack(line, type=notiType.INFO, title){
   try {
     post
     .setColor(type.value)
-    .setRichText('{0}{2}```{1}{2}```{2}{3}'.format(title, line, EOL, CHART_URL), true)
+    .setRichText('[{4}] {0}{2}```{1}{2}```{2}{3}'.format(title, line, EOL, CHART_URL,currency), true)
     .enableUnfurlLinks()
     .send((err) => { if (err) throw err; });
     
