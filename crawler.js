@@ -6,9 +6,6 @@ var Map = require('hashmap');
 var CoinInfo = require('./coinInfo.js');
 var CronJob = require('cron').CronJob;
 
-const BITHUMB_CURRENCY = 'BTC';
-const BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + BITHUMB_CURRENCY;
-
 const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
@@ -24,13 +21,18 @@ var logger = log4js.getLogger('crawler');
 
 // CONFIG
 const CRON = 'cron';
+const CURRENCY = 'currency';
 const MAX_COUNT = 'maxCount';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/crawlerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 
 let cronSchedule = configWatch.get(CRON);
+let currency = configWatch.get(CURRENCY);
 let maxCount = configWatch.get(MAX_COUNT);
+
+
+let BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + currency;
 
 // Stream Roller
 var rollers = require('streamroller');
@@ -52,6 +54,12 @@ configWatch.on("change", (err, config) => { // great !!
       logger.warn("cronSchedule has been changed to " + cronJob.time);
     }
     
+    if(config.hasChanged(CURRENCY)) {
+      currency = config.get(CURRENCY);
+      cronJob.time = cronSchedule;
+      logger.error("currency has been changed to " + currency + ", RE-RUN REQUIRED");
+    }
+    
     if(config.hasChanged(MAX_COUNT)) {
       maxCount = config.get(MAX_COUNT);
       logger.warn("maxcount has been changed to " + maxCount);
@@ -64,10 +72,10 @@ configWatch.on("change", (err, config) => { // great !!
 var redisClient = require("./redisClient.js");
 
 var resize = (max) => {
-  redisClient.zcard(BITHUMB_CURRENCY, (err, res) => {
+  redisClient.zcard(currency, (err, res) => {
     if(err) { throw err; }
     if(res > max) {
-      redisClient.zremrangebyrank(BITHUMB_CURRENCY, 0, res - max - 1);
+      redisClient.zremrangebyrank(currency, 0, res - max - 1);
     }
   });
 };
@@ -79,7 +87,7 @@ var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
   if (epoch - lastepoch > TEN_MINUTE) {
     lastepoch = epoch;
-    logger.debug("crawler is running. cron: " + cronSchedule);
+    logger.debug(currency + " crawler is running. cron: " + cronSchedule);
   } 
 };
 
@@ -117,11 +125,11 @@ var crawl = () => {
       const t = coinMap.get(e);
       const coinInfo = new CoinInfo(t);
       if(coinInfo.volume != 0 && coinInfo.price != null) {
-        redisClient.zadd(BITHUMB_CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
+        redisClient.zadd(currency, coinInfo.epoch, JSON.stringify(coinInfo));
         writtenKeys.push(momnent(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
         
         writeLog(t, coinInfo);
-      }       
+      }
     });
     
     resize(maxCount);
