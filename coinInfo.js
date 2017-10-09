@@ -12,7 +12,7 @@ module.exports = class CoinInfo {
     try {
       this.epoch = new Date(content[0].transaction_date).getTime();
       this.volume = roundTo(content.map((e) => Number(e.units_traded)).reduce(add), 8);
-      this.price = roundTo(content.map((e) => Number(e.total)).reduce(add) / this.volume, 0);      
+      this.price = roundTo(content.map((e) => Number(e.total)).reduce(add) / this.volume, -3);      
     } catch(exception) {
       throw new Error('Failed to make object. ' + exception);
     }
