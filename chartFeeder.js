@@ -23,7 +23,7 @@ ohlcBuilder.getEmitter().on('event', listener);
 function listener(args) {
   try {
     args.forEach((item, index) => writeChartData(item, index == 0, index));
-    logger.debug('# of columns ' + args.length + ' sent to chart ');
+    logger.debug(args.length + ' columns sent to chart ');
   } catch(exception) {
     logger.error('[chartFeeder ] ' + exception);
   }
@@ -43,7 +43,6 @@ function writeChartData(data, firstLine, index) {
   if(firstLine) {
     fs.writeFileSync(FILE_NAME, line, 'utf-8');  
   } else {
-  // } else if (index % 2 == 0) {
     fs.appendFileSync(FILE_NAME, line, 'utf-8');  
   }
 }
