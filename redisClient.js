@@ -4,13 +4,6 @@ var redisConfig = require("./config/redisConfig")
 
 // LOGGER
 var log4js = require('log4js');
-log4js.configure('./config/loggerConfig.json');
-var log4js_extend = require("log4js-extend");
-log4js_extend(log4js, {
-  path: __dirname,
-  format: "(@name:@line:@column)"
-});
-
 var logger = log4js.getLogger('redisClient');
 
 var option = {
