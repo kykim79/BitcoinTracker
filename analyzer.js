@@ -17,13 +17,14 @@ var MACD = require('technicalindicators').MACD;
 var rollers = require('streamroller');
 var stream = new rollers.RollingFileStream('./log/trend.log', 100000, 2);
 
+
 // LOGGER
 let log4js = require('log4js');
 let logger = log4js.getLogger('analyzer');
 
 // CONFIG
 const ANALYZER = 'analyzer';
-const CURRENCY = 'selector:currency';
+const CURRENCY = 'currency';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
@@ -33,9 +34,8 @@ let currency = configWatch.get(CURRENCY);
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
     if (config.hasChanged(ANALYZER)) {
-        analyzer.filter()
         analyzer = config.get(ANALYZER);
-        logger.info('<New Target> buy:{buyPrice}, sell:{sellPrice}, divergence:{divergence}'.format(analyzer));
+        note.warn('buy:{buyPrice}, sell:{sellPrice}, divergence:{divergence}'.format(analyzer),'*Config Change*');
     }
 });
 
@@ -78,7 +78,7 @@ function listener(ohlcs) {
 
     let tableSize = macds.length;
     if (isRestarted) {
-        note.info('Restart with chart length : ' + tableSize, '*_RESTART_*');
+        note.info('Restart with length : ' + tableSize, '*_RESTART_*');
         isRestarted = false;
     }
     if (tableSize < 5) {
