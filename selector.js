@@ -16,11 +16,13 @@ var logger = log4js.getLogger('selector');
 
 // CONFIG
 const CRON = 'selector:cron';
+const CURRENCY = 'selector:currency';
 var cronJob;
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let cronSchedule = configWatch.get(CRON);
+let currency = configWatch.get(CURRENCY);
 
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
@@ -38,7 +40,6 @@ exports.getEmitter = () => emitter;
 var redisClient = require("./redisClient.js");
 
 const TIMEZONE = 'Asia/Seoul';
-const BITHUMB_CURRENCY = 'BTC';
 const TEN_MINUTE = 600;
 
 let lastepoch = 0;
@@ -53,7 +54,7 @@ var heartbeat = (res) => {
 
 var select = () => {
   try {
-    redisClient.zrange(BITHUMB_CURRENCY, 0, -1, (err, res) => {
+    redisClient.zrange(currency, 0, -1, (err, res) => {
     if(err) { throw err; }
       emitter.emit('event', res);
       heartbeat(res);
