@@ -4,7 +4,14 @@ format.extend(String.prototype);
 let pad = require('pad');
 let numeral = require('numeral');
 let roundTo = require('round-to');
-var replaceall = require("replaceall");
+// var replaceall = require("replaceall");
+
+// date, time conversion
+var moment = require('moment');
+
+// macd calculator
+// var jsonexport = require('jsonexport');
+var MACD = require('technicalindicators').MACD;
 
 // Stream Roller
 var rollers = require('streamroller');
@@ -16,319 +23,150 @@ let logger = log4js.getLogger('analyzer');
 
 // CONFIG
 const ANALYZER = 'analyzer';
+const CURRENCY = 'selector:currency';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
-let properties = configWatch.get(ANALYZER);
+let analyzer = configWatch.get(ANALYZER);
+let currency = configWatch.get(CURRENCY);
 
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
-    if(config.hasChanged(ANALYZER)) {
-        properties = config.get(ANALYZER);
-        logger.info('<New Target> buy {buy}, sell {sell}, volMax {volumeHigh}, cntMax {maxCount}'.format(properties));
+    if (config.hasChanged(ANALYZER)) {
+        analyzer.filter()
+        analyzer = config.get(ANALYZER);
+        logger.info('<New Target> buy:{buyPrice}, sell:{sellPrice}, divergence:{divergence}'.format(analyzer));
     }
 });
 
 let npad = (number) => pad(9, numeral((number)).format('0,0'));
 
-let alert = require('./notifier.js');
+let note = require('./notifier.js');
 
-let TradeStatus = require('./tradeStatus.js');
+// let TradeStatus = require('./tradeStatus.js');
 
 let TradeType = require('./tradeType.js');
 
-let notiType = require('./notiType.js');
-
 let isRestarted = true;
 
-// var emaBuilder = require('./char.js');
-// emaBuilder.getEmitter().on('event', listener);
+var ohlcBuilder = require('./ohlcBuilder.js');
+ohlcBuilder.getEmitter().on('event', listener);
 
-function chartListener(args) {
-    // if (args.length <= 4) {
-    //     return;
-    // }
+function listener(ohlcs) {
+
+    // ohlcs  = 
+    // [
+    //     {epoch, price, volume, date, high, low, close, open},
+    //     {epoch, price, volume, date, high, low, close, open}
+    // ]
+    const closes = ohlcs.map(_ => _.close);
+
+    var macdInput = {
+        values            : closes,
+        fastPeriod        : 12,
+        slowPeriod        : 26,
+        signalPeriod      : 9 ,
+        SimpleMAOscillator: false,
+        SimpleMASignal    : false
+    };
+
+    var macds = MACD.calculate(macdInput);
+    // logger.debug('macds length = ' + macds.length);
+    // logger.debug(macds[macds.length-1]);
+    var tradeType = '';
+    var msgText = '';
+
+    let tableSize = macds.length;
     if (isRestarted) {
-        logger.debug('length : ' + args.length);
-        logger.debug('[0] ' + args[0]);         // for understand candle data structure
+        note.info('Restart with chart length : ' + tableSize, '*_RESTART_*');
         isRestarted = false;
     }
-    // try {
-    //     analyzeTimeToTrade(args);
-    //     saveConfig();
-    // } catch (exception) {
-    //     logger.error(exception);
-    // }
-}
-
-// claculate timing thru ema, nowPrice, buy/sell
-function analyzeTimeToTrade(priceInfos) {
-
-    let ti = new TradeStatus(priceInfos, properties);
-    
-    if (isRestarted) {
-        const startValue = {
-            now : npad(ti.nowPrice), 
-            changeLong : ti.changeLong,
-            sell: npad(properties.sell),
-            sellCount : properties.sellCount,
-            buy: npad(properties.sell),
-            buyCount : properties.buyCount,
-            high : npad(ti.lastInfo.high),
-            highGap : numeral(ti.lastInfo.high - ti.nowPrice).format('0,0'),
-            ema : npad(ti.lastInfo.ema),
-            emaGap : numeral(ti.emaGap).format('0,0'),
-            volume: numeral(ti.volumeNow).format('0,0'),
-            volHigh: (ti.isHighVolume) ? 'Hi':''
-        };
-        const startFormat = 'Now :{now}, chg:{changeLong}\n' +
-                            'Sell:{sell}/{sellCount}\n' +
-                            'Buy :{buy}/{buyCount},Vol:{volume} {volHigh}\n' +
-                            'high:{high}, gap:{highGap}\n' +
-                            'ema :{ema}, gap:{emaGap}';     // emaGap = nowPrice - ema
-        alert.info(startFormat.format(startValue),'_Restarted_');
-
-        isRestarted = false;
-    }
-    ti.msgText = '';
-
-    let logMessage = '';
-    logger.debug('ANALYZER ' + sortValues(ti));
-    ti.msgText = '';
-    analyzeSellTime(ti);
-    logMessage += ti.msgText;
-    ti.msgText = '';
-    analyzeBuyTime(ti);
-    logMessage += ti.msgText;
-    keepLog(ti, replaceall('\n','; ',logMessage));
-}
-
-function sortValues(ti) {
-
-    if (ti.isOverSell) {
-        return '{2} sell({0.sell} / {0.sellCount}) <= NOW({1.nowPrice})'
-        .format(properties, ti, '*'.repeat(properties.sellCount));
-    }
-    if (ti.isUnderBuy) {
-        return 'NOW({0.nowPrice}) <= buy({1.buy} / {1.buyCount}) {2}'
-        .format(ti, properties, '<'.repeat(properties.buyCount));
-    }
-    return 'buy({0.buy}/{0.buyCount}){2}<NOW({1.nowPrice}){3}<sell({0.sell}/{0.sellCount})'
-    .format(properties, ti, 'v'.repeat(properties.sellCount), '^'.repeat(properties.buyCount)) ;
-}
-
-let sellHigh;
-let sellPassed = false;
-
-// ANALYZE    ===== S E L L =======
-
-function analyzeSellTime(ti) {
-    if (!properties.Want2Sell) {
+    if (tableSize < 5) {
         return;
     }
-
-    if (ti.isnowEMAUp) {
-        properties.sellCount++;
-    } else {
-        properties.sellCount--;
+ 
+    var nowValues = ohlcs[ohlcs.length - 1];
+    nowValues.MACD = macds[tableSize - 1].MACD;
+    nowValues.signal = macds[tableSize - 1].signal;
+    nowValues.histogram = macds[tableSize - 1].histogram;
+    
+    nowValues.histoSum = macds.slice(tableSize - 5).map(_ => _.histogram).reduce((e1, e2) => e1 + (e2 * e2));
+    
+    if (nowValues.histoSum > analyzer.divergence) {
+        var nowHistogram = nowValues.histogram;
+        var lastHistogram = macds[tableSize - 2].histogram;
+        if (nowHistogram == 0) {
+            tradeType = (lastHistogram > 0) ? TradeType.SELL : TradeType.BUY;
+            msgText = (lastHistogram > 0) ? '*SELL SELL SELL*' : '*BUY BUY BUY*';
+        }
+        else if (lastHistogram >= 0 && nowHistogram < 0) {
+            tradeType = TradeType.SELL;
+            msgText = '*SELL POINT*';
+        }
+        else if (lastHistogram <= 0 && nowHistogram > 0) {
+            tradeType = TradeType.BUY;
+            msgText = '*BUY POINT*';
+        }
+        // if (tradeType) {
+        if (msgText) {
+            informTrade(nowValues, tradeType, msgText);
+        }
     }
+    else {
+        logger.debug('Sum of last 5 is too small : ' + roundTo(nowValues.histoSum, 2));
+    }
+    if (!tradeType) {
+        if (nowValues.close > analyzer.sellPrice) {
+            msgText = 'Higher Price';
+            informTrade(nowValues, TradeType.SELL, msgText);
+        } 
+        else if (nowValues.close < analyzer.buyPrice) {
+            msgText = 'Lower Price';
+            informTrade(nowValues, TradeType.BUY, msgText);
+        }
+    }
+    keepLog(nowValues, tradeType, msgText);
+}
 
-    const sellValue = {
-        now : npad(ti.nowPrice), 
-        changeLong : ti.changeLong,
-        sell: npad(properties.sell),
-        sellCount : properties.sellCount,
-        high : npad(ti.lastInfo.high),
-        highGap : numeral(ti.lastInfo.high - ti.nowPrice).format('0,0'),
-        ema : npad(ti.lastInfo.ema),
-        emaGap : numeral(ti.emaGap).format('0,0'),
-        volume: numeral(ti.volumeNow).format('0,0'),
-        volHigh: ti.isHighVolume ? 'Hi' : ''
+function informTrade(nowValues, tradeType, msgText) {
+    const now = nowValues.close;
+    const target = ( tradeType == TradeType.SELL) ? analyzer.sellPrice : analyzer.buyPrice;
+    const v= {
+        nowNpad     : npad(now),
+        buysell     : tradeType,
+        targetNpad  : npad(target),
+        gap         : npad(now - target),
+        volume      : numeral(nowValues.volume).format('0,0.00'),
+        hist        : numeral(nowValues.histogram).format('0,0.00'),
+        histoSum    : numeral(nowValues.histoSum).format('0,0.00')
     };
-    const sellFormat =  'Now :{now}, chg:{changeLong}\n' +
-                        'Sell:{sell}/{sellCount},Vol:{volume} {volHigh}\n' +
-                        'high:{high}, gap:{highGap}\n' +
-                        'ema :{ema}, gap:{emaGap}';     // emaGap = nowPrice - ema
+    const f = 'Now :{nowNpad} vol:{volume}\n' +
+        '{buysell}:{targetNpad} gap:{gap}\n' +
+        'hist:{hist} sum:{histoSum}';
 
-// 아래 조건문 두개는 아래쪽 ti.isOverSell 조건문 안쪽으로 들어가는게..
-    if (ti.isOverSell && ti.isUUU && ti.isnowEMAUp && properties.sellCount > properties.maxCount) {
-        properties.sell = roundTo(properties.sell * 1.005, -1);
-        ti.msgText = 'Sell Adjusted *higher*';
-        alert.warn(sellFormat.format(sellValue),ti.msgText);
-        properties.sellCount -= 10;
-        return;
-    }
+    note.danger(f.format(v), msgText);
+}
 
-    if (ti.isOverSell && ti.isnowEMADn && ti.emaGap < properties.gapAmount) {
-        ti.msgText = '*SELL SELL SELL*';
-        alert.warn(sellFormat.format(sellValue),ti.msgText);
-        return;
-    }
+function keepLog(nowValues, tradetype, msgText) {
 
-//아래 두 조건문은 둘중에 반드시 하나만 발생함.
-    if (ti.emaGap > 50000) {
-        ti.msgText = '*Too Speedy Up/Down*';
-        alert.info(sellFormat.format(sellValue),ti.msgText);
-    }
-    
-    if (ti.emaGap < 3000 && Math.abs(ti.nowPrice - properties.Sell) < 50000) {
-        ti.msgText = 'ema *NEAR* to now';
-        alert.info(sellFormat.format(sellValue),ti.msgText);
-    }
-    
-    if (ti.isOverSell) {
-        properties.sellCount += 5;
-        if (!sellPassed) {
-            sellPassed = true;
-            sellHigh = ti.lastInfo.high;
-            ti.msgText = '*TargetSELL Passed*'; // nowPrice is just passing up target sell price
-            logger.info(replaceall('\n', '; ',sellFormat.format(sellValue)) + ti.msgText);
-        } else {
-            alert.warn('now ({0.nowPrice}) GONE OVER SELL({1.sell})'.format(ti, properties));
-        }
+    try {
+        let str = [
+            moment(new Date(nowValues.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
+            nowValues.open, 
+            nowValues.high, 
+            nowValues.low, 
+            nowValues.close,
+            roundTo(nowValues.volume,2),
+            roundTo(nowValues.MACD,2),
+            roundTo(nowValues.signal,2),
+            roundTo(nowValues.histogram,2),
+            roundTo(nowValues.histoSum,2),
+            tradetype,
+            msgText
+        ].join(', ');
         
-        if (ti.lastInfo.high > sellHigh) {
-            sellHigh = ti.lastInfo.high;
-            properties.sellCount += 3;
-            logger.debug('set now {} to sellHigh'.format(sellHigh));
-        } else if (ti.isnowEMADn) {
-            ti.msgText = 'Sell Soon'; 
-            alert.info(sellFormat.format(sellValue),ti.msgText);
-        }
-        
-        if (ti.isnowEMADn && sellHigh > ti.nowPrice) {
-            ti.msgText = '*< Sell Point >*';
-            alert.warn(sellFormat.format(sellValue),ti.msgText);
-            properties.sellCount -= 2;
-        }
-    } else {    // current < target.sell
-        if (sellPassed && ti.isnowEMADn) {
-            ti.msgText = '*Shoulder*';
-            alert.danger(sellFormat.format(sellValue),ti.msgText);
-            sellPassed = false;
-        }
+        stream.write(str + require('os').EOL);
+    } catch(exception) {
+        logger.error('[trend log] ' + exception);
     }
-}
-
-let buyLow = 0;
-let buyPassed = false;
-
-
-// ANALYZE   ====== B U Y  =========
-
-function analyzeBuyTime(ti) {
-    if (!properties.Want2Buy) {
-        return;
-    }
-    if (ti.isnowEMADn) {
-        properties.buyCount++;
-    } else {
-        properties.buyCount--;
-    }
-    const buyValue = {
-        now : npad(ti.nowPrice), 
-        changeLong : ti.changeLong,
-        buy: npad(properties.buy),
-        buyCount : properties.buyCount,
-        low: npad(ti.lastInfo.low),
-        lowGap: numeral(ti.lastInfo.low - ti.nowPrice).format('0,0.0'),
-        ema : npad(ti.lastInfo.ema),
-        emaGap : numeral(ti.emaGap).format('0,0'),
-        volume: numeral(ti.volumeNow).format('0,0'),
-        volHigh: ti.isHighVolume ? 'Hi' : ''
-    };
-    const buyFormat =   'Now :{now}, chg:{changeLong}\n' +
-                        'Buy :{buy}/{buyCount}, Vol:{volume}{volHigh}\n' +
-                        'Low :{low}, gap:{lowGap}\n' +
-                        'ema :{ema}, gap:{emaGap}';
-
-    if (ti.isUnderBuy && ti.isDDD && ti.isnowEMADn && properties.buyCount > properties.maxCount) {
-        properties.sell = roundTo(properties.buy * 0.995, -1);
-        ti.msgText = 'Adjust *Buy lower*';
-        alert.warn(buyFormat.format(buyValue),ti.msgText);
-        properties.sellCount -= 10;
-        return;
-    }
-
-    if (ti.isUnderBuy && ti.isnowEMAUp && Math.abs(ti.emaGap) > 1000  && (-ti.emaGap) < properties.gapAmount) {
-        ti.msgText = '*BUY BUY BUY*';
-        alert.danger(buyFormat.format(buyValue),ti.msgText);
-        return;
-    }
-    
-    if (ti.emaGap > 50000) {
-        ti.msgText = '*Too Speedy Up/Down*';
-        alert.info(buyFormat.format(buyValue),ti.msgText);
-    }
-    if (ti.emaGap < 3000  && Math.abs(ti.nowPrice - properties.Buy) < 50000) {
-        ti.msgText = 'ema *NEAR* to now';
-        alert.info(buyFormat.format(buyValue),ti.msgText);
-    }
-
-    if (ti.isUnderBuy) {
-        if (!buyPassed) {
-            buyPassed = true;
-            buyLow = ti.lastInfo.low;
-            logger.warn('now ({0.nowPrice}) is passing BUY({1.buy})'.format(ti, properties));
-        }
-        else {
-            ti.msgText = 'Going *Down*';
-            alert.danger(buyFormat.format(buyValue),ti.msgText);
-        }
-        if (ti.lastInfo.low < buyLow) {
-            buyLow = ti.lastInfo.low;
-            properties.buyCount += 2;
-        } else {
-            logger.debug('buyLow({0}) <= now({1.nowPrice})'.format(buyLow, ti)); 
-        }
-        if (ti.isnowEMAUp) {
-            ti.msgText = '*BUY POINT*';
-            alert.danger(buyFormat.format(buyValue),ti.msgText);
-            return;
-        }
-    } else {
-        if (buyPassed && ti.isnowEMAUp) {
-            ti.msgText = 'is *Knee*';
-            alert.danger(buyFormat.format(buyValue),ti.msgText);
-            buyPassed = false;
-        }
-    }
-}
-
-function saveConfig() {
-    if (properties.buyCount < 0) {
-        properties.buyCount = 0;
-    }
-    if (properties.buyCount > properties.maxCount) {
-        properties.buyCount = properties.maxCount;
-    }
-    if (properties.sellCount < 0) {
-        properties.sellCount = 0;
-    }
-    if (properties.sellCount > properties.maxCount) {
-        properties.sellCount = properties.maxCount;
-    }
-    configWatch.set(ANALYZER, properties);
-    configWatch.save();
-}
-
-function keepLog(ti, tagInfo) {
-
-    let str = [
-        ti.lastInfo.date, 
-        ti.lastInfo.open, 
-        ti.lastInfo.high, 
-        ti.lastInfo.low, 
-        ti.lastInfo.close, 
-        ti.nowPrice, 
-        ti.lastInfo.ema,
-        ti.changes,
-        ti.changeLong,
-        properties.buy, 
-        properties.sell,
-        roundTo(ti.lastInfo.volume,2), 
-        tagInfo
-    ].join(', ');
-    
-    stream.write(str + require('os').EOL);
 }
