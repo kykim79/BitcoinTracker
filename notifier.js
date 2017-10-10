@@ -6,7 +6,7 @@ var moment = require('moment');
 var format = require('string-format');
 format.extend(String.prototype);
 
-const CURRENCY = 'selector:currency';
+const CURRENCY = 'currency';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
