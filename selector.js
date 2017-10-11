@@ -4,25 +4,15 @@ var CronJob = require('cron').CronJob;
 var format = require('string-format');
 format.extend(String.prototype);
 
-var log4js = require('log4js');
-log4js.configure('./config/loggerConfig.json');
-var log4js_extend = require("log4js-extend");
-log4js_extend(log4js, {
-  path: __dirname,
-  format: "(@name:@line:@column)"
-});
-var logger = log4js.getLogger('selector');
-
-
 // CONFIG
 const CRON = 'selector:cron';
-const CURRENCY = 'currency';
 var cronJob;
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
-let configWatch = new ConfigWatch(CONFIG_FILE);
+const configWatch = new ConfigWatch(CONFIG_FILE);
 let cronSchedule = configWatch.get(CRON);
-let currency = configWatch.get(CURRENCY);
+
+const CURRENCY = configWatch.get('currency');
 
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
@@ -33,9 +23,17 @@ configWatch.on("change", (err, config) => {
     }
 });
 
+var log4js = require('log4js');
+log4js.configure('./config/loggerConfig.json');
+var log4js_extend = require("log4js-extend");
+log4js_extend(log4js, {
+  path: __dirname,
+  format: "(@name:@line:@column)"
+});
+var logger = log4js.getLogger('selector ' + CURRENCY);
+
 var emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
-
 
 var redisClient = require("./redisClient.js");
 
@@ -54,7 +52,7 @@ var heartbeat = (res) => {
 
 var select = () => {
   try {
-    redisClient.zrange(currency, 0, -1, (err, res) => {
+    redisClient.zrange(CURRENCY, 0, -1, (err, res) => {
     if(err) { throw err; }
       emitter.emit('event', res);
       heartbeat(res);
