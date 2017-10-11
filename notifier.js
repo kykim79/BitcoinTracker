@@ -1,20 +1,33 @@
-var util = require("util");
+// var util = require("util");
 var fs = require('fs');
 var replaceall = require("replaceall");
-var moment = require('moment');
+// var moment = require('moment');
 
 var format = require('string-format');
 format.extend(String.prototype);
 
-const CURRENCY = 'selector:currency';
+// CONFIG
+const CURRENCY = 'currency';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let currency = configWatch.get(CURRENCY);
 
+const NOTIFYLINK_FILE = './config/notifyLink.json';
+let linkInfos = JSON.parse(fs.readFileSync(NOTIFYLINK_FILE));
 
-// const BITHUMB_CURRENCY = 'BTC';
-// const BITHUMB_URL = "https://api.bithumb.com/public/ticker/" + BITHUMB_CURRENCY;
+let webHook;
+let icon;
+let chart;
+
+linkInfos.forEach (function (e) {
+  if (e.currency == currency) {
+     webHook = e.webhook;
+     icon = e.icon;
+     chart = e.chart;
+   }
+});
+
 const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
@@ -36,13 +49,8 @@ exports.danger = (line, msg) => {
 };
 
 let slackPost = require('slackpost');
-const WEBHOOK_URL = 'https://hooks.slack.com/services/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' || ''; //see section above on sensitive data
-const IconURL = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/440px-Bitcoin.svg.png";
-
-let post = slackPost.post(WEBHOOK_URL);
-post.setUsername('BITCOIN-BOT').setChannel('#bitcoin').enableFieldMarkdown().setIconURL(IconURL);
-
-const CHART_URL = 'http://bithumb-kykim791.c9users.io';
+let post = slackPost.post(webHook);
+post.setUsername('BITHUMB-BOT').setChannel('#bitcoin').enableFieldMarkdown().setIconURL(icon);
 
 const EOL = require('os').EOL;
 
@@ -50,7 +58,7 @@ function sendToSlack(line, type=notiType.INFO, title){
   try {
     post
     .setColor(type.value)
-    .setRichText('[{4}] {0}{2}```{1}{2}```{2}{3}'.format(title, line, EOL, CHART_URL,currency), true)
+    .setRichText('{4}: {0}{2}```{1}{2}```{2}{3}'.format(title, line, EOL, chart, currency), true)
     .enableUnfurlLinks()
     .send((err) => { if (err) throw err; });
     
@@ -61,7 +69,7 @@ function sendToSlack(line, type=notiType.INFO, title){
 }
 
 function log(line, type, msg) {
-  const m = replaceall(EOL, '; ',msg + ', ' + line);
+  const m = replaceall(EOL, '; ', currency + ': ' + msg + ', ' + line);
   switch (type.value) {
   case notiType.INFO:
     logger.info(m);
@@ -77,7 +85,3 @@ function log(line, type, msg) {
     break;
   } 
 }
-
-// let IncomingWebhook = require('@slack/client').IncomingWebhook;
-// let webhook = new IncomingWebhook(WEBHOOK_URL);
-// let MarkDown = '\`\`\`';
