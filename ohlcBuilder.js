@@ -1,17 +1,20 @@
 var events = require('events');
 var splitArray = require('split-array');
-var log4js = require('log4js');
-var logger = log4js.getLogger('ohlc-builder');
 
 var format = require('string-format');
 format.extend(String.prototype);
 
 // CONFIG
-const SPLIT_SIZE = 'ohlc:splitSize';
+const SPLIT_SIZE = 'selector:splitSize';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let splitSize = configWatch.get(SPLIT_SIZE);
+
+const CURRENCY = configWatch.get('currency');
+
+var log4js = require('log4js');
+var logger = log4js.getLogger('ohlc-builder ' + CURRENCY);
 
 var moment = require('moment');
 require('moment-timezone');
@@ -41,7 +44,6 @@ function listener(args) {
     // [
     //   [ {epoch, price, volume}, {epoch, price, volume},...(splitSize 개) ], 
     //   [ {epoch, price, volume}, {epoch, price, volume},...(splitSize 개) ],
-    //   ... cnt = 12 hour 
     // ]
     
     lastHeadCoins = coinChunks.map(e => e[0]);
@@ -51,10 +53,9 @@ function listener(args) {
     // [
     //    {epoch, price, volume, date, high, low, close, open},
     //    {epoch, price, volume, date, high, low, close, open}
-    //    ... cnt = 12 hour / 10
     //]
 
-    validateDates(ohlcInfos);
+    // validateDates(ohlcInfos);
 
     emitter.emit('event', ohlcInfos);
   } catch(exception) {
