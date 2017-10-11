@@ -61,7 +61,7 @@ function sendToSlack(line, type=notiType.INFO, title){
   try {
     post
     .setColor(type.value)
-    .setRichText('[{4}] {0}{2}```{1}{2}```{2}{3}'.format(title, line, EOL, CHART_URL,currency), true)
+    .setRichText('[{4}] {0}{2}```{1}{2}```{2}`{3}`'.format(title, line, EOL, CHART_URL,currency), true)
     .enableUnfurlLinks()
     .send((err) => { if (err) throw err; });
     
