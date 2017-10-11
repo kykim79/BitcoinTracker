@@ -121,8 +121,8 @@ kill -9 9340
 ```js
 {
   "currency" : "BTC",             //  target cryptocurrency to analyze            
-  "priceRoundRadix: -3,           //  round up digit
-  "cron": "0-59/15 * * * * *",    //  re crawling @ every ...
+  "priceRoundRadix": -3,          //  round up digit
+  "cron": "0-59/15 * * * * *",    //  re crawl on every ...
   "maxCount": 10000               //  ignore old data if over this amount  
 }
 ```
@@ -181,8 +181,7 @@ kill -9 9340
 {
   "currency" : "BTC",               // target cryptocurrency (should be paired with crawlerConfig.json currency)
   "selector": {                     // Selector.js
-    "splitSize": 16,                //    chunk size to make one ohlc record used in ohlcBuilder.js
-    "cron": "5 0-59/4 * * * *"      //    rerun selector.js at every ..
+    "cron": "5 0-59/4 * * * *"      //    rerun selector.js on every ..
   },
   "ohlc": {                         // ohlcBuilder.js
     "splitSize": 16                 //    chunk size to make one ohlc record
