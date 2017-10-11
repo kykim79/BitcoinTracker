@@ -1,0 +1,5 @@
+{
+  "cron": "0-59/15 * * * * *",
+  "currency" : "BTC",
+  "maxCount": 1000
+}

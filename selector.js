@@ -16,7 +16,7 @@ var logger = log4js.getLogger('selector');
 
 // CONFIG
 const CRON = 'selector:cron';
-const CURRENCY = 'selector:currency';
+const CURRENCY = 'currency';
 var cronJob;
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';

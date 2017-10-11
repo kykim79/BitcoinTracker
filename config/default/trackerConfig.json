@@ -1,0 +1,14 @@
+{
+  "currency" : "BTC",
+  "selector": {
+    "cron": "0 0-59/4 * * * *"
+  },
+  "ohlc": {
+    "splitSize": 16
+  },
+  "analyzer": {
+    "buyPrice": 0,
+    "sellPrice": 0,
+    "divergence": 0
+  }
+}
