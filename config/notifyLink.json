@@ -1,0 +1,13 @@
+[{
+			"currency": "BTC",
+			"webhook": "https://hooks.slack.com/services/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",
+			"icon": "https://ide.c9.io/kykim791/bithumb/config/btc.png",
+			"chart": "http://bithumb-kykim791.c9users.io"
+		},
+		{
+			"currency": "ETH",
+			"webhook": "https://hooks.slack.com/services/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",
+			"icon": "https://ide.c9.io/riopapa/bithumb/config/eth.png",
+			"chart": "http://bithumb-riopapa.c9users.io"
+		}
+]
