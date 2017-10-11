@@ -51,7 +51,7 @@ const webhook = () => {
 
 
 let post = slackPost.post(webhook());
-post.setUsername('BITCOIN-BOT').setChannel('#bitcoin').enableFieldMarkdown();
+post.setUsername('BITHUMB-BOT').setChannel('#bitcoin').enableFieldMarkdown();
 
 const CHART_URL = 'http://bithumb-kykim791.c9users.io';
 
