@@ -20,62 +20,27 @@ log4js_extend(log4js, {
 var logger = log4js.getLogger('crawler');
 
 // CONFIG
-const CRON = 'cron';
-const CURRENCY = 'currency';
-const MAX_COUNT = 'maxCount';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/crawlerConfig.json';
-let configWatch = new ConfigWatch(CONFIG_FILE);
+const configWatch = new ConfigWatch(CONFIG_FILE);
 
-let cronSchedule = configWatch.get(CRON);
-let currency = configWatch.get(CURRENCY);
-let maxCount = configWatch.get(MAX_COUNT);
+const CURRENCY = configWatch.get('currency');
+const CRON_SCHEDULE = configWatch.get('cron');
+const MAX_COUNT = configWatch.get('maxCount');
 
-
-let BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + currency;
+const BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + CURRENCY;
 
 // Stream Roller
 var rollers = require('streamroller');
 var stream = new rollers.RollingFileStream('./log/crawler.log', 100000, 2);
 
-
-// var events = require('events');
-// var emitter = new events.EventEmitter();
-// exports.getEmitter = () => emitter;
-
-var cronJob;
-configWatch.on("change", (err, config) => { // great !! 
-  try {
-    if (err) { throw err; }
-    
-    if(config.hasChanged(CRON)) {
-      cronSchedule = config.get(CRON);
-      cronJob.time = cronSchedule;
-      logger.warn("cronSchedule has been changed to " + cronJob.time);
-    }
-    
-    if(config.hasChanged(CURRENCY)) {
-      currency = config.get(CURRENCY);
-      cronJob.time = cronSchedule;
-      logger.error("currency has been changed to " + currency + ", RE-RUN REQUIRED");
-    }
-    
-    if(config.hasChanged(MAX_COUNT)) {
-      maxCount = config.get(MAX_COUNT);
-      logger.warn("maxcount has been changed to " + maxCount);
-    }
-  } catch (exception) {
-    logger.error(exception);
-  }
-});
-
 var redisClient = require("./redisClient.js");
 
 var resize = (max) => {
-  redisClient.zcard(currency, (err, res) => {
+  redisClient.zcard(CURRENCY, (err, res) => {
     if(err) { throw err; }
     if(res > max) {
-      redisClient.zremrangebyrank(currency, 0, res - max - 1);
+      redisClient.zremrangebyrank(CURRENCY, 0, res - max - 1);
     }
   });
 };
@@ -87,7 +52,7 @@ var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
   if (epoch - lastepoch > TEN_MINUTE) {
     lastepoch = epoch;
-    logger.debug(currency + " crawler is running. cron: " + cronSchedule);
+    logger.debug(CURRENCY + " crawler is running. cron: " + CRON_SCHEDULE);
   } 
 };
 
@@ -125,21 +90,21 @@ var crawl = () => {
       const t = coinMap.get(e);
       const coinInfo = new CoinInfo(t);
       if(coinInfo.volume != 0 && coinInfo.price != null) {
-        redisClient.zadd(currency, coinInfo.epoch, JSON.stringify(coinInfo));
+        redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
         writtenKeys.push(momnent(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
         
         writeLog(t, coinInfo);
       }
     });
     
-    resize(maxCount);
+    resize(MAX_COUNT);
     heartbeat();
   } catch (exception) {
-    logger.error("[crawl] exception: " + exception);
+    logger.error(CURRENCY + "[crawl] exception: " + exception);
   }    
 };
 
-cronJob = new CronJob(cronSchedule, crawl, null, true, TIMEZONE);
+new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
 
 function writeLog(transactions, coinInfo) {
   try {
