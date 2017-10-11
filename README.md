@@ -1,8 +1,8 @@
 # How to manage BitcoinTracker
 
 ## redis 
-- crawler에서 crawl된 ticker 데이터가 저장되는 storage.
-- celector에서 이곳에 저장된 데이터를 주기적으로 조회한다.
+- memory database cotains crawled cryptocurrency information by crawler.js
+- selector.js will access this database peridically
 
 ### start
 ```
@@ -22,8 +22,7 @@
 ----
 
 ## StockChart
-- csv파일을 읽어들여 차트를 렌더링한다. (cart/public/chart.js)
-- 렌더링된 차트는 웹 서비스로 제공되며 지정된 URL을 통해 차트를 확인할 수 있다.
+- render chart from csv file (cart/public/chart.js) to ide.c9.io url
 
 ### start
 ```
@@ -45,8 +44,8 @@ ubuntu     10293    8121  0 13:32 pts/11   00:00:00 grep --color=auto stoc
 ----
 
 ## crawler.js
-- bithumb 의 시세정보를 크롤링해서 Redis에 저장한다.
-- coinInfo.js 호출
+- crawl cryptocurrency by using bithumb API
+- save into redis database located in redisConfig.json by the coinInfo.js object form.
 
 ### start
 ```
@@ -64,7 +63,7 @@ kill -9 9114
 ----
 
 ## tracker.js
-- selector.js ohlcBuilder.js, candleFeeder.js, analyzer.js 등이 내부에서 수행된다.
+- load and execute selector.js ohlcBuilder.js, candleFeeder.js, analyzer.js
 
 ### start
 ```
@@ -80,29 +79,30 @@ kill -9 9340
 ```
 
 ### selector.js
-- redis table을 시세 array 로 만들어 둔다
+- read cryptocurrency data peridically
 
 ### ohlcBuilder.js
-- selector 에서 넘겨준 array를 splitSize 단위로 나누어서 OHLC를 계산한 array를 만든다
+- calculate OHLC by chunking array pushed by selector.js
 
 ### chartFeeder.js
-- OHLC 결과를 chart로 그리기 위해 csv file을 만든다
+- feed OHLC data in csv format to /chart/chart.js
 
 ### chart/src/chart.js
-- csv file을 받아 MACDIndicator를 계산하고 rendering 한다
-- 계산된 MACDIndicator를 analyzer로 넘겨 준다
+- invoked by updating chart/public/CandleData.csv
+- render stock candle and MACD chart to ide.c9.io screen
 
 ### analyzer.js
-- OHLC, MACD, sequence, histogram 등의 값을 이용해 buy,sell time을 포착한다
-- 필요시 notifier를 통해 alert한다
+- calculate MACD, signal, histogram
+- analyze buy,sell time using histogram (= divergence) 
+- inform thru notifier.js whether to buy,sell
 
 ### notifier.js
-- analyzer의 작업 결과에 따라 slack에 message를 보내준다
+- send various message to slack bia webhook
 
 ### Minor Files
 
 #### coinInfo.js
-- crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
+- create one by one transaction provided by crawler.js
 
 #### notiType.js
 - notify type enum (info, warn, danger)
@@ -120,13 +120,15 @@ kill -9 9340
 - Crawler.js external parameters
 ```js
 {
-  "cron": "0-59/15 * * * * *",          //  얼마마다 data를 가져올지 
-  "maxCount": 10000                     //  얼마나 많이 보관해 둘지  
+  "currency" : "BTC",             //  target cryptocurrency to analyze            
+  "priceRoundRadix: -3,           //  round up digit
+  "cron": "0-59/15 * * * * *",    //  re crawling @ every ...
+  "maxCount": 10000               //  ignore old data if over this amount  
 }
 ```
 
 ### loggerConfig.json
-- set target log where, how
+- set log target to which file
 ```js
 {
   "replaceConsole": true,
@@ -140,7 +142,7 @@ kill -9 9340
     },
     "file": { 
       "type": "file", 
-      "filename": "./log/btc.log", 
+      "filename": "./log/btc.log",    // currendy dependency name
       "maxLogSize": 200000
     }
   },
@@ -154,6 +156,7 @@ kill -9 9340
 ```
 
 ### notifyConfig.json
+- contains slack webHook channel information and c9 chart url
 ```js
 {
 	"webHook": {slack notify target channel},
@@ -176,15 +179,18 @@ kill -9 9340
 - configuration that is used in selector.js, chartFeeder.js and analyzer.js 
 ```js
 {
-  "currency" : "BTC",                   // 이 workspace에서 다룰 비트코인 종류
-  "selector": {                         // Selector.js
-    "splitSize": 16,                    // crawler.js 에서 기록된 line 묶는 단위
-    "cron": "5 0-59/4 * * * *"          // selector execution 주기
+  "currency" : "BTC",               // target cryptocurrency (should be paired with crawlerConfig.json currency)
+  "selector": {                     // Selector.js
+    "splitSize": 16,                //    chunk size to make one ohlc record used in ohlcBuilder.js
+    "cron": "5 0-59/4 * * * *"      //    rerun selector.js at every ..
   },
-  "analyzer": {                         // Analyzer.js
-    "buyPrice": 4350300,                // Target buy Price
-    "sellPrice": 5074580,               // Target sell Price
-    "divergence": 1000                  // ignore analysis if sum of last 5 divergence is so small
+  "ohlc": {                         // ohlcBuilder.js
+    "splitSize": 16                 //    chunk size to make one ohlc record
+  },
+  "analyzer": {                     // Analyzer.js
+    "buyPrice": 4350300,            //    Target buy Price
+    "sellPrice": 5074580,           //    Target sell Price
+    "divergence": 1000              //    ignore analysis if sum of aFew histogram is so small
   }
 }
 ```
