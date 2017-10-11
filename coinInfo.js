@@ -1,6 +1,12 @@
 "use strict";
 var roundTo = require('round-to');
 var empty = require('is-empty');
+
+//CONFIG
+const ConfigWatch = require("config-watch");
+const configWatch = new ConfigWatch('./config/crawlerConfig.json');
+const PRICE_ROUND_RADIX = configWatch.get('priceRoundRadix');
+
 const add = (e1, e2) => e1 + e2;
 
 module.exports = class CoinInfo {
@@ -12,7 +18,7 @@ module.exports = class CoinInfo {
     try {
       this.epoch = new Date(content[0].transaction_date).getTime();
       this.volume = roundTo(content.map((e) => Number(e.units_traded)).reduce(add), 8);
-      this.price = roundTo(content.map((e) => Number(e.total)).reduce(add) / this.volume, -3);      
+      this.price = roundTo(content.map((e) => Number(e.total)).reduce(add) / this.volume, PRICE_ROUND_RADIX);      
     } catch(exception) {
       throw new Error('Failed to make object. ' + exception);
     }
