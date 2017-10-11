@@ -36,11 +36,22 @@ exports.danger = (line, msg) => {
 };
 
 let slackPost = require('slackpost');
-const WEBHOOK_URL = 'https://hooks.slack.com/services/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' || ''; //see section above on sensitive data
-const IconURL = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/440px-Bitcoin.svg.png";
+const webhook = () => {
+  var url;
+  switch(currency) {
+    case 'BTC':
+      url = 'https://hooks.slack.com/services/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';
+      break;
+    case 'ETH':
+      url= 'https://hooks.slack.com/services/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';
+      break;
+  }
+  return url;
+};
 
-let post = slackPost.post(WEBHOOK_URL);
-post.setUsername('BITCOIN-BOT').setChannel('#bitcoin').enableFieldMarkdown().setIconURL(IconURL);
+
+let post = slackPost.post(webhook());
+post.setUsername('BITCOIN-BOT').setChannel('#bitcoin').enableFieldMarkdown();
 
 const CHART_URL = 'http://bithumb-kykim791.c9users.io';
 
