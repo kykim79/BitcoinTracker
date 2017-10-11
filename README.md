@@ -23,7 +23,6 @@
 
 ## StockChart
 - csv파일을 읽어들여 차트를 렌더링한다. (cart/public/chart.js)
-- chatChart 그리기 위해 계산된 값들 (..., MACD, signals,histogram) 을 Analyzer.js 에 넘겨 준다
 - 렌더링된 차트는 웹 서비스로 제공되며 지정된 URL을 통해 차트를 확인할 수 있다.
 
 ### start
@@ -47,6 +46,7 @@ ubuntu     10293    8121  0 13:32 pts/11   00:00:00 grep --color=auto stoc
 
 ## crawler.js
 - bithumb 의 시세정보를 크롤링해서 Redis에 저장한다.
+- coinInfo.js 호출
 
 ### start
 ```
@@ -101,26 +101,27 @@ kill -9 9340
 
 ### Minor Files
 
-*_coinInfo.js_*
--  ohlcBuilder.js 에서 불려짐
+#### coinInfo.js
 - crawler.js에서 읽혀진 json에서 한 transaction object를 만듬
 
-*_notiType.js_*
+#### notiType.js
 - notify type enum (info, warn, danger)
 
-*_tradeType.js_*
+#### tradeType.js
 - trade type enum (buy, sell)
 
 ----
+
 ## Configuration Files
 - file location: ./config
+- format : .json
 
-### redisConfig.json
-- redis remode db 
+### crawlerConfig.json
+- Crawler.js external parameters
 ```js
 {
-  "host": "{redis remote URL}",
-  "port": {port number}
+  "cron": "0-59/15 * * * * *",          //  얼마마다 data를 가져올지 
+  "maxCount": 10000                     //  얼마나 많이 보관해 둘지  
 }
 ```
 
@@ -152,26 +153,33 @@ kill -9 9340
 }
 ```
 
-### crawlerConfig.json
-- Crawler.js external parameters
+### notifyConfig.json
 ```js
 {
-  "cron": "0-59/15 * * * * *",          //  얼마마다 data를 가져올지 
-  "maxCount": 20000                     //  얼마나 많이 보관해 둘지  
+	"webHook": {slack notify target channel},
+	"chart": {stock chart html url}
+}
+
+```
+
+### redisConfig.json
+- redis remote db location
+
+```js
+{
+  "host": "{redis remote URL}",
+  "port": {port number}
 }
 ```
+
 ### trackerConfig.json
 - configuration that is used in selector.js, chartFeeder.js and analyzer.js 
 ```js
 {
+  "currency" : "BTC",                   // 이 workspace에서 다룰 비트코인 종류
   "selector": {                         // Selector.js
+    "splitSize": 16,                    // crawler.js 에서 기록된 line 묶는 단위
     "cron": "5 0-59/4 * * * *"          // selector execution 주기
-  },
-  "ohlc": {                             // OHLC_Builder.js
-    "splitSize": 16,                    // cron에서 생성한 data를 묶는 size
-  },
-  "chart": {                            // ChartFeeder.js
-    "emaSize": 16                       // 아마 안 사용 될 듯 
   },
   "analyzer": {                         // Analyzer.js
     "buyPrice": 4350300,                // Target buy Price
