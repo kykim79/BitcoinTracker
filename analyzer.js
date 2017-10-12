@@ -9,27 +9,20 @@ let roundTo = require('round-to');
 // date, time conversion
 var moment = require('moment');
 
-// macd calculator
-// var jsonexport = require('jsonexport');
 var MACD = require('technicalindicators').MACD;
 
 // Stream Roller
 var rollers = require('streamroller');
-var stream = new rollers.RollingFileStream('./log/trend.log', 100000, 2);
-
-
-// LOGGER
-let log4js = require('log4js');
-let logger = log4js.getLogger('analyzer');
+var stream = new rollers.RollingFileStream('./log/trend.log', 20000, 2);
 
 // CONFIG
 const ANALYZER = 'analyzer';
-const CURRENCY = 'currency';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let analyzer = configWatch.get(ANALYZER);
-let currency = configWatch.get(CURRENCY);
+
+const CURRENCY = configWatch.get('currency');
 
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
@@ -39,18 +32,22 @@ configWatch.on("change", (err, config) => {
     }
 });
 
+// LOGGER
+let log4js = require('log4js');
+let logger = log4js.getLogger('analyzer ' + CURRENCY);
+
 let npad = (number) => pad(9, numeral((number)).format('0,0'));
 
 let note = require('./notifier.js');
 
-// let TradeStatus = require('./tradeStatus.js');
-
 let TradeType = require('./tradeType.js');
 
-let isRestarted = true;
+let isFirstTime = true; // inform current setting when this module is started
+const aFewCount  = 8;   // variable for ignoring if too small changes
 
 var ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
+
 
 function listener(ohlcs) {
 
@@ -71,17 +68,27 @@ function listener(ohlcs) {
     };
 
     var macds = MACD.calculate(macdInput);
-    // logger.debug('macds length = ' + macds.length);
-    // logger.debug(macds[macds.length-1]);
     var tradeType = '';
     var msgText = '';
 
     let tableSize = macds.length;
-    if (isRestarted) {
-        note.info('Restart with length : ' + tableSize, '*_RESTART_*');
-        isRestarted = false;
+    if (isFirstTime) {
+        const v= {
+            sell : npad(analyzer.sellPrice),
+            buy  : npad(analyzer.buyPrice),
+            size : tableSize,
+            now  : npad(ohlcs[ohlcs.length-1].close),
+            histoSum    : numeral(analyzer.divergence).format('0,0')
+        };
+        const f = 'Sell:{sell}, tblSz:{size}\n' +
+            'Buy :{buy}, div:{histoSum}\n' +
+            'Now :{now}' +
+            '';
+        note.info(f.format(v), '*_STARTED_*');
+        isFirstTime = false;
+        
     }
-    if (tableSize < 5) {
+    if (tableSize < aFewCount) {
         return;
     }
  
@@ -90,38 +97,35 @@ function listener(ohlcs) {
     nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = macds[tableSize - 1].histogram;
     
-    nowValues.histoSum = macds.slice(tableSize - 5).map(_ => _.histogram).reduce((e1, e2) => e1 + (e2 * e2));
+    nowValues.histoSum = macds.slice(tableSize - aFewCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2));
     
     if (nowValues.histoSum > analyzer.divergence) {
         var nowHistogram = nowValues.histogram;
         var lastHistogram = macds[tableSize - 2].histogram;
-        if (nowHistogram == 0) {
-            tradeType = (lastHistogram > 0) ? TradeType.SELL : TradeType.BUY;
-            msgText = (lastHistogram > 0) ? '*SELL SELL SELL*' : '*BUY BUY BUY*';
-        }
-        else if (lastHistogram >= 0 && nowHistogram < 0) {
+        if (lastHistogram >= 0 && nowHistogram <= 0 && 
+            (Math.abs(analyzer.sellPrice - nowValues.close) / nowValues.close) < analyzer.gapAllowance) {
             tradeType = TradeType.SELL;
-            msgText = '*SELL POINT*';
+            msgText = (nowValues.close >= analyzer.sellPrice) ? '*OverSELL, Should SELL*' : '*SELL POINT*';
         }
-        else if (lastHistogram <= 0 && nowHistogram > 0) {
-            tradeType = TradeType.BUY;
-            msgText = '*BUY POINT*';
+        else if (lastHistogram <= 0 && nowHistogram > 0 &&
+            (Math.abs(analyzer.buyPrice - nowValues.close) / nowValues.close) < analyzer.gapAllowance) {
+            tradeType = TradeType.BUY;          // tradeType is blank...why?
+            msgText = (nowValues.close <= analyzer.buyPrice) ? '*UnderBUY, Should BUY*' : '*BUY POINT*';
         }
-        // if (tradeType) {
-        if (msgText) {
+        if (msgText) {  // tradeType is not used because 
             informTrade(nowValues, tradeType, msgText);
         }
     }
     else {
-        logger.debug('Sum of last 5 is too small : ' + roundTo(nowValues.histoSum, 2));
+        logger.debug('last ' + aFewCount + ' histogram '  +  roundTo(nowValues.histoSum, 2)  + ' < ' + analyzer.divergence );
     }
-    if (!tradeType) {
+    if (!msgText) {
         if (nowValues.close > analyzer.sellPrice) {
-            msgText = 'Higher Price';
+            msgText = 'Going UP UP';
             informTrade(nowValues, TradeType.SELL, msgText);
         } 
         else if (nowValues.close < analyzer.buyPrice) {
-            msgText = 'Lower Price';
+            msgText = 'Going DOWN';
             informTrade(nowValues, TradeType.BUY, msgText);
         }
     }
@@ -164,7 +168,6 @@ function keepLog(nowValues, tradetype, msgText) {
             tradetype,
             msgText
         ].join(', ');
-        
         stream.write(str + require('os').EOL);
     } catch(exception) {
         logger.error('[trend log] ' + exception);
