@@ -6,22 +6,21 @@
   - redis database (redis cli)
   - bithumb price, volume crawler
   - tracker (selector > ohlcBuilder> analyzer)
-- developed by kykim based on idea by riopapa
-- last uptodate : 2017-10-12
 
 ## Table of Contents
 
 - [Workspace Operation](#workspace-operation)
-  - [redis db start/stop](#redis)
-  - [Stock Chart start/stop](#stockchart)
-  - [Crawler start/stop](#crawler.js)
-  - [Tracker start/stop](#tracker.js)
-- [Configration Files](#configration-files)
-- [Analyzing Files explanation](#analyzing-files)
+  - [redis db start/stop](#redis-operation)
+  - [Stock Chart start/stop](#stockchart-operation)
+  - [Crawler start/stop](#crawler-operation)
+  - [Tracker start/stop](#tracker-operation)
+
+- [Analyzing Files Explanation](#analyzing-files-explanation)
+- [Configuration Files](#configuration-files)
 
 # Workspace Operation
 
-## redis 
+## redis operation
 - memory database cotains crawled cryptocurrency information by crawler.js
 - selector.js will access this database peridically
 
@@ -42,7 +41,7 @@
 
 ----
 
-## StockChart
+## StockChart Operation
 - render chart from csv file (cart/public/chart.js) to ide.c9.io url
 
 ### start
@@ -64,7 +63,7 @@ ubuntu     10293    8121  0 13:32 pts/11   00:00:00 grep --color=auto stoc
 ```
 ----
 
-## crawler.js
+## Crawler Operation
 - crawl cryptocurrency by using bithumb API
 - save into redis database located in redisConfig.json by the coinInfo.js object form.
 
@@ -83,7 +82,7 @@ kill -9 9114
 ```
 ----
 
-## tracker.js
+## Tracker Operation
 - load and execute selector.js ohlcBuilder.js, candleFeeder.js, analyzer.js
 
 ### start
@@ -100,8 +99,7 @@ kill -9 9340
 ```
 
 
-## Analyzing Files
-
+## Analyzing Files Explanation
 
 ### selector.js
 - read cryptocurrency data peridically
