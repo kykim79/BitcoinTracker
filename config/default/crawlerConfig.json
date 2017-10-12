@@ -1,5 +1,6 @@
 {
-  "cron": "0-59/15 * * * * *",
-  "currency" : "BTC",
-  "maxCount": 1000
+  "cron": "*/15 * * * * *",
+  "currency" : "BTC",  
+  "priceRoundRadix" : 0,
+  "maxCount": 10000
 }
