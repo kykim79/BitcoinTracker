@@ -42,7 +42,7 @@
 ----
 
 ## StockChart Operation
-- render chart from csv file (cart/public/chart.js) to ide.c9.io url
+- render chart from csv file (chart/public/chart.js) to ide.c9.io url
 
 ### start
 ```
