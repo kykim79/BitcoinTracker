@@ -1,4 +1,25 @@
-# How to manage BitcoinTracker
+# About BitcoinTracker
+- This workspace is to find out right trading time for cryptocurrency
+- cryptocurrency price source is [bithumb](https://www.bithumb.com)
+- four modules are running
+  - stock chart
+  - redis database (redis cli)
+  - bithumb price, volume crawler
+  - tracker (selector > ohlcBuilder> analyzer)
+- developed by kykim based on idea by riopapa
+- last uptodate : 2017-10-12
+
+## Table of Contents
+
+- [Workspace Operation](#workspace-operation)
+  - [redis db start/stop](#redis)
+  - [Stock Chart start/stop](#StockChart)
+  - [Crawler start/stop](#crawler.js)
+  - [Tracker start/stop](#tracker.js)
+- [Configration Files](#Configration-Files)
+- [Analyzing Files explanation](#Analyzing-Files)
+
+# workspace operation
 
 ## redis 
 - memory database cotains crawled cryptocurrency information by crawler.js
@@ -78,6 +99,9 @@ ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto tracker
 kill -9 9340
 ```
 
+## Analyzing Files
+
+
 ### selector.js
 - read cryptocurrency data peridically
 
@@ -112,11 +136,11 @@ kill -9 9340
 
 ----
 
-## Configuration Files
+# Configuration Files
 - file location: ./config
 - format : .json
 
-### crawlerConfig.json
+## crawlerConfig.json
 - Crawler.js external parameters
 ```js
 {
@@ -127,7 +151,7 @@ kill -9 9340
 }
 ```
 
-### loggerConfig.json
+## loggerConfig.json
 - set log target to which file
 ```js
 {
@@ -155,7 +179,7 @@ kill -9 9340
 }
 ```
 
-### notifyConfig.json
+## notifyConfig.json
 - contains slack webHook channel information and c9 chart url
 ```js
 {
@@ -165,7 +189,7 @@ kill -9 9340
 
 ```
 
-### redisConfig.json
+## redisConfig.json
 - redis remote db location
 
 ```js
@@ -175,7 +199,7 @@ kill -9 9340
 }
 ```
 
-### trackerConfig.json
+## trackerConfig.json
 - configuration that is used in selector.js, chartFeeder.js and analyzer.js 
 ```js
 {
@@ -193,4 +217,8 @@ kill -9 9340
   }
 }
 ```
+
+## chart/public/currency.png
+- currency icon used in chart url and slack
+- BTC,ETH,XRP,ZEC coin icons are ready
 
