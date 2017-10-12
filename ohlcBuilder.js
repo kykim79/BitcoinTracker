@@ -5,7 +5,7 @@ var format = require('string-format');
 format.extend(String.prototype);
 
 // CONFIG
-const SPLIT_SIZE = 'selector:splitSize';
+const SPLIT_SIZE = 'ohlc:splitSize';
 const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
