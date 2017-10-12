@@ -13,13 +13,13 @@
 
 - [Workspace Operation](#workspace-operation)
   - [redis db start/stop](#redis)
-  - [Stock Chart start/stop](#StockChart)
+  - [Stock Chart start/stop](#stockchart)
   - [Crawler start/stop](#crawler.js)
   - [Tracker start/stop](#tracker.js)
-- [Configration Files](#Configration-Files)
-- [Analyzing Files explanation](#Analyzing-Files)
+- [Configration Files](#configration-files)
+- [Analyzing Files explanation](#analyzing-files)
 
-# workspace operation
+# Workspace Operation
 
 ## redis 
 - memory database cotains crawled cryptocurrency information by crawler.js
@@ -98,6 +98,7 @@ ubuntu      9340    7659  0 13:08 pts/9    00:00:01 node tracker.js
 ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto tracker
 kill -9 9340
 ```
+
 
 ## Analyzing Files
 
