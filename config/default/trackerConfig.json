@@ -1,14 +1,15 @@
 {
   "currency" : "BTC",
   "selector": {
-    "cron": "0 0-59/4 * * * *"
+    "cron": "0 */4 * * * *"
   },
   "ohlc": {
-    "splitSize": 16
+    "splitSize": 12
   },
   "analyzer": {
-    "buyPrice": 0,
-    "sellPrice": 0,
-    "divergence": 0
+    "gapAllowance" : 0.03,
+    "buyPrice": 5134000,
+    "sellPrice": 5755000,
+    "divergence": 40000
   }
 }
