@@ -21,6 +21,8 @@ const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let analyzer = configWatch.get(ANALYZER);
+const aFewCount  = 6;   // variable for ignoring if too small changes
+let aFewAmount = aFewCount * analyzer.histogram;
 
 const CURRENCY = configWatch.get('currency');
 
@@ -28,7 +30,15 @@ configWatch.on("change", (err, config) => {
     if (err) { throw err; }
     if (config.hasChanged(ANALYZER)) {
         analyzer = config.get(ANALYZER);
-        note.warn('buy:{buyPrice}, sell:{sellPrice}, divergence:{divergence}'.format(analyzer),'*Config Change*');
+        const v= {
+            sell : npad(analyzer.sellPrice),
+            buy  : npad(analyzer.buyPrice),
+            gap  : roundTo(analyzer.gapAllowance * 100,2),
+            histoSum: numeral(analyzer.histogram).format('0,0')
+        };
+        const f = 'Sell:{sell}, div:{histoSum}\nBuy :{buy}, gap:{gap}\%';
+        note.info(f.format(v), '*Config Change*');
+        aFewAmount = aFewCount * analyzer.histogram;
     }
 });
 
@@ -43,7 +53,6 @@ let note = require('./notifier.js');
 let TradeType = require('./tradeType.js');
 
 let isFirstTime = true; // inform current setting when this module is started
-const aFewCount  = 8;   // variable for ignoring if too small changes
 
 var ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
@@ -77,12 +86,13 @@ function listener(ohlcs) {
             sell : npad(analyzer.sellPrice),
             buy  : npad(analyzer.buyPrice),
             size : tableSize,
+            gap  : roundTo(analyzer.gapAllowance * 100,2),
             now  : npad(ohlcs[ohlcs.length-1].close),
-            histoSum    : numeral(analyzer.divergence).format('0,0')
+            histoSum : numeral(analyzer.histogram).format('0,0')
         };
         const f = 'Sell:{sell}, tblSz:{size}\n' +
             'Buy :{buy}, div:{histoSum}\n' +
-            'Now :{now}' +
+            'Now :{now}, gap:{gap}\%' +
             '';
         note.info(f.format(v), '*_STARTED_*');
         isFirstTime = false;
@@ -99,25 +109,25 @@ function listener(ohlcs) {
     
     nowValues.histoSum = macds.slice(tableSize - aFewCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2));
     
-    if (nowValues.histoSum > analyzer.divergence) {
+    if (nowValues.histoSum > aFewAmount) {
         var nowHistogram = nowValues.histogram;
         var lastHistogram = macds[tableSize - 2].histogram;
         if (lastHistogram >= 0 && nowHistogram <= 0 && 
             (Math.abs(analyzer.sellPrice - nowValues.close) / nowValues.close) < analyzer.gapAllowance) {
             tradeType = TradeType.SELL;
-            msgText = (nowValues.close >= analyzer.sellPrice) ? '*OverSELL, Should SELL*' : '*SELL POINT*';
+            msgText = (nowValues.close >= analyzer.sellPrice) ? '*Over, Should SELL*' : '*SELL POINT*';
         }
-        else if (lastHistogram <= 0 && nowHistogram > 0 &&
+        else if (lastHistogram <= 0 && nowHistogram >= 0 &&
             (Math.abs(analyzer.buyPrice - nowValues.close) / nowValues.close) < analyzer.gapAllowance) {
             tradeType = TradeType.BUY;          // tradeType is blank...why?
-            msgText = (nowValues.close <= analyzer.buyPrice) ? '*UnderBUY, Should BUY*' : '*BUY POINT*';
+            msgText = (nowValues.close <= analyzer.buyPrice) ? '*Under, Should BUY*' : '*BUY POINT*';
         }
         if (msgText) {  // tradeType is not used because 
             informTrade(nowValues, tradeType, msgText);
         }
     }
     else {
-        logger.debug('last ' + aFewCount + ' histogram '  +  roundTo(nowValues.histoSum, 2)  + ' < ' + analyzer.divergence );
+        logger.debug('last ' + aFewCount + ' histogram '  +  roundTo(nowValues.histoSum, 2)  + ' < ' + aFewAmount);
     }
     if (!msgText) {
         if (nowValues.close > analyzer.sellPrice) {
