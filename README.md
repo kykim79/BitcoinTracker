@@ -210,6 +210,7 @@ kill -9 9340
     "splitSize": 16                 //    chunk size to make one ohlc record
   },
   "analyzer": {                     // Analyzer.js
+    "gapAllowance": 0.033,          //    gap allowance to check within target sell,buy price for warning
     "buyPrice": 4350300,            //    Target buy Price
     "sellPrice": 5074580,           //    Target sell Price
     "divergence": 1000              //    ignore analysis if sum of aFew histogram is so small
