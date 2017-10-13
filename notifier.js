@@ -16,7 +16,7 @@ const NOTIFY_FILE = './config/notifyConfig.json';
 const notifyWatch = new ConfigWatch(NOTIFY_FILE);
 const WEBHOOK = notifyWatch.get('webHook');
 const CHART = notifyWatch.get('chart');
-const ICON = notifyWatch.get('icon');
+// const ICON = notifyWatch.get('icon');    // icon removed, which will be covered when create webhook
 
 const TIMEZONE = 'Asia/Seoul';
 
@@ -40,7 +40,8 @@ exports.danger = (line, msg) => {
 
 let slackPost = require('slackpost');
 let post = slackPost.post(WEBHOOK);
-post.setUsername('BITHUMB-BOT').setChannel('#bitcoin').enableFieldMarkdown().setIconURL(ICON);
+// post.setUsername('BITHUMB-BOT').setChannel('#bitcoin').enableFieldMarkdown().setIconURL(ICON);
+post.setUsername('BITHUMB-BOT').setChannel('#bitcoin').enableFieldMarkdown();
 
 const EOL = require('os').EOL;
 
@@ -48,7 +49,7 @@ function sendToSlack(line, type=notiType.INFO, title){
   try {
     post
     .setColor(type.value)
-    .setRichText('{4}: {0}{2}```{1}{2}```{2}`{3}`'.format(title, line, EOL, CHART, CURRENCY), true)
+    .setRichText('\[{4}\] {0}{2}```{1}{2}```{2}`{3}`'.format(title, line, EOL, CHART, CURRENCY), true)
     .enableUnfurlLinks()
     .send((err) => { if (err) throw err; });
     
