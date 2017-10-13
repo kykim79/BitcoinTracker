@@ -10,7 +10,7 @@
     },
     "file": { 
       "type": "file", 
-      "filename": "./log/btc.log", 
+      "filename": "./log/coin.log", 
       "maxLogSize": 200000
     }
   },
