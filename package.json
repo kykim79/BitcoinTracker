@@ -35,6 +35,8 @@
     "request": "^2.81.0",
     "rolling-file": "^1.0.10",
     "round-to": "^2.0.0",
+    "slack-client": "^2.0.6",
+    "slackbots": "^1.1.0",
     "slackpost": "^1.2.0",
     "socket.io": "~0.9.14",
     "sorted-map": "^0.1.8",
