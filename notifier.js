@@ -21,7 +21,7 @@ const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
 var log4js = require('log4js');
-var logger = log4js.getLogger('notifier');
+var logger = log4js.getLogger('notifier-' + CURRENCY);
 
 let notiType = require('./notiType.js');
 
@@ -58,7 +58,7 @@ function sendToSlack(line, type=notiType.INFO, title){
 }
 
 function log(line, type, msg) {
-  const m = replaceall(EOL, '; ', CURRENCY + ': ' + msg + ', ' + line);
+  const m = replaceall(EOL, '; ', msg + ', ' + line);
   switch (type.value) {
   case notiType.INFO:
     logger.info(m);
