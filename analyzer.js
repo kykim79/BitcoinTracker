@@ -21,8 +21,7 @@ const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let analyzer = configWatch.get(ANALYZER);
-const aFewCount  = 6;   // variable for ignoring if too small changes
-let aFewAmount = aFewCount * analyzer.histogram;
+const histoCount  = 6;   // variable for ignoring if too small changes
 
 const CURRENCY = configWatch.get('currency');
 
@@ -34,11 +33,10 @@ configWatch.on("change", (err, config) => {
             sell : npad(analyzer.sellPrice),
             buy  : npad(analyzer.buyPrice),
             gap  : roundTo(analyzer.gapAllowance * 100,2),
-            histoSum: numeral(analyzer.histogram).format('0,0')
+            histogram: numeral(analyzer.histogram).format('0,0')
         };
-        const f = 'Sell:{sell}, div:{histoSum}\nBuy :{buy}, gap:{gap}\%';
+        const f = 'Sell:{sell}, hist:{histogram}\nBuy :{buy}, gap:{gap}\%';
         note.info(f.format(v), '*Config Change*');
-        aFewAmount = aFewCount * analyzer.histogram;
     }
 });
 
@@ -88,17 +86,17 @@ function listener(ohlcs) {
             size : tableSize,
             gap  : roundTo(analyzer.gapAllowance * 100,2),
             now  : npad(ohlcs[ohlcs.length-1].close),
-            histoSum : numeral(analyzer.histogram).format('0,0')
+            histogram : analyzer.histogram
         };
         const f = 'Sell:{sell}, tblSz:{size}\n' +
-            'Buy :{buy}, div:{histoSum}\n' +
+            'Buy :{buy}, hist:{histogram}\n' +
             'Now :{now}, gap:{gap}\%' +
             '';
         note.info(f.format(v), '*_STARTED_*');
         isFirstTime = false;
         
     }
-    if (tableSize < aFewCount) {
+    if (tableSize < histoCount) {
         return;
     }
  
@@ -107,9 +105,9 @@ function listener(ohlcs) {
     nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = macds[tableSize - 1].histogram;
     
-    nowValues.histoSum = macds.slice(tableSize - aFewCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2));
+    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2)))/histoCount,0);
     
-    if (nowValues.histoSum > aFewAmount) {
+    if (nowValues.histoAvr > analyzer.histogram) {
         var nowHistogram = nowValues.histogram;
         var lastHistogram = macds[tableSize - 2].histogram;
         if (lastHistogram >= 0 && nowHistogram <= 0 && 
@@ -127,7 +125,7 @@ function listener(ohlcs) {
         }
     }
     else {
-        logger.debug('last ' + aFewCount + ' histogram '  +  roundTo(nowValues.histoSum, 2)  + ' < ' + aFewAmount);
+        logger.debug('last histogram [' + histoCount + '] average '  +  nowValues.histoAvr  + ' is smaller than ' + analyzer.histogram);
     }
     if (!msgText) {
         if (nowValues.close > analyzer.sellPrice) {
@@ -152,11 +150,11 @@ function informTrade(nowValues, tradeType, msgText) {
         gap         : npad(now - target),
         volume      : numeral(nowValues.volume).format('0,0.00'),
         hist        : numeral(nowValues.histogram).format('0,0.00'),
-        histoSum    : numeral(nowValues.histoSum).format('0,0.00')
+        histoAvr    : numeral(nowValues.histoAvr).format('0,0.00')
     };
     const f = 'Now :{nowNpad} vol:{volume}\n' +
         '{buysell}:{targetNpad} gap:{gap}\n' +
-        'hist:{hist} sum:{histoSum}';
+        'hist:{hist} avr:{histoAvr}';
 
     note.danger(f.format(v), msgText);
 }
@@ -174,7 +172,7 @@ function keepLog(nowValues, tradetype, msgText) {
             roundTo(nowValues.MACD,2),
             roundTo(nowValues.signal,2),
             roundTo(nowValues.histogram,2),
-            roundTo(nowValues.histoSum,2),
+            roundTo(nowValues.histoAvr,2),
             tradetype,
             msgText
         ].join(', ');
