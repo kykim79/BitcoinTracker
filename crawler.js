@@ -6,6 +6,15 @@ var Map = require('hashmap');
 var CoinInfo = require('./coinInfo.js');
 var CronJob = require('cron').CronJob;
 
+// CONFIG
+const ConfigWatch = require("config-watch");
+const CONFIG_FILE = './config/crawlerConfig.json';
+const configWatch = new ConfigWatch(CONFIG_FILE);
+
+const CURRENCY = configWatch.get('currency');
+const CRON_SCHEDULE = configWatch.get('cron');
+const MAX_COUNT = configWatch.get('maxCount');
+
 const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
@@ -17,16 +26,7 @@ log4js_extend(log4js, {
   format: "(@name:@line:@column)"
 });
 
-var logger = log4js.getLogger('crawler');
-
-// CONFIG
-const ConfigWatch = require("config-watch");
-const CONFIG_FILE = './config/crawlerConfig.json';
-const configWatch = new ConfigWatch(CONFIG_FILE);
-
-const CURRENCY = configWatch.get('currency');
-const CRON_SCHEDULE = configWatch.get('cron');
-const MAX_COUNT = configWatch.get('maxCount');
+var logger = log4js.getLogger('crawler-' + CURRENCY);
 
 const BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + CURRENCY;
 
@@ -52,7 +52,7 @@ var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
   if (epoch - lastepoch > TEN_MINUTE) {
     lastepoch = epoch;
-    logger.debug(CURRENCY + " crawler is running. cron: " + CRON_SCHEDULE);
+    logger.debug("crawler is running. cron: " + CRON_SCHEDULE);
   } 
 };
 
