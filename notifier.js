@@ -39,7 +39,7 @@ exports.danger = (line, msg) => {
 
 let slackPost = require('slackpost');
 let post = slackPost.post(WEBHOOK);
-post.setUsername(CURRENCY).setChannel('#bitcoin').enableFieldMarkdown();
+post.setUsername(CURRENCY).enableFieldMarkdown();
 
 const EOL = require('os').EOL;
 
