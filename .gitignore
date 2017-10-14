@@ -125,3 +125,4 @@ typings/
 # this project only
 log/
 config/*.json
+chart/public/currency.png
