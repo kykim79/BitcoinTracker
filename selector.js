@@ -3,6 +3,10 @@ var CronJob = require('cron').CronJob;
 
 var format = require('string-format');
 format.extend(String.prototype);
+let numeral = require('numeral');
+
+// date, time conversion
+var moment = require('moment');
 
 // CONFIG
 const CRON = 'selector:cron';
@@ -38,24 +42,37 @@ exports.getEmitter = () => emitter;
 var redisClient = require("./redisClient.js");
 
 const TIMEZONE = 'Asia/Seoul';
-const TEN_MINUTE = 600;
+const TWENTY_MINUTES = 1200000;
 
 let lastepoch = 0;
 
 var heartbeat = (res) => {
-  const epoch = Math.round(Date.now() / 1000);
-  if (epoch - lastepoch > TEN_MINUTE) {
+  const epoch = Date.now();
+  if (epoch - lastepoch > TWENTY_MINUTES) {
     lastepoch = epoch;
-    logger.debug("selector is running. cron: {}, res size {}".format(cronSchedule, res.length));
-  } 
+    logger.debug("running. cron: {}, res size {}".format(cronSchedule, res.length));
+    let redisEpoch = JSON.parse(res[res.length-1]).epoch;
+
+    if (epoch - redisEpoch > TWENTY_MINUTES) {
+        let moment = require('moment');
+        let note = require('./notifier.js');
+        const v= {
+            nowTime : moment(new Date(epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
+            lastTime : moment(new Date(redisEpoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')
+        };
+        const f = 'Now     : {nowTime}\n' +
+                  'Last db : {lastTime}';
+        note.danger(f.format(v), '*Crawler NOT Working*');
+    }
+  }
 };
 
 var select = () => {
   try {
     redisClient.zrange(CURRENCY, 0, -1, (err, res) => {
     if(err) { throw err; }
-      emitter.emit('event', res);
-      heartbeat(res);
+    emitter.emit('event', res);
+    heartbeat(res);
     });
   } catch (exception) {
     logger.error("[select] exception: " + exception);

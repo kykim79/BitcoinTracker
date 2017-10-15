@@ -89,8 +89,8 @@ function listener(ohlcs) {
             histogram : analyzer.histogram
         };
         const f = 'Sell:{sell}, tblSz:{size}\n' +
-            'Buy :{buy}, hist:{histogram}\n' +
-            'Now :{now}, gap:{gap}\%' +
+            'Now :{now}, gap:{gap}\%\n' +
+            'Buy :{buy}, histo:{histogram}' +
             '';
         note.info(f.format(v), '*_STARTED_*');
         isFirstTime = false;
@@ -129,11 +129,11 @@ function listener(ohlcs) {
     }
     if (!msgText) {
         if (nowValues.close > analyzer.sellPrice) {
-            msgText = 'Going UP UP';
+            msgText = '_Going UP UP_';
             informTrade(nowValues, TradeType.SELL, msgText);
         } 
         else if (nowValues.close < analyzer.buyPrice) {
-            msgText = 'Going DOWN';
+            msgText = '_Going DOWN_';
             informTrade(nowValues, TradeType.BUY, msgText);
         }
     }
@@ -145,16 +145,16 @@ function informTrade(nowValues, tradeType, msgText) {
     const target = ( tradeType == TradeType.SELL) ? analyzer.sellPrice : analyzer.buyPrice;
     const v= {
         nowNpad     : npad(now),
-        buysell     : tradeType,
+        buysell     : (tradeType == 'SELL') ? 'SELL' : 'BUY ',
         targetNpad  : npad(target),
         gap         : npad(now - target),
-        volume      : numeral(nowValues.volume).format('0,0.00'),
-        hist        : numeral(nowValues.histogram).format('0,0.00'),
-        histoAvr    : numeral(nowValues.histoAvr).format('0,0.00')
+        volume      : numeral(nowValues.volume).format('0,0'),
+        histo       : numeral(nowValues.histogram).format('0,0.0'),
+        histoAvr    : numeral(nowValues.histoAvr).format('0,0.0')
     };
     const f = 'Now :{nowNpad} vol:{volume}\n' +
         '{buysell}:{targetNpad} gap:{gap}\n' +
-        'hist:{hist} avr:{histoAvr}';
+        'histo:{histo} histoAvr:{histoAvr}';
 
     note.danger(f.format(v), msgText);
 }
@@ -173,7 +173,7 @@ function keepLog(nowValues, tradetype, msgText) {
             roundTo(nowValues.signal,2),
             roundTo(nowValues.histogram,2),
             roundTo(nowValues.histoAvr,2),
-            tradetype,
+            nowValues.tradeType,
             msgText
         ].join(', ');
         stream.write(str + require('os').EOL);

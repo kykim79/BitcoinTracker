@@ -46,11 +46,11 @@ var resize = (max) => {
 };
 
 let lastepoch = 0;
-const TEN_MINUTE = 600;
+const TWENTY_MINUTE = 1200;
 
 var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
-  if (epoch - lastepoch > TEN_MINUTE) {
+  if (epoch - lastepoch > TWENTY_MINUTE) {
     lastepoch = epoch;
     logger.debug("crawler is running. cron: " + CRON_SCHEDULE);
   } 
