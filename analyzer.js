@@ -13,7 +13,7 @@ var MACD = require('technicalindicators').MACD;
 
 // Stream Roller
 var rollers = require('streamroller');
-var stream = new rollers.RollingFileStream('./log/trend.log', 20000, 2);
+var stream = new rollers.RollingFileStream('./log/trend.log', 40000, 2);
 
 // CONFIG
 const ANALYZER = 'analyzer';
@@ -21,7 +21,7 @@ const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let analyzer = configWatch.get(ANALYZER);
-const histoCount  = 6;   // variable for ignoring if too small changes
+const histoCount  = 5;   // variable for ignoring if too small changes
 
 const CURRENCY = configWatch.get('currency');
 
@@ -33,9 +33,9 @@ configWatch.on("change", (err, config) => {
             sell : npad(analyzer.sellPrice),
             buy  : npad(analyzer.buyPrice),
             gap  : roundTo(analyzer.gapAllowance * 100,2),
-            histogram: numeral(analyzer.histogram).format('0,0')
+            histo: numeral(analyzer.histogram).format('0,0.0')
         };
-        const f = 'Sell:{sell}, hist:{histogram}\nBuy :{buy}, gap:{gap}\%';
+        const f = 'Sell:{sell}  histo:{histo}\nBuy :{buy}  gap:{gap}\%';
         note.info(f.format(v), '*Config Change*');
     }
 });
@@ -84,11 +84,11 @@ function listener(ohlcs) {
             size : tableSize,
             gap  : roundTo(analyzer.gapAllowance * 100,2),
             now  : npad(ohlcs[ohlcs.length-1].close),
-            histogram : analyzer.histogram
+            histo : analyzer.histogram
         };
         const f = 'Sell:{sell}, tblSz:{size}\n' +
             'Now :{now}, gap:{gap}\%\n' +
-            'Buy :{buy}, histo:{histogram}' +
+            'Buy :{buy}, histo:{histo}' +
             '';
         note.info(f.format(v), '*_STARTED_*');
         isFirstTime = false;
