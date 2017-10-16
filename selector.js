@@ -57,12 +57,10 @@ var heartbeat = (res) => {
         let moment = require('moment');
         let note = require('./notifier.js');
         const v= {
-            nowTime : moment(new Date(epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
             lastTime : moment(new Date(redisEpoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')
         };
-        const f = 'Now     : {nowTime}\n' +
-                  'Last db : {lastTime}';
-        note.danger(f.format(v), '*Crawler NOT Working*');
+        const f = 'Latest date in db is {lastTime}';
+        note.danger(f.format(v), '*Check Database Status*');
     }
   }
 };

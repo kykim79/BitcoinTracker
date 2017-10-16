@@ -220,5 +220,5 @@ kill -9 9340
 
 ## chart/public/currency.png
 - currency icon used in chart url and slack
-- BTC,ETH,XRP,ZEC coin icons are ready
+- BTC,ETH,XRP,ZEC, BCH coin icons are ready
 
