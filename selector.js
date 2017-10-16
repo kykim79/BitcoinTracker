@@ -79,4 +79,6 @@ var select = () => {
   }
 };
 
+select(); // immediate run once when started..
+
 cronJob = new CronJob(cronSchedule, select, null, true, TIMEZONE);

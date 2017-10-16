@@ -1,4 +1,4 @@
-var syncRequest = require('sync-request');
+const syncRequest = require('sync-request');
 
 var momnent = require('moment');
 var Map = require('hashmap');

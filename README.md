@@ -146,7 +146,7 @@ kill -9 9340
   "currency" : "BTC",             //  target cryptocurrency to analyze            
   "priceRoundRadix": -3,          //  round up digit
   "cron": "0-59/15 * * * * *",    //  re crawl on every ...
-  "maxCount": 10000               //  ignore old data if over this amount  
+  "maxCount": 1000                //  ignore old data if over this amount  
 }
 ```
 
@@ -165,7 +165,7 @@ kill -9 9340
     },
     "file": { 
       "type": "file", 
-      "filename": "./log/btc.log",    // currendy dependency name
+      "filename": "./log/coin.log",
       "maxLogSize": 200000
     }
   },
@@ -207,7 +207,7 @@ kill -9 9340
     "cron": "5 0-59/4 * * * *"      //    rerun selector.js on every ..
   },
   "ohlc": {                         // ohlcBuilder.js
-    "splitSize": 16                 //    chunk size to make one ohlc record
+    "splitSize": 4                  //    chunk size to make one ohlc record (usually same with cron rerun min.)
   },
   "analyzer": {                     // Analyzer.js
     "gapAllowance": 0.033,          //    gap allowance to check within target sell,buy price for warning
