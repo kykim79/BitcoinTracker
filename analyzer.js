@@ -150,13 +150,13 @@ function informTrade(nowValues) {
         buysell     : (nowValues.tradeType == 'SELL') ? 'SELL' : 'BUY ',
         targetNpad  : npad(target),
         gap         : npad(now - target),
-        volume      : numeral(nowValues.volume).format('0,0'),
+        volume      : numeral(nowValues.volume).format('0,0.0'),
         histo       : numeral(nowValues.histogram).format('0,0.0'),
         histoAvr    : numeral(nowValues.histoAvr).format('0,0.0')
     };
-    const f = 'Now :{nowNpad} vol:{volume}\n' +
-        '{buysell}:{targetNpad} gap:{gap}\n' +
-        'histo:{histo} histoAvr:{histoAvr}';
+    const f = 'Now :{nowNpad}  vol:{volume}\n' +
+        '{buysell}:{targetNpad}  gap:{gap}\n' +
+        'histo:{histo}  histoAvr:{histoAvr}';
 
     note.danger(f.format(v), nowValues.msgText);
 }
