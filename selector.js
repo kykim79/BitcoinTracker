@@ -34,7 +34,7 @@ log4js_extend(log4js, {
   path: __dirname,
   format: "(@name:@line:@column)"
 });
-var logger = log4js.getLogger('selector ' + CURRENCY);
+var logger = log4js.getLogger('selector:' + CURRENCY.toLowerCase());
 
 var emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;

@@ -42,7 +42,7 @@ configWatch.on("change", (err, config) => {
 
 // LOGGER
 let log4js = require('log4js');
-let logger = log4js.getLogger('analyzer ' + CURRENCY);
+let logger = log4js.getLogger('analyzer:' + CURRENCY.toLowerCase());
 
 let npad = (number) => pad(9, numeral((number)).format('0,0'));
 

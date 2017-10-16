@@ -2,9 +2,16 @@ var redis = require("redis");
 
 var redisConfig = require("./config/redisConfig")
 
+// CONFIG
+const ConfigWatch = require("config-watch");
+const CONFIG_FILE = './config/crawlerConfig.json';
+const configWatch = new ConfigWatch(CONFIG_FILE);
+
+const CURRENCY = configWatch.get('currency');
+
 // LOGGER
 var log4js = require('log4js');
-var logger = log4js.getLogger('redisClient');
+var logger = log4js.getLogger('redisClient:' + CURRENCY.toLowerCase());
 
 var option = {
   host: redisConfig.host,
