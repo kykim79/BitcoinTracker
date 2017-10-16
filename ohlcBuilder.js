@@ -58,8 +58,8 @@ function listener(args) {
     validateDates(ohlcInfos);
 
     emitter.emit('event', ohlcInfos);
-  } catch(exception) {
-    logger.error(exception);
+  } catch(e) {
+    logger.error(e);
   }
 }
 

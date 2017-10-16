@@ -99,8 +99,8 @@ var crawl = () => {
     
     resize(MAX_COUNT);
     heartbeat();
-  } catch (exception) {
-    logger.error(exception);
+  } catch (e) {
+    logger.error(e);
   }    
 };
 
@@ -109,8 +109,8 @@ new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
 function writeLog(transactions, coinInfo) {
   try {
     stream.write(coinInfo.toString() + " " + JSON.stringify(transactions) + require('os').EOL);
-  } catch (exception) {
-    logger.error(exception);
+  } catch (e) {
+    logger.error(e);
   }
     
 }

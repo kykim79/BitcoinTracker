@@ -24,8 +24,8 @@ function listener(args) {
   try {
     args.forEach((item, index) => writeChartData(item, index == 0, index));
     logger.debug(args.length + ' columns sent to chart');
-  } catch(exception) {
-    logger.error('[chartFeeder ] ' + exception);
+  } catch(e) {
+    logger.error(e);
   }
 }
 

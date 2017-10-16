@@ -52,8 +52,8 @@ function sendToSlack(line, type=notiType.INFO, title){
     .send((err) => { if (err) throw err; });
     
     log(line, type, title);
-  } catch(exception) {
-    logger.error(exception);
+  } catch(e) {
+    logger.error(e);
   }
 }
 

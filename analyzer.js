@@ -180,7 +180,7 @@ function keepLog(nowValues) {
             nowValues.msgText
         ].join(', ');
         stream.write(str + require('os').EOL);
-    } catch(exception) {
-        logger.error('[trend log] ' + exception);
+    } catch(e) {
+        logger.error(e);
     }
 }

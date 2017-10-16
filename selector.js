@@ -72,8 +72,8 @@ var select = () => {
     emitter.emit('event', res);
     heartbeat(res);
     });
-  } catch (exception) {
-    logger.error("[select] exception: " + exception);
+  } catch (e) {
+    logger.error(e);
   }
 };
 
