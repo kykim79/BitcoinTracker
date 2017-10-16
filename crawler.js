@@ -100,7 +100,7 @@ var crawl = () => {
     resize(MAX_COUNT);
     heartbeat();
   } catch (exception) {
-    logger.error("[crawl] exception: " + exception);
+    logger.error(exception);
   }    
 };
 
