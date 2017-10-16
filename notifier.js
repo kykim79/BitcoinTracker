@@ -21,7 +21,7 @@ const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
 var log4js = require('log4js');
-var logger = log4js.getLogger('notifier-' + CURRENCY);
+var logger = log4js.getLogger('notifier:' + CURRENCY.toLowerCase());
 
 let notiType = require('./notiType.js');
 

@@ -6,7 +6,14 @@ var zip = require('zip-array').zip_longest;
 
 // LOGGER
 var log4js = require('log4js');
-var logger = log4js.getLogger('chart-feeder');
+
+// CONFIG
+const ConfigWatch = require("config-watch");
+const CONFIG_FILE = './config/crawlerConfig.json';
+const configWatch = new ConfigWatch(CONFIG_FILE);
+
+const CURRENCY = configWatch.get('currency');
+var logger = log4js.getLogger('chartFeeder:' + CURRENCY.toLowerCase());
 
 var emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;

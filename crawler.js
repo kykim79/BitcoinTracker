@@ -26,7 +26,7 @@ log4js_extend(log4js, {
   format: "(@name:@line:@column)"
 });
 
-var logger = log4js.getLogger('crawler-' + CURRENCY);
+var logger = log4js.getLogger('crawler:' + CURRENCY.toLowerCase());
 
 const BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + CURRENCY;
 

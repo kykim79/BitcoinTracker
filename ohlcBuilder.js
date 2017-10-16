@@ -14,7 +14,7 @@ let splitSize = configWatch.get(SPLIT_SIZE);
 const CURRENCY = configWatch.get('currency');
 
 var log4js = require('log4js');
-var logger = log4js.getLogger('ohlc-builder ' + CURRENCY);
+var logger = log4js.getLogger('ohlcBuilder:'  + CURRENCY.toLowerCase());
 
 var moment = require('moment');
 require('moment-timezone');
