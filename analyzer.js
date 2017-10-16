@@ -75,8 +75,6 @@ function listener(ohlcs) {
     };
 
     var macds = MACD.calculate(macdInput);
-    var tradeType = '';
-    var msgText = '';
 
     let tableSize = macds.length;
     if (isFirstTime) {
@@ -104,48 +102,52 @@ function listener(ohlcs) {
     nowValues.MACD = macds[tableSize - 1].MACD;
     nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = macds[tableSize - 1].histogram;
+    nowValues.tradeType = '';
+    nowValues.msgText = '';
     
-    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2)))/histoCount,0);
+    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2)))/histoCount,1);
     
     if (nowValues.histoAvr > analyzer.histogram) {
         var nowHistogram = nowValues.histogram;
         var lastHistogram = macds[tableSize - 2].histogram;
         if (lastHistogram >= 0 && nowHistogram <= 0 && 
             (Math.abs(analyzer.sellPrice - nowValues.close) / nowValues.close) < analyzer.gapAllowance) {
-            tradeType = TradeType.SELL;
-            msgText = (nowValues.close >= analyzer.sellPrice) ? '*Over, Should SELL*' : '*SELL POINT*';
+            nowValues.tradeType = TradeType.SELL;
+            nowValues.msgText = (nowValues.close >= analyzer.sellPrice) ? '*Over, Should SELL*' : '*SELL POINT*';
         }
         else if (lastHistogram <= 0 && nowHistogram >= 0 &&
             (Math.abs(analyzer.buyPrice - nowValues.close) / nowValues.close) < analyzer.gapAllowance) {
-            tradeType = TradeType.BUY;          // tradeType is blank...why?
-            msgText = (nowValues.close <= analyzer.buyPrice) ? '*Under, Should BUY*' : '*BUY POINT*';
+            nowValues.tradeType = TradeType.BUY;
+            nowValues.msgText = (nowValues.close <= analyzer.buyPrice) ? '*Under, Should BUY*' : '*BUY POINT*';
         }
-        if (msgText) {  // tradeType is not used because 
-            informTrade(nowValues, tradeType, msgText);
+        if (nowValues.msgText) {
+            informTrade(nowValues);
         }
     }
     else {
         logger.debug('last histogram [' + histoCount + '] average '  +  nowValues.histoAvr  + ' is smaller than ' + analyzer.histogram);
     }
-    if (!msgText) {
+    if (!nowValues.msgText) {
         if (nowValues.close > analyzer.sellPrice) {
-            msgText = '_Going UP UP_';
-            informTrade(nowValues, TradeType.SELL, msgText);
+            nowValues.tradeType = TradeType.SELL;
+            nowValues.msgText = '_Going UP UP_';
+            informTrade(nowValues);
         } 
         else if (nowValues.close < analyzer.buyPrice) {
-            msgText = '_Going DOWN_';
-            informTrade(nowValues, TradeType.BUY, msgText);
+            nowValues.tradeType = TradeType.BUY;
+            nowValues.msgText = '_Going DOWN_';
+            informTrade(nowValues);
         }
     }
-    keepLog(nowValues, tradeType, msgText);
+    keepLog(nowValues);
 }
 
-function informTrade(nowValues, tradeType, msgText) {
+function informTrade(nowValues) {
     const now = nowValues.close;
-    const target = ( tradeType == TradeType.SELL) ? analyzer.sellPrice : analyzer.buyPrice;
+    const target = ( nowValues.tradeType == TradeType.SELL) ? analyzer.sellPrice : analyzer.buyPrice;
     const v= {
         nowNpad     : npad(now),
-        buysell     : (tradeType == 'SELL') ? 'SELL' : 'BUY ',
+        buysell     : (nowValues.tradeType == 'SELL') ? 'SELL' : 'BUY ',
         targetNpad  : npad(target),
         gap         : npad(now - target),
         volume      : numeral(nowValues.volume).format('0,0'),
@@ -156,13 +158,14 @@ function informTrade(nowValues, tradeType, msgText) {
         '{buysell}:{targetNpad} gap:{gap}\n' +
         'histo:{histo} histoAvr:{histoAvr}';
 
-    note.danger(f.format(v), msgText);
+    note.danger(f.format(v), nowValues.msgText);
 }
 
-function keepLog(nowValues, tradetype, msgText) {
+function keepLog(nowValues) {
 
     try {
         let str = [
+            CURRENCY,
             moment(new Date(nowValues.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
             nowValues.open, 
             nowValues.high, 
@@ -172,9 +175,9 @@ function keepLog(nowValues, tradetype, msgText) {
             roundTo(nowValues.MACD,2),
             roundTo(nowValues.signal,2),
             roundTo(nowValues.histogram,2),
-            roundTo(nowValues.histoAvr,2),
+            nowValues.histoAvr,
             nowValues.tradeType,
-            msgText
+            nowValues.msgText
         ].join(', ');
         stream.write(str + require('os').EOL);
     } catch(exception) {

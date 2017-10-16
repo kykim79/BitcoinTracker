@@ -55,7 +55,7 @@ function listener(args) {
     //    {epoch, price, volume, date, high, low, close, open}
     //]
 
-    // validateDates(ohlcInfos);
+    validateDates(ohlcInfos);
 
     emitter.emit('event', ohlcInfos);
   } catch(exception) {
