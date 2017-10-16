@@ -15,7 +15,7 @@ const CURRENCY = configWatch.get('currency');
 const NOTIFY_FILE = './config/notifyConfig.json';
 const notifyWatch = new ConfigWatch(NOTIFY_FILE);
 const WEBHOOK = notifyWatch.get('webHook');
-const CHART = notifyWatch.get('chart');
+// const CHART = notifyWatch.get('chart');
 
 const TIMEZONE = 'Asia/Seoul';
 
@@ -47,7 +47,7 @@ function sendToSlack(line, type=notiType.INFO, title){
   try {
     post
     .setColor(type.value)
-    .setRichText('{0}{2}```{1}{2}```{2}`{3}`'.format(title, line, EOL, CHART), true)
+    .setRichText('{0}{2}```{1}{2}```{2}'.format(title, line, EOL), true)
     .enableUnfurlLinks()
     .send((err) => { if (err) throw err; });
     
