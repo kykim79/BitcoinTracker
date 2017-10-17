@@ -13,7 +13,7 @@ var MACD = require('technicalindicators').MACD;
 
 // Stream Roller
 var rollers = require('streamroller');
-var stream = new rollers.RollingFileStream('./log/trend.log', 20000, 2);
+var stream = new rollers.RollingFileStream('./log/trend.log', 30000, 2);
 
 // CONFIG
 const ANALYZER = 'analyzer';
@@ -21,7 +21,7 @@ const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let analyzer = configWatch.get(ANALYZER);
-const histoCount  = 6;   // variable for ignoring if too small changes
+const histoCount  = 5;   // variable for ignoring if too small changes
 
 const CURRENCY = configWatch.get('currency');
 
@@ -42,9 +42,8 @@ configWatch.on("change", (err, config) => {
 
 // LOGGER
 let log4js = require('log4js');
-let logger = log4js.getLogger('analyzer ' + CURRENCY.toLowerCase());
+let logger = log4js.getLogger('analyzer:' + CURRENCY.toLowerCase());
 
-// let npad = (number) => pad(9, numeral((number)).format('0,0'));
 let npad = (number) => (number < 1000000) ? pad(4, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
 
 let note = require('./notifier.js');
@@ -85,11 +84,11 @@ function listener(ohlcs) {
             size : tableSize,
             gap  : roundTo(analyzer.gapAllowance * 100,2),
             now  : npad(ohlcs[ohlcs.length-1].close),
-            histogram : analyzer.histogram
+            histo: analyzer.histogram
         };
-        const f = 'Sell:{sell}, tblSz:{size}\n' +
-            'Now :{now}, gap:{gap}\%\n' +
-            'Buy :{buy}, histo:{histogram}' +
+        const f = 'Sell:{sell}  tblSz:{size}\n' +
+            'Now :{now}  gap:{gap}\%\n' +
+            'Buy :{buy}  histo:{histo}' +
             '';
         note.info(f.format(v), '*_STARTED_*');
         isFirstTime = false;
@@ -155,9 +154,9 @@ function informTrade(nowValues) {
         histo       : numeral(nowValues.histogram).format('0,0.0'),
         histoAvr    : numeral(nowValues.histoAvr).format('0,0.0')
     };
-    const f = 'Now :{nowNpad} vol:{volume}\n' +
-        '{buysell}:{targetNpad} gap:{gap}\n' +
-        'histo:{histo} histoAvr:{histoAvr}';
+    const f = 'Now :{nowNpad}  vol:{volume}\n' +
+        '{buysell}:{targetNpad}  gap:{gap}\n' +
+        'histo:{histo}  histoAvr:{histoAvr}';
 
     note.danger(f.format(v), nowValues.msgText);
 }
@@ -181,7 +180,7 @@ function keepLog(nowValues) {
             nowValues.msgText
         ].join(', ');
         stream.write(str + require('os').EOL);
-    } catch(exception) {
-        logger.error('[trend log] ' + exception);
+    } catch(e) {
+        logger.error(e);
     }
 }
