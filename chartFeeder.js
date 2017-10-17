@@ -30,7 +30,7 @@ ohlcBuilder.getEmitter().on('event', listener);
 function listener(args) {
   try {
     args.forEach((item, index) => writeChartData(item, index == 0, index));
-    logger.debug(args.length + ' columns sent to chart');
+    logger.debug('Feeding ' + args.length + ' columns');
   } catch(e) {
     logger.error(e);
   }

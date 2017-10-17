@@ -13,7 +13,7 @@ var MACD = require('technicalindicators').MACD;
 
 // Stream Roller
 var rollers = require('streamroller');
-var stream = new rollers.RollingFileStream('./log/trend.log', 40000, 2);
+var stream = new rollers.RollingFileStream('./log/trend.log', 20000, 2);
 
 // CONFIG
 const ANALYZER = 'analyzer';
@@ -21,7 +21,7 @@ const ConfigWatch = require("config-watch");
 const CONFIG_FILE = './config/trackerConfig.json';
 let configWatch = new ConfigWatch(CONFIG_FILE);
 let analyzer = configWatch.get(ANALYZER);
-const histoCount  = 5;   // variable for ignoring if too small changes
+const histoCount  = 6;   // variable for ignoring if too small changes
 
 const CURRENCY = configWatch.get('currency');
 
@@ -33,18 +33,19 @@ configWatch.on("change", (err, config) => {
             sell : npad(analyzer.sellPrice),
             buy  : npad(analyzer.buyPrice),
             gap  : roundTo(analyzer.gapAllowance * 100,2),
-            histo: numeral(analyzer.histogram).format('0,0.0')
+            histogram: numeral(analyzer.histogram).format('0,0.0')
         };
-        const f = 'Sell:{sell}  histo:{histo}\nBuy :{buy}  gap:{gap}\%';
-        note.info(f.format(v), '*Config Change*');
+        const f = 'Sell:{sell}, histo:{histogram}\nBuy :{buy}, gap:{gap}\%';
+        note.info(f.format(v), '*Config Changed*');
     }
 });
 
 // LOGGER
 let log4js = require('log4js');
-let logger = log4js.getLogger('analyzer:' + CURRENCY.toLowerCase());
+let logger = log4js.getLogger('analyzer ' + CURRENCY.toLowerCase());
 
-let npad = (number) => pad(9, numeral((number)).format('0,0'));
+// let npad = (number) => pad(9, numeral((number)).format('0,0'));
+let npad = (number) => (number < 1000000) ? pad(4, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
 
 let note = require('./notifier.js');
 
@@ -84,11 +85,11 @@ function listener(ohlcs) {
             size : tableSize,
             gap  : roundTo(analyzer.gapAllowance * 100,2),
             now  : npad(ohlcs[ohlcs.length-1].close),
-            histo : analyzer.histogram
+            histogram : analyzer.histogram
         };
         const f = 'Sell:{sell}, tblSz:{size}\n' +
             'Now :{now}, gap:{gap}\%\n' +
-            'Buy :{buy}, histo:{histo}' +
+            'Buy :{buy}, histo:{histogram}' +
             '';
         note.info(f.format(v), '*_STARTED_*');
         isFirstTime = false;
@@ -105,7 +106,7 @@ function listener(ohlcs) {
     nowValues.tradeType = '';
     nowValues.msgText = '';
     
-    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2)))/histoCount,1);
+    nowValues.histoAvr = (macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2)))/histoCount;
     
     if (nowValues.histoAvr > analyzer.histogram) {
         var nowHistogram = nowValues.histogram;
@@ -150,13 +151,13 @@ function informTrade(nowValues) {
         buysell     : (nowValues.tradeType == 'SELL') ? 'SELL' : 'BUY ',
         targetNpad  : npad(target),
         gap         : npad(now - target),
-        volume      : numeral(nowValues.volume).format('0,0.0'),
+        volume      : numeral(nowValues.volume).format('0,0'),
         histo       : numeral(nowValues.histogram).format('0,0.0'),
         histoAvr    : numeral(nowValues.histoAvr).format('0,0.0')
     };
-    const f = 'Now :{nowNpad}  vol:{volume}\n' +
-        '{buysell}:{targetNpad}  gap:{gap}\n' +
-        'histo:{histo}  histoAvr:{histoAvr}';
+    const f = 'Now :{nowNpad} vol:{volume}\n' +
+        '{buysell}:{targetNpad} gap:{gap}\n' +
+        'histo:{histo} histoAvr:{histoAvr}';
 
     note.danger(f.format(v), nowValues.msgText);
 }
@@ -175,12 +176,12 @@ function keepLog(nowValues) {
             roundTo(nowValues.MACD,2),
             roundTo(nowValues.signal,2),
             roundTo(nowValues.histogram,2),
-            nowValues.histoAvr,
+            roundTo(nowValues.histoAvr,2),
             nowValues.tradeType,
             nowValues.msgText
         ].join(', ');
         stream.write(str + require('os').EOL);
-    } catch(e) {
-        logger.error(e);
+    } catch(exception) {
+        logger.error('[trend log] ' + exception);
     }
 }

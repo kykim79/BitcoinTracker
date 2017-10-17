@@ -97,12 +97,12 @@ function makeOHLCfield(coins) {
 
 function validateDates(ohlcInfos) {
   // to verify dates
-  if (ohlcInfos.length > 3) {
+  if (ohlcInfos.length > 4) {
     logger.debug('table[{0}], ({1} ~ {2}, {3}, {4})'
       .format(ohlcInfos.length,
         ohlcInfos[0].date,
-        ohlcInfos[ohlcInfos.length - 3].date,
-        ohlcInfos[ohlcInfos.length - 2].date,
-        ohlcInfos[ohlcInfos.length - 1].date));
+        ohlcInfos[ohlcInfos.length - 3].date.substring(8),
+        ohlcInfos[ohlcInfos.length - 2].date.substring(8),
+        ohlcInfos[ohlcInfos.length - 1].date.substring(8)));
   }
 }
