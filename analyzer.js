@@ -125,7 +125,7 @@ function listener(ohlcs) {
         }
     }
     else {
-        logger.debug('last histogram [' + histoCount + '] average '  +  nowValues.histoAvr  + ' is smaller than ' + analyzer.histogram);
+        logger.debug('last histogram [' + histoCount + '] average '  +  roundTo(nowValues.histoAvr,2)  + ' is smaller than ' + roundTo(analyzer.histogram,2));
     }
     if (!nowValues.msgText) {
         if (nowValues.close > analyzer.sellPrice) {
@@ -150,12 +150,13 @@ function informTrade(nowValues) {
         buysell     : (nowValues.tradeType == 'SELL') ? 'SELL' : 'BUY ',
         targetNpad  : npad(target),
         gap         : npad(now - target),
+        gapPcnt     : roundTo((now - target) / target * 100,1),
         volume      : numeral(nowValues.volume).format('0,0'),
         histo       : numeral(nowValues.histogram).format('0,0.0'),
         histoAvr    : numeral(nowValues.histoAvr).format('0,0.0')
     };
     const f = 'Now :{nowNpad}  vol:{volume}\n' +
-        '{buysell}:{targetNpad}  gap:{gap}\n' +
+        '{buysell}:{targetNpad}  gap:{gap} {gapPcnt}\%\n' +
         'histo:{histo}  histoAvr:{histoAvr}';
 
     note.danger(f.format(v), nowValues.msgText);
