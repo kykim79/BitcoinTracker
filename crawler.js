@@ -66,7 +66,7 @@ var crawl = () => {
   Promise.try(() => { 
     return bhttp.get(BITHUMB_URL); 
   }).then((response) => {
-    var content = JSON.parse(response.body);
+    var content = response.body;
     grouping(content);	
     resize(MAX_COUNT);
     heartbeat();      
