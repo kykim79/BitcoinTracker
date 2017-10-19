@@ -1,6 +1,4 @@
-const syncRequest = require('sync-request');
-
-var momnent = require('moment');
+var moment = require('moment');
 var Map = require('hashmap');
 
 var CoinInfo = require('./coinInfo.js');
@@ -33,6 +31,7 @@ const BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + CURR
 // Stream Roller
 var rollers = require('streamroller');
 var stream = new rollers.RollingFileStream('./log/crawler.log', 100000, 2);
+var stream2 = new rollers.RollingFileStream('./log/raw.log', 100000, 2);
 
 var redisClient = require("./redisClient.js");
 
@@ -66,23 +65,24 @@ var crawl = () => {
   Promise.try(() => { 
     return bhttp.get(BITHUMB_URL); 
   }).then((response) => {
-    var content = response.body;
-    grouping(content);	
+    write(getNewCoins(response.body));	
     resize(MAX_COUNT);
-    heartbeat();      
+    heartbeat();
   }).catch((e) => {
     logger.error(e);
   });
 };
 
-function grouping(content) {
-  var coinMap = new Map();    
-  content.data.forEach(e => {
-    const minKey = momnent(new Date(e.transaction_date)).second(0).milliseconds(0).unix();
-    if(coinMap.has(minKey)){
-      coinMap.get(minKey).push(e);
+function getNewCoins(body) {
+  writeLog2(body);
+  
+  var coinMap = new Map();
+  body.data.forEach(e => {
+    const minuteKey = moment(new Date(e.transaction_date)).second(0).milliseconds(0).unix();
+    if(coinMap.has(minuteKey)){
+      coinMap.get(minuteKey).push(e);
     } else {
-      coinMap.set(minKey, [e]);
+      coinMap.set(minuteKey, [e]);
     }
   });
 
@@ -98,15 +98,18 @@ function grouping(content) {
   } 
   
   coins.pop();
-  coins.forEach(e => {
-    const t = coinMap.get(e);
-    const coinInfo = new CoinInfo(t);
+  return coins.map(e => coinMap.get(e));
+}
+
+function write(newCoins) {
+  newCoins.forEach(e => {
+    const coinInfo = new CoinInfo(e);
     if(coinInfo.volume != 0 && coinInfo.price != null) {
       redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
-      writtenKeys.push(momnent(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
-      writeLog(t, coinInfo);
+      writtenKeys.push(moment(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
+      writeLog(e, coinInfo);
     }
-  });  
+  }); 
 }
 
 new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
@@ -114,6 +117,14 @@ new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
 function writeLog(transactions, coinInfo) {
   try {
     stream.write(coinInfo.toString() + " " + JSON.stringify(transactions) + require('os').EOL);
+  } catch (e) {
+    logger.error(e);
+  }
+}
+
+function writeLog2(json) {
+  try {
+    stream2.write(JSON.stringify(json) + require('os').EOL);
   } catch (e) {
     logger.error(e);
   }
