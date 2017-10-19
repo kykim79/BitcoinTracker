@@ -8,6 +8,7 @@
   "dependencies": {
     "async": "~0.2.8",
     "average": "^0.1.0",
+    "bhttp": "^1.2.4",
     "body-parser": "^1.18.0",
     "config": "^1.26.2",
     "config-watch": "^0.1.0",

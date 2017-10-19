@@ -59,50 +59,55 @@ var heartbeat = () => {
 var writtenKeys = [];
 var isFirst = true;
 
+var Promise = require("bluebird");
+var bhttp = require("bhttp");
+
 var crawl = () => {
-  try {    
-    
-    var content = JSON.parse(syncRequest('GET', BITHUMB_URL).getBody());
-
-    var coinMap = new Map();    
-    content.data.forEach(e => {
-      const minKey = momnent(new Date(e.transaction_date)).second(0).milliseconds(0).unix();
-      if(coinMap.has(minKey)){
-        coinMap.get(minKey).push(e);
-      } else {
-        coinMap.set(minKey, [e]);
-      }
-    });
-
-    var coins = [];    
-    coins = coinMap.keys();
-    coins.sort();
-    if(isFirst) {
-      coins.shift();
-      isFirst = false;
-    } else {
-      writtenKeys = writtenKeys.filter(e => e >= coins[0]);
-      coins = coins.filter(e => !writtenKeys.includes(e));
-    } 
-    
-    coins.pop();
-    coins.forEach(e => {
-      const t = coinMap.get(e);
-      const coinInfo = new CoinInfo(t);
-      if(coinInfo.volume != 0 && coinInfo.price != null) {
-        redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
-        writtenKeys.push(momnent(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
-        
-        writeLog(t, coinInfo);
-      }
-    });
-    
+  Promise.try(() => { 
+    return bhttp.get(BITHUMB_URL); 
+  }).then((response) => {
+    var content = JSON.parse(response.body);
+    grouping(content);	
     resize(MAX_COUNT);
-    heartbeat();
-  } catch (e) {
+    heartbeat();      
+  }).catch((e) => {
     logger.error(e);
-  }    
+  });
 };
+
+function grouping(content) {
+  var coinMap = new Map();    
+  content.data.forEach(e => {
+    const minKey = momnent(new Date(e.transaction_date)).second(0).milliseconds(0).unix();
+    if(coinMap.has(minKey)){
+      coinMap.get(minKey).push(e);
+    } else {
+      coinMap.set(minKey, [e]);
+    }
+  });
+
+  var coins = [];    
+  coins = coinMap.keys();
+  coins.sort();
+  if(isFirst) {
+    coins.shift();
+    isFirst = false;
+  } else {
+    writtenKeys = writtenKeys.filter(e => e >= coins[0]);
+    coins = coins.filter(e => !writtenKeys.includes(e));
+  } 
+  
+  coins.pop();
+  coins.forEach(e => {
+    const t = coinMap.get(e);
+    const coinInfo = new CoinInfo(t);
+    if(coinInfo.volume != 0 && coinInfo.price != null) {
+      redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
+      writtenKeys.push(momnent(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
+      writeLog(t, coinInfo);
+    }
+  });  
+}
 
 new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
 
