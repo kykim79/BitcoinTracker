@@ -126,3 +126,4 @@ typings/
 log/
 config/*.json
 chart/public/currency.png
+chartData/

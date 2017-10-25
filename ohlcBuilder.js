@@ -4,14 +4,9 @@ var splitArray = require('split-array');
 var format = require('string-format');
 format.extend(String.prototype);
 
-// CONFIG
-const SPLIT_SIZE = 'ohlc:splitSize';
-const ConfigWatch = require("config-watch");
-const CONFIG_FILE = './config/trackerConfig.json';
-let configWatch = new ConfigWatch(CONFIG_FILE);
-let splitSize = configWatch.get(SPLIT_SIZE);
+let SPLIT_SIZE = Number(process.env.SPLIT_SIZE);
 
-const CURRENCY = configWatch.get('currency');
+const CURRENCY = process.env.CURRENCY;
 
 var log4js = require('log4js');
 var logger = log4js.getLogger('ohlcBuilder:'  + CURRENCY.toLowerCase());
@@ -19,14 +14,6 @@ var logger = log4js.getLogger('ohlcBuilder:'  + CURRENCY.toLowerCase());
 var moment = require('moment');
 require('moment-timezone');
 var minuteString = (epoch) => moment(new Date(epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm');
-
-configWatch.on("change", (err, config) => {
-  if (err) { throw err; }
-  if (config.hasChanged(SPLIT_SIZE)) {
-    splitSize = config.get(SPLIT_SIZE);
-    logger.warn("ohlc:splitsize has been changed to " + splitSize);
-  }
-});
 
 var selector = require('./selector.js');
 selector.getEmitter().on('event', listener);
@@ -39,7 +26,7 @@ var lastHeadCoins = [];
 function listener(args) {
   try {
 
-    const coinChunks = splitArray(shiftCoins(args), splitSize);
+    const coinChunks = splitArray(shiftCoins(args), SPLIT_SIZE);
         // coinChunks = 
     // [
     //   [ {epoch, price, volume}, {epoch, price, volume},...(splitSize 개) ], 
@@ -74,7 +61,7 @@ function shiftCoins(args) {
     coins = args.filter((e,index) => index >= firstHeadIndex);
   }
 
-  const count = coins.length % splitSize;
+  const count = coins.length % SPLIT_SIZE;
   coins.splice(-count, count);
   return coins;
 }

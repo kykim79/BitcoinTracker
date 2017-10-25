@@ -4,12 +4,12 @@
     "cron": "0 */4 * * * *"
   },
   "ohlc": {
-    "splitSize": 12
+    "splitSize": 4
   },
   "analyzer": {
-    "gapAllowance" : 0.03,
+    "gapAllowance" : 0.023,
     "buyPrice": 5134000,
     "sellPrice": 5755000,
-    "divergence": 40000
+    "histogram": 40000
   }
 }

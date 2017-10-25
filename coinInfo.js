@@ -2,10 +2,7 @@
 var roundTo = require('round-to');
 var empty = require('is-empty');
 
-//CONFIG
-const ConfigWatch = require("config-watch");
-const configWatch = new ConfigWatch('./config/crawlerConfig.json');
-const PRICE_ROUND_RADIX = configWatch.get('priceRoundRadix');
+const PRICE_ROUND_RADIX = Number(process.env.PRICE_ROUND_RADIX);
 
 const add = (e1, e2) => e1 + e2;
 

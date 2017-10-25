@@ -18,7 +18,7 @@ function parseData(parse) {
 const parseDate = timeParse("%Y-%m-%d %H:%M");
 
 export function getData() {
-	const promiseMSFT = fetch("CandleData.csv")
+	const promiseMSFT = fetch("./data/CandleData.csv")
 		.then(response => response.text())
 	 	.then(data => csvParse(data, parseData(parseDate)));
 	return promiseMSFT;

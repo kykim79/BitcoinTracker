@@ -1,0 +1,21 @@
+FROM node:6.2.2
+
+MAINTAINER KwonYoung Kim <kykim79@gmail.com>
+
+RUN echo "Asia/Seoul" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
+
+RUN mkdir -p /app
+
+COPY . app/
+
+ARG CURRENCY
+
+COPY ./src/images/${CURRENCY}.png /app/public/currency.png
+
+RUN cd /app; npm install
+
+WORKDIR /app
+
+CMD npm start
+
+

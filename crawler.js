@@ -4,14 +4,11 @@ var Map = require('hashmap');
 var CoinInfo = require('./coinInfo.js');
 var CronJob = require('cron').CronJob;
 
-// CONFIG
-const ConfigWatch = require("config-watch");
-const CONFIG_FILE = './config/crawlerConfig.json';
-const configWatch = new ConfigWatch(CONFIG_FILE);
+String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '')}
 
-const CURRENCY = configWatch.get('currency');
-const CRON_SCHEDULE = configWatch.get('cron');
-const MAX_COUNT = configWatch.get('maxCount');
+const CURRENCY = process.env.CURRENCY;
+const CRON_SCHEDULE = process.env.CRAWLER_CRON.unquoted();
+const MAX_COUNT = process.env.MAX_COUNT;
 
 const TIMEZONE = 'Asia/Seoul';
 
@@ -35,6 +32,8 @@ var stream2 = new rollers.RollingFileStream('./log/raw.log', 100000, 2);
 
 var redisClient = require("./redisClient.js");
 
+String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '')}
+
 var resize = (max) => {
   redisClient.zcard(CURRENCY, (err, res) => {
     if(err) { throw err; }
@@ -51,7 +50,7 @@ var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
   if (epoch - lastepoch > TWENTY_MINUTE) {
     lastepoch = epoch;
-    logger.debug("crawler is running. cron: " + CRON_SCHEDULE);
+	logger.info("crawler is running. cron: " + CRON_SCHEDULE);
   } 
 };
 
@@ -128,5 +127,4 @@ function writeLog2(json) {
   } catch (e) {
     logger.error(e);
   }
-    
 }

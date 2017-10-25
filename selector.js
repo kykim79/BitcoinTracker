@@ -5,35 +5,15 @@ var format = require('string-format');
 format.extend(String.prototype);
 let numeral = require('numeral');
 
+String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '')}
+
 // date, time conversion
 var moment = require('moment');
 
-// CONFIG
-const CRON = 'selector:cron';
-var cronJob;
-const ConfigWatch = require("config-watch");
-const CONFIG_FILE = './config/trackerConfig.json';
-const configWatch = new ConfigWatch(CONFIG_FILE);
-let cronSchedule = configWatch.get(CRON);
-
-const CURRENCY = configWatch.get('currency');
-
-configWatch.on("change", (err, config) => {
-    if (err) { throw err; }
-    if(config.hasChanged(CRON)) {
-      cronSchedule = config.get(CRON);
-      cronJob.time = cronSchedule;
-      logger.info("cronSchedule for selector has been changed to " + cronJob.time);
-    }
-});
+const CRON_SCHEDULE = process.env.SELECTOR_CRON.unquoted();
+const CURRENCY = process.env.CURRENCY;
 
 var log4js = require('log4js');
-log4js.configure('./config/loggerConfig.json');
-var log4js_extend = require("log4js-extend");
-log4js_extend(log4js, {
-  path: __dirname,
-  format: "(@name:@line:@column)"
-});
 var logger = log4js.getLogger('selector:' + CURRENCY.toLowerCase());
 
 var emitter = new events.EventEmitter();
@@ -46,11 +26,13 @@ const TWENTY_MINUTES = 1200000;
 
 let lastepoch = 0;
 
+String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '')}
+
 var heartbeat = (res) => {
   const epoch = Date.now();
   if (epoch - lastepoch > TWENTY_MINUTES) {
     lastepoch = epoch;
-    logger.debug("running. cron: {}, res size {}".format(cronSchedule, res.length));
+    logger.debug("running. cron: {}, res size {}".format(CRON_SCHEDULE, res.length));
     let redisEpoch = JSON.parse(res[res.length-1]).epoch;
 
     if (epoch - redisEpoch > TWENTY_MINUTES) {
@@ -79,4 +61,4 @@ var select = () => {
 
 select(); // immediate run once when started..
 
-cronJob = new CronJob(cronSchedule, select, null, true, TIMEZONE);
+new CronJob(CRON_SCHEDULE, select, null, true, TIMEZONE);

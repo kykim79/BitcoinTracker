@@ -1,21 +1,17 @@
 var redis = require("redis");
 
-var redisConfig = require("./config/redisConfig")
+var format = require('string-format'); 
+format.extend(String.prototype);
 
-// CONFIG
-const ConfigWatch = require("config-watch");
-const CONFIG_FILE = './config/crawlerConfig.json';
-const configWatch = new ConfigWatch(CONFIG_FILE);
-
-const CURRENCY = configWatch.get('currency');
+const CURRENCY = process.env.CURRENCY;
 
 // LOGGER
 var log4js = require('log4js');
 var logger = log4js.getLogger('redisClient:' + CURRENCY.toLowerCase());
 
-var option = {
-  host: redisConfig.host,
-  port: redisConfig.port,
+let option = {
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
   retry_strategy: function(options) {
     logger.error('error: ' + option.error + ', error.code: ' + options.error.code);
     if (options.total_retry_time > 1000 * 60 * 60) {
@@ -39,6 +35,7 @@ client.on("end", () => {
 });
 
 client.on("error", (err) => {
+  logger.error('redis host: {REDIS_HOST}, redis port: {REDIS_PORT}'.format(process.env));
   logger.error(err);
 });
 

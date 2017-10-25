@@ -1,4 +1,0 @@
-{
-	"webHook": "https://hooks.slack.com/services/{WEBHOOK-INCOMMING-TOKEN}",
-	"chart": "{CHART URL}"
-}

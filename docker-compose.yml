@@ -1,0 +1,52 @@
+version: '2.0'
+
+services:
+ tracker_btc:
+  build:
+   context: .
+   dockerfile: ./Dockerfile-tracker
+  env_file:
+   - tracker.env
+  environment:
+   - CURRENCY=BTC
+   - PRICE_ROUND_RADIX=-3
+   - WEBHOOK=https://hooks.slack.com/services/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
+  volumes:
+   - ./config/btc/:/app/config/
+   - ./chartData/btc/:/app/chartData/
+   - ./log/btc/:/app/log/
+ tracker_xrp:
+  build:
+   context: .
+   dockerfile: ./Dockerfile-tracker
+  env_file:
+   - tracker.env
+  environment:
+   - CURRENCY=XRP
+   - PRICE_ROUND_RADIX=0
+   - WEBHOOK=https://hooks.slack.com/services/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
+  volumes:
+   - ./config/xrp/:/app/config/
+   - ./chartData/xrp/:/app/chartData/
+   - ./log/xrp/:/app/log/
+ chart_btc:
+  build:
+   context: ./chart
+   dockerfile: ./Dockerfile-chart
+   args:
+    - CURRENCY=BTC
+  ports:
+   - "4000:3000"
+  volumes:
+   - ./chartData/btc/:/app/public/data/
+ chart_xrp:
+  build:
+   context: ./chart
+   dockerfile: ./Dockerfile-chart
+   args:
+    - CURRENCY=XRP
+  ports:
+   - "4001:3000"
+  volumes:
+   - ./chartData/xrp/:/app/public/data/
+

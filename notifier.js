@@ -1,21 +1,10 @@
-// var util = require("util");
-// var fs = require('fs');
 var replaceall = require("replaceall");
-// var moment = require('moment');
 
 var format = require('string-format');
 format.extend(String.prototype);
 
-// CONFIG
-const ConfigWatch = require("config-watch");
-const CONFIG_FILE = './config/trackerConfig.json';
-let configWatch = new ConfigWatch(CONFIG_FILE);
-const CURRENCY = configWatch.get('currency');
-
-const NOTIFY_FILE = './config/notifyConfig.json';
-const notifyWatch = new ConfigWatch(NOTIFY_FILE);
-const WEBHOOK = notifyWatch.get('webHook');
-// const CHART = notifyWatch.get('chart');
+const CURRENCY = process.env.CURRENCY;
+const WEBHOOK = process.env.WEBHOOK;
 
 const TIMEZONE = 'Asia/Seoul';
 

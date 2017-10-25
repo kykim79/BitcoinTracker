@@ -23,7 +23,7 @@ let configWatch = new ConfigWatch(CONFIG_FILE);
 let analyzer = configWatch.get(ANALYZER);
 const histoCount  = 5;   // variable for ignoring if too small changes
 
-const CURRENCY = configWatch.get('currency');
+const CURRENCY = process.env.CURRENCY;
 
 configWatch.on("change", (err, config) => {
     if (err) { throw err; }
@@ -125,7 +125,7 @@ function listener(ohlcs) {
         }
     }
     else {
-        logger.debug('last histogram [' + histoCount + '] average '  +  roundTo(nowValues.histoAvr,2)  + ' is smaller than ' + roundTo(analyzer.histogram,2));
+        //logger.debug('last histogram [' + histoCount + '] average '  +  roundTo(nowValues.histoAvr,2)  + ' is smaller than ' + roundTo(analyzer.histogram,2));
     }
     if (!nowValues.msgText) {
         if (nowValues.close > analyzer.sellPrice) {

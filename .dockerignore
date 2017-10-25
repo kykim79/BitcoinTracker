@@ -1,0 +1,13 @@
+Dockerfile
+node_modules/
+*.iml
+*.md
+*.yml
+*.env
+.git
+.gitignore
+.idea
+chartData/
+chart/
+config/
+log/

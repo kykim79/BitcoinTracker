@@ -1,19 +1,10 @@
-var ema = require('exponential-moving-average');
 var fs = require('fs');
 var json2csv = require('json2csv');
 var events = require('events');
-var zip = require('zip-array').zip_longest;
 
 // LOGGER
 var log4js = require('log4js');
-
-// CONFIG
-const ConfigWatch = require("config-watch");
-const CONFIG_FILE = './config/crawlerConfig.json';
-const configWatch = new ConfigWatch(CONFIG_FILE);
-
-const CURRENCY = configWatch.get('currency');
-var logger = log4js.getLogger('chartFeeder:' + CURRENCY.toLowerCase());
+var logger = log4js.getLogger('chartFeeder:' + process.env.CURRENCY.toLowerCase());
 
 var emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
@@ -22,7 +13,7 @@ const TIMEZONE = 'Asia/Seoul';
 
 const CHART_FIELDS = ['date', 'open', 'high', 'low', 'close', 'volume'];
 const CHART_FIELD_NAMES = ['date', 'open', 'high', 'low', 'close', 'volume'];
-const FILE_NAME = './chart/public/CandleData.csv';
+const FILE_NAME = process.env.CHART_DATA;
 
 var ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
@@ -30,7 +21,7 @@ ohlcBuilder.getEmitter().on('event', listener);
 function listener(args) {
   try {
     args.forEach((item, index) => writeChartData(item, index == 0, index));
-    logger.debug('Feeding ' + args.length + ' columns');
+    logger.debug('Feeding ' + args.length + ' rows');
   } catch(e) {
     logger.error(e);
   }
