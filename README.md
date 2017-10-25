@@ -1,3 +1,5 @@
+[![Waffle.io - Columns and their card count](https://badge.waffle.io/kykim79/BitcoinTracker.svg?columns=all)](http://waffle.io/kykim79/BitcoinTracker)
+
 # About BitcoinTracker
 - This workspace is to find out right trading time for cryptocurrency
 - cryptocurrency price source is [bithumb](https://www.bithumb.com)
