@@ -16,6 +16,8 @@ RUN cd /app; npm install
 
 WORKDIR /app
 
+VOLUME [ "/app/public/data" ]
+
 CMD npm start
 
 

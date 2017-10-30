@@ -14,6 +14,8 @@ WORKDIR /app
 
 ADD . /app
 
+RUN mkdir -p /app/config
+
 RUN mkdir -p /app/chartData
 
 VOLUME [ "/app/config", "/app/chartData", "/app/log" ] 
