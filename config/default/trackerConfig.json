@@ -1,11 +1,4 @@
 {
-  "currency" : "BTC",
-  "selector": {
-    "cron": "0 */4 * * * *"
-  },
-  "ohlc": {
-    "splitSize": 4
-  },
   "analyzer": {
     "gapAllowance" : 0.023,
     "buyPrice": 5134000,
