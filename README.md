@@ -20,6 +20,8 @@
 - [Analyzing Files Explanation](#analyzing-files-explanation)
 - [Configuration Files](#configuration-files)
 
+- [Variables control by Slack](#variables-control-by-slack)
+
 # Workspace Operation
 
 ## redis operation
@@ -224,3 +226,21 @@ kill -9 9340
 - currency icon used in chart url and slack
 - BTC,ETH,XRP,ZEC, BCH coin icons are ready
 
+
+# Variables Control by Slack
+## command name : 
+- sa    (nickname from satosh :-P)
+
+## Syntax for parameter changes
+
+sa {currency}{subcommand}{amount}
+    {subcommand} b|s|g|h|n or {+|-}  buy, sell, gap, histogram, now  or  incremental Plus/Minus 
+    {currency} b (BTC), x(XRP), e (ETH), c (BCH), ....
+    {amount} 1234567,  123.45, 6780k (k = 1000)
+ 
+## example
+sa bs6800000   <- set BTC sellPrice to 6800000
+sa eb345k      <- set ETH buyPrice to 345000
+sa bb-1k       <- set BTC buyPrice down 1000
+sa xg0.012     <- set XRP gapAllowance to 0.012
+sa n           <- show all currency now status

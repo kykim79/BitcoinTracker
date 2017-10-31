@@ -25,6 +25,9 @@ exports.warn = (line, msg) => {
 exports.danger = (line, msg) => {
   sendToSlack(line, notiType.DANGER, msg);
 };
+exports.attach = (line, msg) => {
+  sendToSlackAttach(line, notiType.ATTACHMENT, msg);
+};
 
 let slackPost = require('slackpost');
 let post = slackPost.post(WEBHOOK);
@@ -37,6 +40,20 @@ function sendToSlack(line, type=notiType.INFO, title){
     post
     .setColor(type.value)
     .setRichText('{0}{2}```{1}{2}```'.format(title, line, EOL), true)
+    .enableUnfurlLinks()
+    .send((err) => { if (err) throw err; });
+    
+    log(line, type, title);
+  } catch(e) {
+    logger.error(e);
+  }
+}
+
+function sendToSlackAttach(line, type=notiType.INFO, title){ 
+  try {
+    post
+    .setColor(type.value)
+    .setRichText(line, false)
     .enableUnfurlLinks()
     .send((err) => { if (err) throw err; });
     

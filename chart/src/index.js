@@ -5,6 +5,8 @@ import { getData } from "./utils"
 
 import { TypeChooser } from "react-stockcharts/lib/helper";
 
+var CURRENCY = 'ETH';
+
 class ChartComponent extends React.Component {
 	componentDidMount() {
 		getData().then(data => {
@@ -27,3 +29,8 @@ render(
 	<ChartComponent />,
 	document.getElementById("root")
 );
+
+export function setCurrency() {
+	// return '';
+	return CURRENCY;
+}

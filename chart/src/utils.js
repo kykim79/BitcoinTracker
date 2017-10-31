@@ -1,5 +1,6 @@
 import { csvParse } from  "d3-dsv";
 import { timeParse } from "d3-time-format";
+import { setCurrency} from "./index";
 
 function parseData(parse) {
 	return function(d) {
@@ -14,10 +15,13 @@ function parseData(parse) {
 	};
 }
 
+const CURRENCY = setCurrency();
+
 //const parseDate = timeParse("%Y-%m-%d");
 const parseDate = timeParse("%Y-%m-%d %H:%M");
 
 export function getData() {
+	/* global fetch */
 	const promiseMSFT = fetch("./data/CandleData.csv")
 		.then(response => response.text())
 	 	.then(data => csvParse(data, parseData(parseDate)));

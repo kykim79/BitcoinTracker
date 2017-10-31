@@ -50,7 +50,7 @@ var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
   if (epoch - lastepoch > TWENTY_MINUTE) {
     lastepoch = epoch;
-	logger.info("crawler is running. cron: " + CRON_SCHEDULE);
+    logger.debug("running. cron: " + CRON_SCHEDULE);
   } 
 };
 
@@ -66,10 +66,11 @@ var crawl = () => {
   }).then((response) => {
     write(getNewCoins(response.body));	
     resize(MAX_COUNT);
-    heartbeat();
   }).catch((e) => {
     logger.error(e);
   });
+  
+  heartbeat();
 };
 
 function getNewCoins(body) {
