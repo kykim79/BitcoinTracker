@@ -15,6 +15,7 @@ services:
    - ./config/btc/:/app/config/
    - ./chartData/btc/:/app/chartData/
    - ./log/btc/:/app/log/
+  restart: unless-stopped
  tracker_xrp:
   build:
    context: .
@@ -29,6 +30,7 @@ services:
    - ./config/xrp/:/app/config/
    - ./chartData/xrp/:/app/chartData/
    - ./log/xrp/:/app/log/
+  restart: unless-stopped
  chart_btc:
   build:
    context: ./chart
@@ -39,6 +41,7 @@ services:
    - "4000:3000"
   volumes:
    - ./chartData/btc/:/app/public/data/
+  restart: unless-stopped
  chart_xrp:
   build:
    context: ./chart
@@ -49,4 +52,5 @@ services:
    - "4001:3000"
   volumes:
    - ./chartData/xrp/:/app/public/data/
+  restart: unless-stopped
 
