@@ -33,20 +33,17 @@ services:
   build:
    context: ./chart
    dockerfile: ./Dockerfile-chart
-   args:
-    - CURRENCY=BTC
   ports:
    - "4000:3000"
   volumes:
    - ./chartData/btc/:/app/public/data/
+   - ./chartData/btc/:/app/public/image/
  chart_xrp:
   build:
    context: ./chart
    dockerfile: ./Dockerfile-chart
-   args:
-    - CURRENCY=XRP
   ports:
    - "4001:3000"
   volumes:
    - ./chartData/xrp/:/app/public/data/
-
+   - ./chartData/xrp/:/app/public/image/

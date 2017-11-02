@@ -8,16 +8,10 @@ RUN mkdir -p /app
 
 COPY . app/
 
-ARG CURRENCY
-
-COPY ./src/images/${CURRENCY}.png /app/public/currency.png
-
 RUN cd /app; npm install
 
 WORKDIR /app
 
-VOLUME [ "/app/public/data" ]
+VOLUME [ "/app/public/data", "app/public/image" ]
 
 CMD npm start
-
-
