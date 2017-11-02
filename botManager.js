@@ -12,17 +12,27 @@ var Promise = require("bluebird");
 var bhttp = require("bhttp");
 var coinConfig = require('./coinConfig.js');
 let coinType = require('./coinType.js');
-let coinTypes = coinType.enums.map((c) => c.value); // should be coded in coinType.js
+let coinTypes = coinType.enums.map((c) => c.value);
+
+// LOGGER
+var log4js = require('log4js');
+log4js.configure(process.env.LOGGER_CONFIG);
+var log4js_extend = require("log4js-extend");
+log4js_extend(log4js, {
+    path: __dirname,
+    format: "(@name:@line:@column)"
+});
+var logger = log4js.getLogger('botmanager');
 
 //
 
 let npad = (number) => (number < 1000000) ? pad(4, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
+let npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 const CONFIG_FOLDER = './config/';
 const CONFIG_FILE = '/trackerConfig.json';
 const BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/";
 const WEBTOKEN = "xoxp-146635173889-147997134374-263670048758-f86cb300f91c49ab741993f259d81459"; // for #cryptocurrency
 
-// bot id name이 안 
 // const CHANNEL_NAME = '#cryptocurrency';
 const botId='xoxb-261765742902-L5maHrT9IVDOKJFXm159lxmg'; // for #cryptocurrency
 const botName='satoshi_nakamoto';
@@ -71,18 +81,29 @@ function userIdToName(id) {
     return ''; 
 }
 
+const WELCOME_MESSAGE = '* Configration Bot Started *\n\n' +
+    '*sa command syntax*\n\n' +
+    '*sa* _{currency}{subcommand}{amount}_\n\n' +
+    '     _{currency}_ b(BTC), x(XRP), e(ETH), c(BCH)\n' +
+    '     _{subcommand}_ b | s | g | h | n\n' +
+    '                    buy, sell, gap, histogram, now\n' +
+    '     _{amount}_ (+|-|)123.45k'
+
 bot.on('start', function() {
     // more information about additional params https://api.slack.com/methods/chat.postMessage
     // var params = {
     //     icon_emoji: ':cat:'
     // };
-    
+    send(WELCOME_MESSAGE);
+    logger.debug('bot just started');
 });
 
 bot.on('message', function(data) {
+
     if (data.type != 'message') {
         return;
     }
+    logger.debug('input text = ' + data.text);
 
     if (data.text.length < 4 || !data.text.startsWith('sa ')) {
         return;
@@ -105,56 +126,56 @@ bot.on('message', function(data) {
             reply(coinTypes, "Current Config");
         }
         else {  // sa bs
-            let result = {
-                coinType: coinType.get(match[2]).value,
-                config: match[3],
+            let config = {
+                cointype: coinType.get(match[2]).value,
+                configField: match[3],
                 sign: match[4],
                 amount: match[6] ? Number(match[5]) * 1000 : Number(match[5])
             };
-            reply([updateConfig(result).coinType], "New Config");
+            reply([updateConfig(config)], "New Config");
         }
     }
     catch (e) {
-        console.error(e);
+        logger.error(e);
     }
 });
 
-function updateConfig(val) {
+function updateConfig(config) {
 
-    let targetFile = CONFIG_FOLDER + val.coin + CONFIG_FILE;
-    let config = JSON.parse(fs.readFileSync(targetFile));
-    switch (val.config) {
+    let targetFile = CONFIG_FOLDER + config.cointype.toLowerCase() + CONFIG_FILE;
+    let c = JSON.parse(fs.readFileSync(targetFile));
+    switch (config.configField) {
         case 's':
-            config.analyzer.sellPrice = updatePrice(val, config.analyzer.sellPrice);
+            c.analyzer.sellPrice = updatePrice(config.sign, config.amount, c.analyzer.sellPrice);
             break;
         case 'b':
-            config.analyzer.buyPrice = updatePrice(val, config.analyzer.buyPrice);
+            c.analyzer.buyPrice = updatePrice(config.sign, config.amount, c.analyzer.buyPrice);
             break;
         case 'g':
-            config.analyzer.gapAllowance = val.amount / 100;
+            c.analyzer.gapAllowance = config.amount / 100;
             break;
         case 'h':
-            config.analyzer.histogram = val.amount;
+            c.analyzer.histoPercent = config.amount / 100;
+            c.analyzer.histogram = (c.analyzer.sellPrice + c.analyzer.buyPrice) / 2 * c.analyzer.histoPercent;
             break;
         default:
-            console.error('undefined config: ' + val.config);   // should not happen
+            send('undefined config field: ' + config.configField);   // should not happen
+            process.exit(1);
     }
-    fs.writeFileSync(targetFile, JSON.stringify(config, null, 1), 'utf-8');
-    
-    config.analyzer.coin = val.coin;
-    return config.analyzer;
+    fs.writeFileSync(targetFile, JSON.stringify(c, null, 1), 'utf-8');
+    return config.cointype;
 }
 
-function updatePrice(val, price) {
-    switch (val) {
+function updatePrice(sign, amount, price) {
+    switch (sign) {
         case '+':
-            price += val.amount;
+            price += amount;
             break;
         case '-':
-            price -= val.amount;
+            price -= amount;
             break;
         default:
-            price = val.amount;
+            price = amount;
     }
     return price;
 }
@@ -185,29 +206,33 @@ function requestMessage(msg) {
     let webMsg = 'http://slack.com/api/chat.postMessage?' + querystring.stringify(msg);
     request(webMsg, function(error, response, body) {
         if (error || response.statusCode != 200) {
-            console.log(error);
+            logger.error(error);
         }
     });
 }
 
-function reply(COINS, msg) {
-    var request = (coin) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + coin)));
-    var response = (values) => values.map((value, i) => makeCoinConfig(COINS[i], value));
-    Promise.all(COINS.map(e => request(e)))
+function reply(cointypes, msg) {
+    var request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
+    var response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
+    Promise.all(cointypes.map(e => request(e)))
         .then(response)
         .then(attachs => sendWithAttach(msg, attachs))
-        .catch(e => console.log(e));
+        .catch(e => logger.error(e));
 }
 
-function makeCoinConfig(coin, value) {
-    let cf = JSON.parse(fs.readFileSync(CONFIG_FOLDER + coin + CONFIG_FILE)).analyzer;
-    return new coinConfig(coin)
-        .addField('Buy   ', npad(cf.buyPrice))
-        .addField('Histo ', npad(cf.histogram))
-        .addField('Now ', npad(Number(value.body.data[0].price))
-        // .addField('gapAllow ', numeral(cf.gapAllowance * 100).format('0,0.0') + '%')
-        // .addField('Sell    ', npad(cf.sellPrice)));
-    );
+function makeCoinConfig(cointype, value) {
+    try {
+        let cf = JSON.parse(fs.readFileSync(CONFIG_FOLDER + cointype.toLowerCase() + CONFIG_FILE)).analyzer;
+        return new coinConfig(cointype)
+            .addField('Buy   ', npad(cf.buyPrice))
+            .addField('Histo(div) ', npercent(cf.histoPercent))
+            .addField('Now ', npad(Number(value.body.data[0].price)))
+            .addField('gapAllow ', npercent(cf.gapAllowance))
+            .addField('Sell    ', npad(cf.sellPrice));
+    } catch (e) {
+        throw new Error("coinType:{0}, value:{1}".format(coinType, value), e);
+    }
+
 }
 
 // sa command syntax
