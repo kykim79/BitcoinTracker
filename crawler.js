@@ -4,7 +4,7 @@ var Map = require('hashmap');
 var CoinInfo = require('./coinInfo.js');
 var CronJob = require('cron').CronJob;
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '')}
+String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
 const CURRENCY = process.env.CURRENCY;
 const CRON_SCHEDULE = process.env.CRAWLER_CRON.unquoted();
@@ -15,24 +15,24 @@ const TIMEZONE = 'Asia/Seoul';
 // LOGGER
 var log4js = require('log4js');
 log4js.configure('./config/loggerConfig.json');
-var log4js_extend = require("log4js-extend");
+var log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
   path: __dirname,
-  format: "(@name:@line:@column)"
+  format: '(@name:@line:@column)'
 });
 
 var logger = log4js.getLogger('crawler:' + CURRENCY.toLowerCase());
 
-const BITHUMB_URL = "https://api.bithumb.com/public/recent_transactions/" + CURRENCY;
+const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/' + CURRENCY;
 
 // Stream Roller
 var rollers = require('streamroller');
 var stream = new rollers.RollingFileStream('./log/crawler.log', 100000, 2);
 var stream2 = new rollers.RollingFileStream('./log/raw.log', 100000, 2);
 
-var redisClient = require("./redisClient.js");
+var redisClient = require('./redisClient.js');
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '')}
+String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
 var resize = (max) => {
   redisClient.zcard(CURRENCY, (err, res) => {
@@ -50,15 +50,15 @@ var heartbeat = () => {
   const epoch = Math.round(Date.now() / 1000);
   if (epoch - lastepoch > TWENTY_MINUTE) {
     lastepoch = epoch;
-    logger.debug("running. cron: " + CRON_SCHEDULE);
+    logger.debug('running. cron: ' + CRON_SCHEDULE);
   } 
 };
 
 var writtenKeys = [];
 var isFirst = true;
 
-var Promise = require("bluebird");
-var bhttp = require("bhttp");
+var Promise = require('bluebird');
+var bhttp = require('bhttp');
 
 var crawl = () => {
   Promise.try(() => { 
@@ -116,7 +116,7 @@ new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
 
 function writeLog(transactions, coinInfo) {
   try {
-    stream.write(coinInfo.toString() + " " + JSON.stringify(transactions) + require('os').EOL);
+    stream.write(coinInfo.toString() + ' ' + JSON.stringify(transactions) + require('os').EOL);
   } catch (e) {
     logger.error(e);
   }

@@ -1,4 +1,4 @@
-var redis = require("redis");
+var redis = require('redis');
 
 var format = require('string-format'); 
 format.extend(String.prototype);
@@ -13,7 +13,7 @@ let option = {
   host: process.env.REDIS_HOST,
   port: process.env.REDIS_PORT,
   retry_strategy: function(options) {
-    logger.error('error: ' + option.error + ', error.code: ' + options.error.code);
+    logger.error('error: ' + option.error);
     if (options.total_retry_time > 1000 * 60 * 60) {
       // End reconnecting after a specific timeout and flush all commands 
       // with a individual error 
@@ -26,15 +26,15 @@ let option = {
 
 var client = redis.createClient(option);
 
-client.on("connect", () => {
-  logger.warn("redis connected.");
+client.on('connect', () => {
+  logger.warn('redis connected.');
 });
 
-client.on("end", () => {
-  logger.warn("redis connection is closed.");
+client.on('end', () => {
+  logger.warn('redis connection is closed.');
 });
 
-client.on("error", (err) => {
+client.on('error', (err) => {
   logger.error('redis host: {REDIS_HOST}, redis port: {REDIS_PORT}'.format(process.env));
   logger.error(err);
 });

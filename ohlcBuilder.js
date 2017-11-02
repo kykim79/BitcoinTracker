@@ -27,7 +27,7 @@ function listener(args) {
   try {
 
     const coinChunks = splitArray(shiftCoins(args), SPLIT_SIZE);
-        // coinChunks = 
+    // coinChunks = 
     // [
     //   [ {epoch, price, volume}, {epoch, price, volume},...(splitSize 개) ], 
     //   [ {epoch, price, volume}, {epoch, price, volume},...(splitSize 개) ],

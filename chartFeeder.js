@@ -9,8 +9,6 @@ var logger = log4js.getLogger('chartFeeder:' + process.env.CURRENCY.toLowerCase(
 var emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
-const TIMEZONE = 'Asia/Seoul';
-
 const CHART_FIELDS = ['date', 'open', 'high', 'low', 'close', 'volume'];
 const CHART_FIELD_NAMES = ['date', 'open', 'high', 'low', 'close', 'volume'];
 const FILE_NAME = process.env.CHART_DATA;
@@ -27,7 +25,7 @@ function listener(args) {
   }
 }
 
-function writeChartData(data, firstLine, index) {
+function writeChartData(data, firstLine) {
   var opts = { 
     data: JSON.parse(JSON.stringify(data)), 
     fields: CHART_FIELDS,

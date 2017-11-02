@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 var roundTo = require('round-to');
 var empty = require('is-empty');
 

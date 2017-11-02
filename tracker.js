@@ -1,4 +1,4 @@
-require('./crawler.js');
+//require('./crawler.js');
 require('./selector.js');
 require('./ohlcBuilder.js');
 require('./chartFeeder.js');
