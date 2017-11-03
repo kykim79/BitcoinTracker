@@ -22,7 +22,6 @@ let post = slackPost.post(WEBHOOK);
 post.setUsername(CURRENCY).enableFieldMarkdown();
 const EOL = require('os').EOL;
 
-function sendToSlack(line, type=notiType.INFO, title){
 var mdLine = (line, title) => '{0}{2}```{1}{2}```'.format(title, line, EOL);
 var singleLine = (line, title) => replaceall(EOL, '; ', title + ', ' + line);
 
@@ -41,8 +40,7 @@ function sendToSlack(line, title, markdown, type=notiType.INFO){
 }
 
 
-function log(line, type, msg) {
-  const m = replaceall(EOL, '; ', msg + ', ' + line);
+function log(m, type) {
   switch (type.value) {
   case notiType.INFO:
     logger.info(m);
