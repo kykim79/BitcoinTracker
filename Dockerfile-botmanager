@@ -14,8 +14,6 @@ WORKDIR /app
 
 ADD . /app
 
-rem RUN mkdir -p /app/chartData
-
-VOLUME [ "/app/config", "/app/chartData", "/app/log" ] 
+VOLUME [ "/app/config", "/app/log" ]
 
 CMD node botManager.js

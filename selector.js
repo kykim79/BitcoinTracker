@@ -9,8 +9,9 @@ String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');}
 const CRON_SCHEDULE = process.env.SELECTOR_CRON.unquoted();
 const CURRENCY = process.env.CURRENCY;
 
+// LOGGER
 var log4js = require('log4js');
-log4js.configure('./config/loggerConfig.json');
+log4js.configure(process.env.LOGGER_CONFIG);
 var log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
   path: __dirname,

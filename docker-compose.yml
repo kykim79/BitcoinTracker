@@ -1,6 +1,7 @@
 version: '2.0'
 
 services:
+
  tracker_btc:
   build:
    context: .
@@ -11,10 +12,28 @@ services:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
    - WEBHOOK=https://hooks.slack.com/services/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
+   - ICON=http://riopapa.zzux.com/BTC.png
   volumes:
    - ./config/btc/:/app/config/
    - ./chartData/btc/:/app/chartData/
    - ./log/btc/:/app/log/
+
+ tracker_eth:
+  build:
+   context: .
+   dockerfile: ./Dockerfile-tracker
+  env_file:
+   - tracker.env
+  environment:
+   - CURRENCY=ETH
+   - PRICE_ROUND_RADIX=-1
+   - WEBHOOK=https://hooks.slack.com/services/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
+   - ICON=http://riopapa.zzux.com/ETH.png
+  volumes:
+   - ./config/eth/:/app/config/
+   - ./chartData/eth/:/app/chartData/
+   - ./log/eth/:/app/log/
+
  tracker_xrp:
   build:
    context: .
@@ -25,14 +44,45 @@ services:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
    - WEBHOOK=https://hooks.slack.com/services/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
+   - ICON=http://riopapa.zzux.com/XRP.png
   volumes:
    - ./config/xrp/:/app/config/
    - ./chartData/xrp/:/app/chartData/
    - ./log/xrp/:/app/log/
+
+ tracker_bch:
+  build:
+   context: .
+   dockerfile: ./Dockerfile-tracker
+  env_file:
+   - tracker.env
+  environment:
+   - CURRENCY=BCH
+   - PRICE_ROUND_RADIX=-1
+   - WEBHOOK=https://hooks.slack.com/services/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
+   - ICON=http://riopapa.zzux.com/BCH.png
+  volumes:
+   - ./config/xrp/:/app/config/
+   - ./chartData/xrp/:/app/chartData/
+   - ./log/xrp/:/app/log/
+
+ botmanager:
+  build:
+   context: .
+   dockerfile: ./Dockerfile-botmanager
+  environment:
+   - WEBHOOK=https://hooks.slack.com/services/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
+   - ICON=http://riopapa.zzux.com/doraemon.png
+  volumes:
+   - ./config/bot/:/app/config/
+   - ./log/bot/:/app/log/
+
  chart_btc:
   build:
    context: ./chart
    dockerfile: ./Dockerfile-chart
+   args:
+    - CURRENCY=BTC
   ports:
    - "4000:3000"
   volumes:
@@ -42,8 +92,34 @@ services:
   build:
    context: ./chart
    dockerfile: ./Dockerfile-chart
+   args:
+    - CURRENCY=XRP
   ports:
    - "4001:3000"
   volumes:
    - ./chartData/xrp/:/app/public/data/
    - ./chartData/xrp/:/app/public/image/
+
+ chart_eth:
+  build:
+   context: ./chart
+   dockerfile: ./Dockerfile-chart
+   args:
+    - CURRENCY=ETH
+  ports:
+   - "4002:3000"
+  volumes:
+   - ./chartData/eth/:/app/public/data/
+   - ./chartData/eth/:/app/public/image/
+
+ chart_bch:
+  build:
+   context: ./chart
+   dockerfile: ./Dockerfile-chart
+   args:
+    - CURRENCY=BCH
+  ports:
+   - "4004:3000"
+  volumes:
+   - ./chartData/bch/:/app/public/data/
+   - ./chartData/bch/:/app/public/image/

@@ -40,6 +40,18 @@ watcher.on('change', (info) => {
   logger.info(v, '*Config Changed*');
 });
 
+// CONFIG
+const CURRENCY = process.env.CURRENCY;
+const ANALYZER = 'analyzer';
+const ConfigWatch = require("config-watch");
+const CONFIG_FILE = './config/' + CURRENCY.toLowerCase() + '/trackerConfig.json';
+let configWatch = new ConfigWatch(CONFIG_FILE);
+let analyzer = configWatch.get(ANALYZER);
+analyzer.histogram = roundTo(analyzer.histoPercent * (analyzer.sellPrice + analyzer.buyPrice) / 2, 2);
+
+let npad = (number) => (number < 1000000) ? pad(4, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
+let npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
+
 const histoCount  = 5;   // variable for ignoring if too small changes
 
 const CURRENCY = process.env.CURRENCY;
@@ -47,22 +59,6 @@ const CURRENCY = process.env.CURRENCY;
 // LOGGER
 let log4js = require('log4js');
 let logger = log4js.getLogger('analyzer:' + CURRENCY.toLowerCase());
-
-// configWatch.on('change', (err, config) => {
-//   if (err) { throw err; }
-//   if (config.hasChanged(ANALYZER)) {
-//     analyzer = config.get(ANALYZER);
-//     const v= {
-//       sell : npad(analyzer.sellPrice),
-//       buy  : npad(analyzer.buyPrice),
-//       gap  : roundTo(analyzer.gapAllowance * 100,2),
-//       histogram: numeral(analyzer.histogram).format('0,0.0')
-//     };
-//     const f = 'Sell:{sell}, histo:{histogram}\nBuy :{buy}, gap:{gap}%';
-//     logger.info(f.format(v), '*Config Changed*');
-//     //note.info(f.format(v), '*Config Changed*');
-//   }
-// });
 
 let npad = (number) => (number < 1000000) ? pad(4, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
 
@@ -99,12 +95,12 @@ function listener(ohlcs) {
   let tableSize = macds.length;
   if (isFirstTime) {
     const v= {
-      sell : npad(analyzer.sellPrice),
-      buy  : npad(analyzer.buyPrice),
-      size : tableSize,
-      gap  : roundTo(analyzer.gapAllowance * 100,2),
-      now  : npad(ohlcs[ohlcs.length-1].close),
-      histo: analyzer.histogram
+        sell : npad(analyzer.sellPrice),
+        buy  : npad(analyzer.buyPrice),
+        size : tableSize,
+        gap  : npercent(analyzer.gapAllowance),
+        now  : npad(ohlcs[ohlcs.length-1].close),
+        histo: npercent(analyzer.histoPercent)
     };
     const f = 'Sell:{sell}  tblSz:{size}\n' +
             'Now :{now}  gap:{gap}%\n' +
@@ -166,14 +162,14 @@ function informTrade(nowValues) {
   const now = nowValues.close;
   const target = ( nowValues.tradeType == TradeType.SELL) ? analyzer.sellPrice : analyzer.buyPrice;
   const v= {
-    nowNpad     : npad(now),
-    buysell     : (nowValues.tradeType == 'SELL') ? 'SELL' : 'BUY ',
-    targetNpad  : npad(target),
-    gap         : npad(now - target),
-    gapPcnt     : roundTo((now - target) / target * 100,1),
-    volume      : numeral(nowValues.volume).format('0,0'),
-    histo       : numeral(nowValues.histogram).format('0,0.0'),
-    histoAvr    : numeral(nowValues.histoAvr).format('0,0.0')
+      nowNpad     : npad(now),
+      buysell     : (nowValues.tradeType == 'SELL') ? 'SELL' : 'BUY ',
+      targetNpad  : npad(target),
+      gap         : npad(now - target),
+      gapPcnt     : npercent((now - target)/target),
+      volume      : numeral(nowValues.volume).format('0,0'),
+      histo       : npercent(nowValues.histoPercent),
+      histoAvr    : npad(nowValues.histoAvr)
   };
   const f = 'Now :{nowNpad}  vol:{volume}\n' +
         '{buysell}:{targetNpad}  gap:{gap} {gapPcnt}%\n' +

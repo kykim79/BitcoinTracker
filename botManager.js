@@ -13,6 +13,7 @@ var bhttp = require('bhttp');
 var coinConfig = require('./coinConfig.js');
 let coinType = require('./coinType.js');
 let coinTypes = coinType.enums.map((c) => c.value);
+let roundTo = require('round-to');
 
 // LOGGER
 var log4js = require('log4js');
@@ -125,11 +126,11 @@ function updateConfig(config) {
     break;
   case 'h':
     c.analyzer.histoPercent = config.amount / 100;
-    c.analyzer.histogram = (c.analyzer.sellPrice + c.analyzer.buyPrice) / 2 * c.analyzer.histoPercent;
+    c.analyzer.histogram = roundTo((c.analyzer.sellPrice + c.analyzer.buyPrice) / 2 * c.analyzer.histoPercent,2);
     break;
   default:
     send('undefined config field: ' + config.configField);   // should not happen
-    process.exit(1);
+    process.exit(11);
   }
   fs.writeFileSync(targetFile, JSON.stringify(c, null, 1), 'utf-8');
   return config.cointype;
