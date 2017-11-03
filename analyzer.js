@@ -128,6 +128,7 @@ function listener(ohlcs) {
   nowValues.MACD = macds[tableSize - 1].MACD;
   nowValues.signal = macds[tableSize - 1].signal;
   nowValues.histogram = macds[tableSize - 1].histogram;
+  nowValues.histoPercent = analyzer.histoPercent;
   nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d,3);
   nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k,3);
   nowValues.dLast = roundTo(stochastic[stochastic.length - 2].d,3);
@@ -173,7 +174,7 @@ function analyzeHistogram(nV) {
         }
     }
     else {
-        logger.debug('last [' + histoCount + '] histoAverage '  + nV.histoAvr  + ' < ' + analyzer.histogram +' histoPercent : '  +  npercent(analyzer.histoPercent));
+        logger.debug('last [' + histoCount + '] histoAverage '  + nV.histoAvr  + ' < ' + analyzer.histogram +' nv.histoPercent : '  +  npercent(analyzer.histoPercent));
     }
 }
 
@@ -183,17 +184,15 @@ function analyzeStochastic(nv) {
             nv.tradeType = TradeType.SELL;
             nv.msgText = '*Stochastic SELL*'
             informTrade(nv);
-            logger.debug('dLast ' + nv.dnow + 'kLast ' + nv.kLast);
-            logger.debug('dNow  ' + nv.dnow + 'kNow  ' + nv.kNow);
+            logger.debug('dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
         }
     }
     else if (nv.dLast <= 20  && nv.kLast <= 20) {
         if (nv.dNow > 20 || nv.kNow > 20) {
-            nv.tradeType = TradeType.SELL;
+            nv.tradeType = TradeType.BUY;
             nv.msgText = '*Stochastic BUY*'
             informTrade(nv);
-            logger.debug('dLast ' + nv.dnow + 'kLast ' + nv.kLast);
-            logger.debug('dNow  ' + nv.dnow + 'kNow  ' + nv.kNow);
+            logger.debug('dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
         }
     }
 }
@@ -212,8 +211,9 @@ function informTrade(nowValues) {
       histoAvr    : npad(nowValues.histoAvr)
   };
   const f = 'Now :{nowNpad}  vol:{volume}\n' +
-        '{buysell}:{targetNpad}  gap:{gap} {gapPcnt}%\n' +
-        'histoAvr:{histoAvr}  histo(div):{histo}%';
+        '{buysell}:{targetNpad}  histoAvr:{histoAvr}\n' +
+        'Gap :{gap}    histo(div):{histo}' +
+        'gap%: {gapPcnt}\n';
 
   note.danger(f.format(v), nowValues.msgText);
 }
