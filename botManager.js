@@ -92,7 +92,7 @@ bot.on('message', function(data) {
             send('Invalid sa command syntax  : ' + text);
             return;
         }
-        match.forEach((e, i) => console.log(i + ': ' + e));
+        // match.forEach((e, i) => console.log(i + ': ' + e));
 
         if (match[1]) { // sa n
             reply(coinTypes, 'Current Config');
@@ -133,11 +133,11 @@ function updateConfig(c) {
         cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
     case 'g':
-        cf.analyzer.gapAllowance = c.amount / 100;
+        cf.analyzer.gapAllowance = roundTo(c.amount / 100,4);
         cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
     case 'h':
-        cf.analyzer.histoPercent = c.amount / 100;
+        cf.analyzer.histoPercent = roundTo(c.amount / 100,6);
         cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
     default:
@@ -194,7 +194,6 @@ function requestMessage(msg) {
 }
 
 function reply(cointypes, msg) {
-    console.log ('reply coins ' + cointypes);
     let request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
     let response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
     Promise.all(cointypes.map(e => request(e)))
