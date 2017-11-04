@@ -11,7 +11,7 @@ services:
   environment:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
-   - WEBHOOK=https://hooks.slack.com/services/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
+   - WEBHOOK=https://hooks.slack.com/services/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
    - ICON=http://riopapa.zzux.com/BTC.png
   volumes:
    - ./config/btc/:/app/config/
@@ -27,7 +27,7 @@ services:
   environment:
    - CURRENCY=ETH
    - PRICE_ROUND_RADIX=-1
-   - WEBHOOK=https://hooks.slack.com/services/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
+   - WEBHOOK=https://hooks.slack.com/services/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
    - ICON=http://riopapa.zzux.com/ETH.png
   volumes:
    - ./config/eth/:/app/config/
@@ -43,7 +43,7 @@ services:
   environment:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
-   - WEBHOOK=https://hooks.slack.com/services/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
+   - WEBHOOK=https://hooks.slack.com/services/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
    - ICON=http://riopapa.zzux.com/XRP.png
   volumes:
    - ./config/xrp/:/app/config/
@@ -59,7 +59,7 @@ services:
   environment:
    - CURRENCY=BCH
    - PRICE_ROUND_RADIX=-1
-   - WEBHOOK=https://hooks.slack.com/services/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
+   - WEBHOOK=https://hooks.slack.com/services/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
    - ICON=http://riopapa.zzux.com/BCH.png
   volumes:
    - ./config/xrp/:/app/config/
@@ -71,7 +71,7 @@ services:
    context: .
    dockerfile: ./Dockerfile-botmanager
   environment:
-   - WEBHOOK=https://hooks.slack.com/services/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
+   - WEBHOOK=https://hooks.slack.com/services/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
    - ICON=http://riopapa.zzux.com/doraemon.png
   volumes:
    - ./config/bot/:/app/config/

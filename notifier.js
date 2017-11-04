@@ -5,6 +5,7 @@ format.extend(String.prototype);
 
 const CURRENCY = process.env.CURRENCY;
 const WEBHOOK = process.env.WEBHOOK;
+const ICON = 'http://riopapa.zzux.com/' + CURRENCY + '.png';
 
 // LOGGER
 let log4js = require('log4js');
@@ -22,18 +23,19 @@ let post = slackPost.post(WEBHOOK);
 post.setUsername(CURRENCY).enableFieldMarkdown();
 const EOL = require('os').EOL;
 
-let mdLine = (line, title) => '{0}{2}```{1}{2}```'.format(title, line, EOL);
-let singleLine = (line, title) => replaceall(EOL, '; ', title + ', ' + line);
+let msgLine = (line, title) => '{0}{2}```{1}{2}```'.format(title, line, EOL);
+let logLine = (line, title) => replaceall(EOL, '; ', title + ', ' + line);
 
 function sendToSlack(line, title, markdown, type=notiType.INFO){
     try {
         post
             .setColor(type.value)
-            .setRichText(markdown ? mdLine(line, title) : line, markdown)
+            .setRichText(markdown ? msgLine(line, title) : line, markdown)
+            .setIconURL(ICON)
             .enableUnfurlLinks()
             .send((err) => { if (err) throw err; });
 
-        log(singleLine(line, title), type);
+        log(logLine(line, title), type);
     } catch(e) {
         logger.error(e);
     }

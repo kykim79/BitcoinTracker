@@ -1,6 +1,7 @@
 let format = require('string-format');
 format.extend(String.prototype);
 const CURRENCY = process.env.CURRENCY;
+var fs = require('fs');
 
 let pad = require('pad');
 let numeral = require('numeral');

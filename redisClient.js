@@ -15,12 +15,12 @@ let option = {
     retry_strategy: function(options) {
         logger.error('error: ' + option.error);
         if (options.total_retry_time > 1000 * 60 * 60) {
-            // End reconnecting after a specific timeout and flush all commands 
-            // with a individual error 
+            // End reconnecting after a specific timeout and flush all commands
+            // with a individual error
             return new Error('Retry time exhausted');
         }
-        // reconnect after 
-        return 5000;
+        // reconnect after
+        return 5000; // 5 secs
     }
 };
 
