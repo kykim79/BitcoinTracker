@@ -8,6 +8,7 @@
   - redis database (redis cli)
   - bithumb price, volume crawler
   - tracker (selector > ohlcBuilder> analyzer)
+  - botManager (to change configuration via slack)
 
 ## Table of Contents
 
@@ -16,6 +17,7 @@
   - [Stock Chart start/stop](#stockchart-operation)
   - [Crawler start/stop](#crawler-operation)
   - [Tracker start/stop](#tracker-operation)
+  - [botManager start/stop] <- to be documented later
 
 - [Analyzing Files Explanation](#analyzing-files-explanation)
 - [Configuration Files](#configuration-files)
