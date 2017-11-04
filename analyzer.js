@@ -1,7 +1,7 @@
 let format = require('string-format');
 format.extend(String.prototype);
 const CURRENCY = process.env.CURRENCY;
-var fs = require('fs');
+let fs = require('fs');
 
 let pad = require('pad');
 let numeral = require('numeral');
@@ -11,7 +11,7 @@ let roundTo = require('round-to');
 // date, time conversion
 let moment = require('moment');
 
-let MACD = require('technicalindicators').MACD;
+const MACD = require('technicalindicators').MACD;
 const Stochastic = require('technicalindicators').Stochastic;
 
 // Stream Roller
@@ -39,21 +39,22 @@ let note = require('./notifier.js');
 let TradeType = require('./tradeType.js');
 let isFirstTime = true; // inform current setting when this module is started
 
-let analyzer  = readAnalyzer(CONFIG_FILE);
+let analyzer = readAnalyzer(CONFIG_FILE);
 
 watcher.on('change', (info) => {
-    const a = readAnalyzer(info.path);
-    analyzer.histogram = roundTo(analyzer.histoPercent * (analyzer.sellPrice + analyzer.buyPrice) / 2, 2);
-    const v = 'Sell:{sell}, histo:{histo}\nBuy :{buy}, gap:{gap}%'.format({
-        sell : npad(a.sellPrice),
-        buy  : npad(a.buyPrice),
-        gap  : npercent(a.gapAllowance),
-        histo: npercent(a.histogram)
+    analyzer = readAnalyzer(info.path);
+    analyzer.histogram = roundTo((analyzer.sellPrice + analyzer.buyPrice) / 2 * analyzer.histoPercent, 2);
+    const v = 'Sell:{sell}, histo:{histo}\nBuy :{buy}, gap:{gap}'.format({
+        sell: npad(analyzer.sellPrice),
+        buy: npad(analyzer.buyPrice),
+        gap: npercent(analyzer.gapAllowance),
+        histo: npercent(analyzer.histoPercent)
     });
+    note.info(v, '*Config Changed*');
     logger.info(v, '*Config Changed*');
 });
 
-const histoCount  = 5;   // variable for ignoring if too small changes
+const histoCount = 8;   // variable for ignoring if too small changes
 
 let ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
@@ -69,45 +70,10 @@ function listener(ohlcs) {
     const highs = ohlcs.map(_ => _.high);
     const lows = ohlcs.map(_ => _.low);
 
-    let macdInput = {
-        values            : closes,
-        fastPeriod        : 12,
-        slowPeriod        : 26,
-        signalPeriod      : 9 ,
-        SimpleMAOscillator: false,
-        SimpleMASignal    : false
-    };
-
-    let macds = MACD.calculate(macdInput);
-
-    let stockInput = {
-        high: highs,
-        low: lows,
-        close: closes,
-        period: 14,
-        signalPeriod: 3
-    };
-
-    let stochastic = Stochastic.calculate(stockInput);
+    let macds = calculateMACD(closes);
+    let stochastic = calculateStochastic(highs, lows, closes);
 
     let tableSize = macds.length;
-    if (isFirstTime) {
-        const v= {
-            sell : npad(analyzer.sellPrice),
-            buy  : npad(analyzer.buyPrice),
-            size : tableSize,
-            gap  : npercent(analyzer.gapAllowance),
-            now  : npad(ohlcs[ohlcs.length-1].close),
-            histo: npercent(analyzer.histoPercent)
-        };
-        const f = 'Sell:{sell}  tblSz :{size}\n' +
-      'Now :{now}  gap :{gap}\n' +
-      'Buy :{buy}  histo(div):{histo}' +
-      '';
-        note.info(f.format(v), '*_STARTED_*');
-        isFirstTime = false;
-
-    }
     if (tableSize < histoCount) {
         return;
     }
@@ -115,119 +81,181 @@ function listener(ohlcs) {
     let nowValues = ohlcs[ohlcs.length - 1];
     nowValues.MACD = macds[tableSize - 1].MACD;
     nowValues.signal = macds[tableSize - 1].signal;
-    nowValues.histogram = macds[tableSize - 1].histogram;
+    nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
     nowValues.histoPercent = analyzer.histoPercent;
-    nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d,3);
-    nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k,3);
-    nowValues.dLast = roundTo(stochastic[stochastic.length - 2].d,3);
-    nowValues.kLast = roundTo(stochastic[stochastic.length - 2].k,3);
+    nowValues.lastHistogram = roundTo(macds[tableSize - 2].histogram, 3);
+    nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d, 3);
+    nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 3);
+    nowValues.dLast = roundTo(stochastic[stochastic.length - 2].d, 3);
+    nowValues.kLast = roundTo(stochastic[stochastic.length - 2].k, 3);
     nowValues.tradeType = '';
     nowValues.msgText = '';
-    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2)))/histoCount,2);
+    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 2);
 
-    analyzeHistogram(nowValues, tableSize, macds);
-    analyzeStochastic(nowValues);
-
-    if (!nowValues.msgText) {
-        if (nowValues.close > analyzer.sellPrice) {
-            nowValues.tradeType = TradeType.SELL;
-            nowValues.msgText = '_Going UP UP_';
-            informTrade(nowValues);
-        }
-        else if (nowValues.close < analyzer.buyPrice) {
-            nowValues.tradeType = TradeType.BUY;
-            nowValues.msgText = '_Going DOWN_';
-            informTrade(nowValues);
-        }
+    if (isFirstTime) {
+        justStarted(nowValues, analyzer, tableSize);
+        isFirstTime = false;
     }
+
+    nowValues.msgText += analyzeHistogram(nowValues);
+    nowValues.msgText += analyzeStochastic(nowValues);
+    nowValues.msgText += analyzeBoundary(nowValues);
+
     keepLog(nowValues);
 }
 
-function analyzeHistogram(nV, tableSize, macds) {
-    if (nV.histoAvr > analyzer.histogram) {
-        let nowHistogram = nV.histogram;
-        let lastHistogram = macds[tableSize - 2].histogram;
-        if (lastHistogram >= 0 && nowHistogram <= 0 &&
-      (Math.abs(analyzer.sellPrice - nV.close) / nV.close) < analyzer.gapAllowance) {
-            nV.tradeType = TradeType.SELL;
-            nV.msgText = (nV.close >= analyzer.sellPrice) ? '*Over, Should SELL*' : '*SELL POINT*';
+function calculateMACD(closes) {
+    let m = {
+        values: closes,
+        fastPeriod: 12,
+        slowPeriod: 26,
+        signalPeriod: 9,
+        SimpleMAOscillator: false,
+        SimpleMASignal: false
+    };
+    return MACD.calculate(m);
+}
+
+function calculateStochastic(highs, lows, closes) {
+    let s = {
+        high: highs,
+        low: lows,
+        close: closes,
+        period: 14,
+        signalPeriod: 3
+    };
+
+    let stochastic = Stochastic.calculate(s);
+    return stochastic;
+}
+
+function justStarted(nowValues, analyzer, tableSize) {
+    const v = {
+        sell: npad(analyzer.sellPrice),
+        buy: npad(analyzer.buyPrice),
+        size: tableSize,
+        gap: npercent(analyzer.gapAllowance),
+        now: npad(nowValues.close),
+        histo: npercent(analyzer.histoPercent)
+    };
+    const m = 'Buy  :{buy}  tblSz :{size}\n' +
+        'Now  :{now}  gap :{gap}\n' +
+        'Sell :{sell}  histo(div):{histo}'; // .format(v); does not work
+    note.info(m.format(v), '*_Monitoring Started_*');
+}
+
+function analyzeHistogram(nv) {
+    let msg = '';
+    if (nv.histoAvr > analyzer.histogram) {
+        if (nv.lastHistogram >= 0 && nv.histogram <= 0 &&
+            (Math.abs(analyzer.sellPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
+            nv.tradeType = TradeType.SELL;
+            msg = (nv.close >= analyzer.sellPrice) ? '*Over, Should SELL*' : 'SELL POINT';
         }
-        else if (lastHistogram <= 0 && nowHistogram >= 0 &&
-      (Math.abs(analyzer.buyPrice - nV.close) / nV.close) < analyzer.gapAllowance) {
-            nV.tradeType = TradeType.BUY;
-            nV.msgText = (nV.close <= analyzer.buyPrice) ? '*Under, Should BUY*' : '*BUY POINT*';
+        else if (nv.lastHistogram <= 0 && nv.histogram >= 0 &&
+            (Math.abs(analyzer.buyPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
+            nv.tradeType = TradeType.BUY;
+            msg = (nv.close <= analyzer.buyPrice) ? '*Under, Should BUY*' : 'BUY POINT';
         }
-        if (nV.msgText) {
-            informTrade(nV);
+        if (msg) {
+            informTrade(nv,msg);
         }
     }
     else {
-        logger.debug('last [' + histoCount + '] histoAverage '  + nV.histoAvr  + ' < ' + analyzer.histogram +' nv.histoPercent : '  +  npercent(analyzer.histoPercent));
+        logger.debug('last [' + histoCount + '] histoAvr ' + nv.histoAvr + ' < histogram ' + analyzer.histogram + '(' + npercent(analyzer.histoPercent) + ')');
     }
+    return msg;
 }
 
 function analyzeStochastic(nv) {
-    if (nv.dLast >= 80  && nv.kLast >= 80) {
+    let msg = '';
+    if (nv.dLast >= 80 && nv.kLast >= 80) {
         if (nv.dNow < 80 || nv.kNow < 80) {
             nv.tradeType = TradeType.SELL;
-            nv.msgText = '*Stochastic SELL*';
-            informTrade(nv);
-            logger.debug('dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
+            if ((Math.abs(analyzer.sellPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
+                nv.msgText = '*Stochastic SELL SELL*';
+            }
+            else {
+                nv.msgText = 'Stochastic SELL?';
+            }
         }
     }
-    else if (nv.dLast <= 20  && nv.kLast <= 20) {
+    else if (nv.dLast <= 20 && nv.kLast <= 20) {
         if (nv.dNow > 20 || nv.kNow > 20) {
             nv.tradeType = TradeType.BUY;
-            nv.msgText = '*Stochastic BUY*';
-            informTrade(nv);
-            logger.debug('dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
+            if ((Math.abs(analyzer.buyPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
+                nv.msgText = '*Stochastic BUY BUY*';
+            } else {
+                nv.msgText = 'Stochastic BUY?';
+            }
         }
     }
+    if (msg) {
+        informTrade(nv,msg);
+        logger.debug(nv.msgText + ' : dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
+    }
+    return msg;
 }
 
-function informTrade(nowValues) {
-    const now = nowValues.close;
-    const target = ( nowValues.tradeType === TradeType.SELL) ? analyzer.sellPrice : analyzer.buyPrice;
-    const v= {
-        nowNpad     : npad(now),
-        buysell     : nowValues.tradeType.key,
-        targetNpad  : npad(target),
-        gap         : npad(now - target),
-        gapPcnt     : npercent((now - target)/target),
-        volume      : numeral(nowValues.volume).format('0,0'),
-        histo       : npercent(nowValues.histoPercent),
-        histoAvr    : npad(nowValues.histoAvr)
+function analyzeBoundary(nv) {
+    let msg = '';
+    if (nv.close > analyzer.sellPrice) {
+        nv.tradeType = TradeType.SELL;
+        msg = '_Going UP UP_';
+    }
+    else if (nv.close < analyzer.buyPrice) {
+        nv.tradeType = TradeType.BUY;
+        msg = '_Going DOWN_';
+    }
+    if (msg) {
+        informTrade(nv,msg);
+        logger.debug('Boundary alert ' + msg);
+    }
+    return msg;
+}
+
+function informTrade(nv, msg) {
+    const target = ( nv.tradeType === TradeType.SELL) ? analyzer.sellPrice : analyzer.buyPrice;
+    const v = {
+        nowNpad: npad(nv.close),
+        buysell: ( nv.tradeType === TradeType.SELL) ? 'SELL' : 'BUY ',
+        targetNpad: npad(target),
+        gap: npad(nv.close - target),
+        gapPcnt: npercent((nv.close - target) / target),
+        volume: numeral(nv.volume).format('0,0'),
+        histo: npercent(nv.histoPercent),
+        histoAvr: npad(nv.histoAvr)
     };
-    const f = 'Now :{nowNpad}  vol:{volume}\n' +
-    '{buysell}:{targetNpad}  histoAvr:{histoAvr}\n' +
-    'Gap :{gap}    histo(div):{histo}' +
-    'gap%: {gapPcnt}\n';
+    const m = 'Now :{nowNpad}  vol:{volume}\n' +
+        '{buysell}:{targetNpad}  histoAvr:{histoAvr}\n' +
+        'Gap :{gap}    histo(div):{histo}\n' +
+        'Gap%: {gapPcnt}\n'; // .format(v); does'n work
 
-    note.danger(f.format(v), nowValues.msgText);
+    note.danger(m.format(v), msg);
 }
 
-function keepLog(nowValues) {
+function keepLog(nv) {
 
     try {
         let str = [
             CURRENCY,
-            moment(new Date(nowValues.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
-            nowValues.open,
-            nowValues.high,
-            nowValues.low,
-            nowValues.close,
-            roundTo(nowValues.volume,2),
-            roundTo(nowValues.MACD,2),
-            roundTo(nowValues.signal,2),
-            nowValues.histogram,
-            nowValues.histoAvr,
-            nowValues.dNow,
-            nowValues.kNow,
-            nowValues.tradeType,
-            nowValues.msgText
+            moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
+            nv.open,
+            nv.high,
+            nv.low,
+            nv.close,
+            roundTo(nv.volume, 2),
+            roundTo(nv.MACD, 2),
+            roundTo(nv.signal, 2),
+            nv.histogram,
+            nv.histoAvr,
+            nv.dNow,
+            nv.kNow,
+            nv.tradeType,
+            nv.msgText
         ].join(', ');
         stream.write(str + require('os').EOL);
-    } catch(e) {
+    } catch (e) {
         logger.error(e);
     }
 }
