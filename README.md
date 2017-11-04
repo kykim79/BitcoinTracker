@@ -243,4 +243,4 @@ sa bs6800000   <- set BTC sellPrice to 6800000
 sa eb345k      <- set ETH buyPrice to 345000
 sa bb-1k       <- set BTC buyPrice down 1000
 sa xg0.012     <- set XRP gapAllowance to 0.012
-sa n           <- show all currency now status 
+sa n           <- show all currency now status
