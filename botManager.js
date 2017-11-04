@@ -41,7 +41,7 @@ const botName='satoshi_nakamoto';
 
 const CHANNEL_NAME = '#cointest';
 
-const MATCH_REGEX = /^sa (?:(?:(\S))|(?:([bxce])([bsgh])([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))$/;
+const  MATCH_REGEX = /^sa (?:([n]))|(?:([bxce])([n]))|(?:([bxce])([bsgh])([+-]?)((?:\d+.\d+)|(?:\d+))(k?))$/;
 // MATCH_REGX contains all possible sub commands and parameters
 
 // create a bot
@@ -92,19 +92,26 @@ bot.on('message', function(data) {
             send('Invalid sa command syntax  : ' + text);
             return;
         }
-        // match.forEach((e, i) => console.log(i + ': ' + e));
+        match.forEach((e, i) => console.log(i + ': ' + e));
 
         if (match[1]) { // sa n
             reply(coinTypes, 'Current Config');
-        }
-        else {  // sa bs
-            let config = {
-                cointype: coinType.get(match[2]).value,
-                configField: match[3],
-                sign: match[4],
-                amount: match[6] ? Number(match[5]) * 1000 : Number(match[5])
-            };
-            reply([updateConfig(config)], 'New Config');
+        } else {  // sa bX
+            if (match[2]) {
+                if (match[3] === 'n') {
+                    reply([coinType.get(match[2]).value], 'Config Now');
+                } else {
+                    send('Invalid sa subcommand  : ' + text);
+                }
+            } else {
+                let config = {
+                    cointype: coinType.get(match[4]).value,
+                    configField: match[5],
+                    sign: match[6],
+                    amount: match[8] === 'k' ? Number(match[7]) * 1000 : Number(match[7])
+                };
+                reply([updateConfig(config)], 'New Config');
+            }
         }
     }
     catch (e) {
@@ -112,30 +119,33 @@ bot.on('message', function(data) {
     }
 });
 
-function updateConfig(config) {
+function updateConfig(c) {
 
-    let targetFile = CONFIG_FOLDER + config.cointype.toLowerCase() + CONFIG_FILE;
-    let c = JSON.parse(fs.readFileSync(targetFile));
-    switch (config.configField) {
+    let targetFile = CONFIG_FOLDER + c.cointype.toLowerCase() + CONFIG_FILE;
+    let cf = JSON.parse(fs.readFileSync(targetFile));
+    switch (c.configField) {
     case 's':
-        c.analyzer.sellPrice = updatePrice(config.sign, config.amount, c.analyzer.sellPrice);
+        cf.analyzer.sellPrice = updatePrice(c.sign, c.amount, cf.analyzer.sellPrice);
+        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
     case 'b':
-        c.analyzer.buyPrice = updatePrice(config.sign, config.amount, c.analyzer.buyPrice);
+        cf.analyzer.buyPrice = updatePrice(c.sign, c.amount, cf.analyzer.buyPrice);
+        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
     case 'g':
-        c.analyzer.gapAllowance = config.amount / 100;
+        cf.analyzer.gapAllowance = c.amount / 100;
+        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
     case 'h':
-        c.analyzer.histoPercent = config.amount / 100;
-        c.analyzer.histogram = roundTo((c.analyzer.sellPrice + c.analyzer.buyPrice) / 2 * c.analyzer.histoPercent,2);
+        cf.analyzer.histoPercent = c.amount / 100;
+        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
     default:
-        send('undefined config field: ' + config.configField);   // should not happen
+        send('undefined config field: ' + c.configField);   // should not happen
         process.exit(11);
     }
-    fs.writeFileSync(targetFile, JSON.stringify(c, null, 1), 'utf-8');
-    return config.cointype;
+    fs.writeFileSync(targetFile, JSON.stringify(cf, null, 1), 'utf-8');
+    return c.cointype;
 }
 
 function updatePrice(sign, amount, price) {
@@ -184,6 +194,7 @@ function requestMessage(msg) {
 }
 
 function reply(cointypes, msg) {
+    console.log ('reply coins ' + cointypes);
     let request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
     let response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
     Promise.all(cointypes.map(e => request(e)))
