@@ -1,8 +1,11 @@
+const coinType = require('./coinType.js');
+const coinTypes = coinType.enums.map((c) => c.value);
+
 module.exports = class configCoin {
     constructor(coin) {
         try {
             this.title = coin; // Big blue head
-            this.title_link = 'http:/riopapa.zzux.com:4000'; // link when title was pressed
+            this.title_link = 'http:/riopapa.zzux.com:400' + coinTypes.indexOf(coin); // link when title was pressed
             this.text = '';
             this.fields = [];
             // this.image_url = "http://riopapa.zzux.com/" + coin + ".png";
