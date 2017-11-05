@@ -16,9 +16,9 @@ const Stochastic = require('technicalindicators').Stochastic;
 
 // Stream Roller
 let rollers = require('streamroller');
-let stream = new rollers.RollingFileStream('./log/' + CURRENCY.toLowerCase() + '/trend.log', 30000, 2);
+let stream = new rollers.RollingFileStream('./log/trend.log', 30000, 2); // actual file name is './log/ coin / trend.log'
 
-const CONFIG_FILE = './config/trackerConfig.json';
+const CONFIG_FILE = './config/trackerConfig.json';  // actual file name is './config/ coin /trackerConfig.json'
 
 const Watcher = require('watch-files');
 let watcher = Watcher({
@@ -201,7 +201,7 @@ function analyzeBoundary(nv) {
     let msg = '';
     if (nv.close > analyzer.sellPrice) {
         nv.tradeType = TradeType.SELL;
-        msg = '_Going Over sellPrice';
+        msg = '_Going Over sellPrice_';
     }
     else if (nv.close < analyzer.buyPrice) {
         nv.tradeType = TradeType.BUY;
@@ -229,7 +229,7 @@ function informTrade(nv, msg) {
     const m = 'Now :{nowNpad}  vol:{volume}\n' +
         '{buysell}:{targetNpad}  histoAvr:{histoAvr}\n' +
         'Gap :{gap}    histo(div):{histo}\n' +
-        'Gap%: {gapPcnt}\n'; // .format(v); does'n work
+        'Gap%: {gapPcnt}'; // .format(v); does'n work
 
     note.danger(m.format(v), msg);
 }
