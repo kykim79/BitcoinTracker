@@ -18,7 +18,7 @@ const Stochastic = require('technicalindicators').Stochastic;
 let rollers = require('streamroller');
 let stream = new rollers.RollingFileStream('./log/' + CURRENCY.toLowerCase() + '/trend.log', 30000, 2);
 
-const CONFIG_FILE = './config/' + CURRENCY.toLowerCase() + '/trackerConfig.json';
+const CONFIG_FILE = './config/trackerConfig.json';
 
 const Watcher = require('watch-files');
 let watcher = Watcher({
@@ -50,7 +50,7 @@ watcher.on('change', (info) => {
         gap: npercent(analyzer.gapAllowance),
         histo: npercent(analyzer.histoPercent)
     });
-    note.info(v, '*Config Changed*');
+    note.info(v, '*Config Changed*');   // will be removed later
     logger.info(v, '*Config Changed*');
 });
 
@@ -87,7 +87,7 @@ function listener(ohlcs) {
     nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d, 3);
     nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 3);
     nowValues.dLast = roundTo(stochastic[stochastic.length - 2].d, 3);
-    nowValues.kLast = roundTo(stochastic[stochastic.length - 2].k, 3);
+    nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 3): 0;
     nowValues.tradeType = '';
     nowValues.msgText = '';
     nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 2);
@@ -173,10 +173,10 @@ function analyzeStochastic(nv) {
         if (nv.dNow < 80 || nv.kNow < 80) {
             nv.tradeType = TradeType.SELL;
             if ((Math.abs(analyzer.sellPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
-                nv.msgText = '*Stochastic SELL SELL*';
+                msg = '*Stochastic SELL SELL*';
             }
             else {
-                nv.msgText = 'Stochastic SELL?';
+                msg = 'Stochastic SELL?';
             }
         }
     }
@@ -184,15 +184,15 @@ function analyzeStochastic(nv) {
         if (nv.dNow > 20 || nv.kNow > 20) {
             nv.tradeType = TradeType.BUY;
             if ((Math.abs(analyzer.buyPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
-                nv.msgText = '*Stochastic BUY BUY*';
+                msg = '*Stochastic BUY BUY*';
             } else {
-                nv.msgText = 'Stochastic BUY?';
+                msg = 'Stochastic BUY?';
             }
         }
     }
     if (msg) {
         informTrade(nv,msg);
-        logger.debug(nv.msgText + ' : dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
+        logger.debug(msg + ' : dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
     }
     return msg;
 }
@@ -201,11 +201,11 @@ function analyzeBoundary(nv) {
     let msg = '';
     if (nv.close > analyzer.sellPrice) {
         nv.tradeType = TradeType.SELL;
-        msg = '_Going UP UP_';
+        msg = '_Going Over sellPrice';
     }
     else if (nv.close < analyzer.buyPrice) {
         nv.tradeType = TradeType.BUY;
-        msg = '_Going DOWN_';
+        msg = '_Going Under buyPrice_';
     }
     if (msg) {
         informTrade(nv,msg);

@@ -52,13 +52,13 @@ let settings = {
 
 let bot = new Bot(settings);
 
-const WELCOME_MESSAGE = '* Configration Bot Started *\n\n' +
+const WELCOME_MESSAGE = '* Configuration Bot Started *\n\n' +
     '*sa command syntax*\n\n' +
     '*sa* _{currency}{subcommand}{amount}_\n\n' +
     '     _{currency}_ b(BTC), x(XRP), e(ETH), c(BCH)\n' +
     '     _{subcommand}_ b | s | g | h | n | a\n' +
     '                    buy, sell, gap, histogram, now, adjust\n' +
-    '                    now, adjust has no {amount}' +
+    '                    note) now, adjust has no {amount}' +
     '     _{amount}_ (+|-|)123.45k';
 
 bot.on('start', function() {
@@ -75,11 +75,11 @@ bot.on('message', function(data) {
     if (data.type !== 'message') {
         return;
     }
-    logger.debug('input text = ' + data.text);
 
     if (data.text.length < 4 || !data.text.startsWith('sa ')) {
         return;
     }
+    logger.debug('input text = ' + data.text);
 
     let text = data.text.trim();
 
@@ -244,19 +244,3 @@ function makeCoinConfig(cointype, value) {
         throw new Error('coinType:{0}, value:{1}'.format(coinType, value), e);
     }
 }
-
-// sa command syntax
-
-// sa {currency}{subcommand}{amount}
-//  {subcommand} b|s|g|h|n or {+|-}  buy, sell, gap, histogram, now  or  incremental Plus/Minus
-//  {currency} b (BTC), x(XRP), e (ETH), c (BCH), ....
-//  {amount} 1234567,  123.45, 6780k (k = 1000)
-
-// example
-// sa bs6800000   <- set BTC sellPrice to 6800000
-// sa eb345k      <- set ETH buyPrice to 345000
-// sa bb-1k       <- set BTC buyPrice down 1000
-// sa xg0.012     <- set XRP gapAllowance to 0.012
-// sa n           <- show all currency now status
-
-
