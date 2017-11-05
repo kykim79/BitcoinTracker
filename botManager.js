@@ -39,9 +39,9 @@ const WEBTOKEN = 'xoxp-146635173889-147997134374-263670048758-f86cb300f91c49ab74
 const botId='xoxb-261765742902-L5maHrT9IVDOKJFXm159lxmg'; // for #cryptocurrency
 const botName='satoshi_nakamoto';
 
-const CHANNEL_NAME = '#cointest';
+const CHANNEL_NAME = process.env.CHANNEL;
 
-const  MATCH_REGEX = /^sa (?:([n]))|(?:([bxce])([n]))|(?:([bxce])([bsgh])([+-]?)((?:\d+.\d+)|(?:\d+))(k?))$/;
+const  MATCH_REGEX = /^sa (?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])([+-]?)((?:\d+.\d+)|(?:\d+))(k?))$/;
 // MATCH_REGX contains all possible sub commands and parameters
 
 // create a bot
@@ -56,8 +56,9 @@ const WELCOME_MESSAGE = '* Configration Bot Started *\n\n' +
     '*sa command syntax*\n\n' +
     '*sa* _{currency}{subcommand}{amount}_\n\n' +
     '     _{currency}_ b(BTC), x(XRP), e(ETH), c(BCH)\n' +
-    '     _{subcommand}_ b | s | g | h | n\n' +
-    '                    buy, sell, gap, histogram, now\n' +
+    '     _{subcommand}_ b | s | g | h | n | a\n' +
+    '                    buy, sell, gap, histogram, now, adjust\n' +
+    '                    now, adjust has no {amount}' +
     '     _{amount}_ (+|-|)123.45k';
 
 bot.on('start', function() {
@@ -100,6 +101,8 @@ bot.on('message', function(data) {
             if (match[2]) {
                 if (match[3] === 'n') {
                     reply([coinType.get(match[2]).value], 'Config Now');
+                } else if (match[3] === 'a') {
+                    adjustConfig(coinType.get(match[2]).value);
                 } else {
                     send('Invalid sa subcommand  : ' + text);
                 }
@@ -124,19 +127,19 @@ function updateConfig(c) {
     let targetFile = CONFIG_FOLDER + c.cointype.toLowerCase() + CONFIG_FILE;
     let cf = JSON.parse(fs.readFileSync(targetFile));
     switch (c.configField) {
-    case 's':
+    case 's':   // sellPrice
         cf.analyzer.sellPrice = updatePrice(c.sign, c.amount, cf.analyzer.sellPrice);
         cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
-    case 'b':
+    case 'b':   // buyPrice
         cf.analyzer.buyPrice = updatePrice(c.sign, c.amount, cf.analyzer.buyPrice);
         cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
-    case 'g':
+    case 'g':   // gapAllowance
         cf.analyzer.gapAllowance = roundTo(c.amount / 100,4);
         cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
-    case 'h':
+    case 'h':   // histogram
         cf.analyzer.histoPercent = roundTo(c.amount / 100,6);
         cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
         break;
@@ -200,6 +203,32 @@ function reply(cointypes, msg) {
         .then(response)
         .then(attachs => sendWithAttach(msg, attachs))
         .catch(e => logger.error(e));
+}
+
+function adjustConfig(cointype) {
+    let request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
+    let response = (value) => adjustSellBuy(cointype, value);
+    Promise.try(() => {
+        return bhttp.get(BITHUMB_URL +  cointype);
+    })
+    .then(response)
+    .then(attach => sendWithAttach('Sell, Buy Price Adjusted', [attach]))
+    .catch(e => logger.error(e));
+}
+
+function adjustSellBuy(cointype,value) {
+    try {
+        let targetFile = CONFIG_FOLDER + cointype.toLowerCase() + CONFIG_FILE;
+        let cf = JSON.parse(fs.readFileSync(targetFile));
+        let n = Number(value.body.data[0].price);
+        cf.analyzer.buyPrice = roundTo(n * (1 - cf.analyzer.gapAllowance * 3),0);
+        cf.analyzer.sellPrice = roundTo(n * (1 + cf.analyzer.gapAllowance * 3),0);
+        fs.writeFileSync(CONFIG_FOLDER + cointype.toLowerCase() + CONFIG_FILE, JSON.stringify(cf, null, 1), 'utf-8');
+        return makeCoinConfig(cointype, value);
+    }
+    catch (e) {
+        logger.error(e);
+    }
 }
 
 function makeCoinConfig(cointype, value) {
