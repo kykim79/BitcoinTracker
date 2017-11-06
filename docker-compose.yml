@@ -5,9 +5,9 @@ services:
  tracker_btc:
   build:
    context: .
-   dockerfile: ./Dockerfile-tracker
+   dockerfile: ./tracker/Dockerfile
   env_file:
-   - tracker.env
+   - ./tracker/tracker.env
   environment:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
@@ -19,9 +19,9 @@ services:
  tracker_eth:
   build:
    context: .
-   dockerfile: ./Dockerfile-tracker
+   dockerfile: ./tracker/Dockerfile
   env_file:
-   - tracker.env
+   - ./tracker/tracker.env
   environment:
    - CURRENCY=ETH
    - PRICE_ROUND_RADIX=-1
@@ -33,9 +33,9 @@ services:
  tracker_xrp:
   build:
    context: .
-   dockerfile: ./Dockerfile-tracker
+   dockerfile: ./tracker/Dockerfile
   env_file:
-   - tracker.env
+   - ./tracker/tracker.env
   environment:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
@@ -47,9 +47,9 @@ services:
  tracker_bch:
   build:
    context: .
-   dockerfile: ./Dockerfile-tracker
+   dockerfile: ./tracker/Dockerfile
   env_file:
-   - tracker.env
+   - ./tracker/tracker.env
   environment:
    - CURRENCY=BCH
    - PRICE_ROUND_RADIX=-1
@@ -61,9 +61,9 @@ services:
  tracker_btg:
   build:
    context: .
-   dockerfile: ./Dockerfile-tracker
+   dockerfile: ./tracker/Dockerfile
   env_file:
-   - tracker.env
+   - ./tracker/tracker.env
   environment:
    - CURRENCY=BTG
    - PRICE_ROUND_RADIX=0
@@ -74,8 +74,8 @@ services:
 
  botmanager:
   build:
-   context: .
-   dockerfile: ./Dockerfile-botmanager
+   context: ./botManager
+   dockerfile: Dockerfile
   environment:
    - LOGGER_CONFIG=./config/bot/loggerConfig.json
    - CHANNEL=#cointest
@@ -87,8 +87,8 @@ services:
 
  chart_btc:
   build:
-   context: ./chart
-   dockerfile: ./Dockerfile-chart
+   context: .
+   dockerfile: ./chart/Dockerfile
   ports:
    - "4000:3000"
   volumes:
@@ -97,8 +97,8 @@ services:
 
  chart_eth:
   build:
-   context: ./chart
-   dockerfile: ./Dockerfile-chart
+   context: .
+   dockerfile: ./chart/Dockerfile
   ports:
    - "4002:3000"
   volumes:
@@ -107,8 +107,8 @@ services:
 
  chart_xrp:
   build:
-   context: ./chart
-   dockerfile: ./Dockerfile-chart
+   context: .
+   dockerfile: ./chart/Dockerfile
   ports:
    - "4001:3000"
   volumes:
@@ -117,8 +117,8 @@ services:
 
  chart_bch:
   build:
-   context: ./chart
-   dockerfile: ./Dockerfile-chart
+   context: .
+   dockerfile: ./chart/Dockerfile
   ports:
    - "4003:3000"
   volumes:

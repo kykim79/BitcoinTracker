@@ -11,7 +11,7 @@ let Bot = require('slackbots');
 let Promise = require('bluebird');
 let bhttp = require('bhttp');
 let coinConfig = require('./coinConfig.js');
-let coinType = require('./coinType.js');
+let coinType = require('../common/coinType.js');
 
 let coinTypes = coinType.enums.map((c) => c.value);
 let roundTo = require('round-to');

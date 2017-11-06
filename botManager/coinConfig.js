@@ -1,4 +1,4 @@
-const coinType = require('./coinType.js');
+const coinType = require('../common/coinType.js');
 const coinTypes = coinType.enums.map((c) => c.value);
 const CHART_URL = process.env.CHART_URL;
 

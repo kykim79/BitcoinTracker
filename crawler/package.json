@@ -1,0 +1,32 @@
+{
+  "name": "crawler",
+  "version": "0.0.1",
+  "description": "",
+  "main": "crawler.js",
+  "repository": "",
+  "author": "kwonyoung kim <kykim79@gmail.com>",
+  "dependencies": {
+    "bhttp": "^1.2.4",
+    "bluebird": "^3.5.1",
+    "cron": "^1.3.0",
+    "hashmap": "^2.3.0",
+    "is-empty": "^1.2.0",
+    "log4js": "^2.3.3",
+    "log4js-extend": "^0.2.1",
+    "moment": "^2.18.1",
+    "moment-timezone": "^0.5.13",
+    "pad": "^1.1.0",
+    "redis": "^2.8.0",
+    "round-to": "^2.0.0",
+    "streamroller": "^0.5.2",
+    "string-format": "^0.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.10.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-react": "^7.4.0",
+    "eslint-plugin-standard": "^3.0.1"
+  }
+}
