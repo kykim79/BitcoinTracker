@@ -14,7 +14,7 @@ services:
   volumes:
    - ./config/:/app/config/
    - ./chartData/btc/:/app/chartData/
-   - ./log/btc/:/app/log/
+   - ./log/:/app/log/
 
  tracker_eth:
   build:
@@ -28,7 +28,7 @@ services:
   volumes:
    - ./config/:/app/config/
    - ./chartData/eth/:/app/chartData/
-   - ./log/eth/:/app/log/
+   - ./log/:/app/log/
 
  tracker_xrp:
   build:
@@ -42,7 +42,7 @@ services:
   volumes:
    - ./config/:/app/config/
    - ./chartData/xrp/:/app/chartData/
-   - ./log/xrp/:/app/log/
+   - ./log/:/app/log/
 
  tracker_bch:
   build:
@@ -56,7 +56,7 @@ services:
   volumes:
    - ./config/:/app/config/
    - ./chartData/xrp/:/app/chartData/
-   - ./log/xrp/:/app/log/
+   - ./log/:/app/log/
 
  tracker_btg:
   build:
@@ -70,7 +70,7 @@ services:
   volumes:
    - ./config/:/app/config/
    - ./chartData/btg/:/app/chartData/
-   - ./log/btg/:/app/log/
+   - ./log/:/app/log/
 
  botmanager:
   build:
@@ -83,7 +83,7 @@ services:
    - CHART_URL=http://riopapa.zzux.com:400
   volumes:
    - ./config/:/app/config/
-   - ./log/bot/:/app/log/
+   - ./log/:/app/log/
 
  chart_btc:
   build:
