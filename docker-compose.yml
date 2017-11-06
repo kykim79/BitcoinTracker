@@ -11,11 +11,8 @@ services:
   environment:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
-   - WEBHOOK=https://hooks.slack.com/services/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
-   - LOGGER_CONFIG=./config/loggerConfig.json
-   - ICON=http://riopapa.zzux.com/BTC.png
   volumes:
-   - ./config/btc/:/app/config/
+   - ./config/:/app/config/
    - ./chartData/btc/:/app/chartData/
    - ./log/btc/:/app/log/
 
@@ -28,11 +25,8 @@ services:
   environment:
    - CURRENCY=ETH
    - PRICE_ROUND_RADIX=-1
-   - WEBHOOK=https://hooks.slack.com/services/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
-   - LOGGER_CONFIG=./config/loggerConfig.json
-   - ICON=http://riopapa.zzux.com/ETH.png
   volumes:
-   - ./config/eth/:/app/config/
+   - ./config/:/app/config/
    - ./chartData/eth/:/app/chartData/
    - ./log/eth/:/app/log/
 
@@ -45,11 +39,8 @@ services:
   environment:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
-   - WEBHOOK=https://hooks.slack.com/services/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
-   - LOGGER_CONFIG=./config/loggerConfig.json
-   - ICON=http://riopapa.zzux.com/XRP.png
   volumes:
-   - ./config/xrp/:/app/config/
+   - ./config/:/app/config/
    - ./chartData/xrp/:/app/chartData/
    - ./log/xrp/:/app/log/
 
@@ -62,11 +53,8 @@ services:
   environment:
    - CURRENCY=BCH
    - PRICE_ROUND_RADIX=-1
-   - WEBHOOK=https://hooks.slack.com/services/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
-   - LOGGER_CONFIG=./config/loggerConfig.json
-   - ICON=http://riopapa.zzux.com/BCH.png
   volumes:
-   - ./config/xrp/:/app/config/
+   - ./config/:/app/config/
    - ./chartData/xrp/:/app/chartData/
    - ./log/xrp/:/app/log/
 
@@ -78,12 +66,9 @@ services:
    - tracker.env
   environment:
    - CURRENCY=BTG
-   - PRICE_ROUND_RADIX=-0
-   - WEBHOOK=https://hooks.slack.com/services/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
-   - LOGGER_CONFIG=./config/loggerConfig.json
-   - ICON=http://riopapa.zzux.com/BTG.png
+   - PRICE_ROUND_RADIX=0
   volumes:
-   - ./config/btg/:/app/config/
+   - ./config/:/app/config/
    - ./chartData/btg/:/app/chartData/
    - ./log/btg/:/app/log/
 
@@ -92,10 +77,10 @@ services:
    context: .
    dockerfile: ./Dockerfile-botmanager
   environment:
-   - WEBHOOK=https://hooks.slack.com/services/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
-   - ICON=http://riopapa.zzux.com/doraemon.png
    - LOGGER_CONFIG=./config/bot/loggerConfig.json
    - CHANNEL=#cointest
+   - ICON_URL=http://riopapa.zzux.com/
+   - CHART_URL=http://riopapa.zzux.com:400
   volumes:
    - ./config/:/app/config/
    - ./log/bot/:/app/log/
@@ -115,7 +100,7 @@ services:
    context: ./chart
    dockerfile: ./Dockerfile-chart
   ports:
-   - "4001:3000"
+   - "4002:3000"
   volumes:
    - ./chartData/eth/:/app/public/data/
    - ./chartData/eth/:/app/public/image/
@@ -125,7 +110,7 @@ services:
    context: ./chart
    dockerfile: ./Dockerfile-chart
   ports:
-   - "4002:3000"
+   - "4001:3000"
   volumes:
    - ./chartData/xrp/:/app/public/data/
    - ./chartData/xrp/:/app/public/image/

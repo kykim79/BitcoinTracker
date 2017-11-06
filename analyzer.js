@@ -1,12 +1,14 @@
 let format = require('string-format');
 format.extend(String.prototype);
 const CURRENCY = process.env.CURRENCY;
+const currency = CURRENCY.toLowerCase();
+
 let fs = require('fs');
 
 let pad = require('pad');
 let numeral = require('numeral');
 let roundTo = require('round-to');
-// var replaceall = require("replaceall");
+let replaceall = require('replaceall');
 
 // date, time conversion
 let moment = require('moment');
@@ -16,9 +18,9 @@ const Stochastic = require('technicalindicators').Stochastic;
 
 // Stream Roller
 let rollers = require('streamroller');
-let stream = new rollers.RollingFileStream('./log/trend.log', 30000, 2); // actual file name is './log/ coin / trend.log'
+let stream = new rollers.RollingFileStream('./log/' + currency + '/trend.log', 30000, 2);
 
-const CONFIG_FILE = './config/trackerConfig.json';  // actual file name is './config/ coin /trackerConfig.json'
+const CONFIG_FILE = process.env.CONFIG + currency + '/trackerConfig.json';
 
 const Watcher = require('watch-files');
 let watcher = Watcher({
@@ -31,9 +33,9 @@ let readAnalyzer = (path) => new json.read(path).get('analyzer');
 
 // LOGGER
 let log4js = require('log4js');
-let logger = log4js.getLogger('analyzer:' + CURRENCY.toLowerCase());
+let logger = log4js.getLogger('analyzer:' + currency);
 
-let npad = (number) => (number < 1000000) ? pad(4, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
+let npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
 let npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 let note = require('./notifier.js');
 let TradeType = require('./tradeType.js');
@@ -50,8 +52,8 @@ watcher.on('change', (info) => {
         gap: npercent(analyzer.gapAllowance),
         histo: npercent(analyzer.histoPercent)
     });
-    note.info(v, '*Config Changed*');   // will be removed later
-    logger.info(v, '*Config Changed*');
+    note.info(v, '*Configuration Changed*');   // will be removed later
+    logger.info('Config Changed : ' + replaceall(require('os').EOL, '; ', v));
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
@@ -86,7 +88,7 @@ function listener(ohlcs) {
     nowValues.lastHistogram = roundTo(macds[tableSize - 2].histogram, 3);
     nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d, 3);
     nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 3);
-    nowValues.dLast = roundTo(stochastic[stochastic.length - 2].d, 3);
+    nowValues.dLast = (stochastic[stochastic.length - 2].d) ? roundTo(stochastic[stochastic.length - 2].d, 3): 0;
     nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 3): 0;
     nowValues.tradeType = '';
     nowValues.msgText = '';
@@ -138,10 +140,10 @@ function justStarted(nowValues, analyzer, tableSize) {
         now: npad(nowValues.close),
         histo: npercent(analyzer.histoPercent)
     };
-    const m = 'Buy  :{buy}  tblSz :{size}\n' +
-        'Now  :{now}  gap :{gap}\n' +
-        'Sell :{sell}  histo(div):{histo}'; // .format(v); does not work
-    note.info(m.format(v), '*_Monitoring Started_*');
+    const m = 'Buy  :{buy}   tblSz :{size}\n' +
+        'Now  :{now}   gap :{gap}\n' +
+        'Sell:{sell}   h(div):{histo}'; // .format(v); does not work
+    note.info(m.format(v), '_Analyzing Started_');
 }
 
 function analyzeHistogram(nv) {
@@ -168,6 +170,10 @@ function analyzeHistogram(nv) {
 }
 
 function analyzeStochastic(nv) {
+
+    if (nv.histoAvr < analyzer.histogram) {
+        return '';
+    }
     let msg = '';
     if (nv.dLast >= 80 && nv.kLast >= 80) {
         if (nv.dNow < 80 || nv.kNow < 80) {
@@ -175,9 +181,9 @@ function analyzeStochastic(nv) {
             if ((Math.abs(analyzer.sellPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
                 msg = '*Stochastic SELL SELL*';
             }
-            else {
-                msg = 'Stochastic SELL?';
-            }
+            // else {
+            //     msg = 'Stochastic SELL?';
+            // }
         }
     }
     else if (nv.dLast <= 20 && nv.kLast <= 20) {
@@ -185,9 +191,10 @@ function analyzeStochastic(nv) {
             nv.tradeType = TradeType.BUY;
             if ((Math.abs(analyzer.buyPrice - nv.close) / nv.close) < analyzer.gapAllowance) {
                 msg = '*Stochastic BUY BUY*';
-            } else {
-                msg = 'Stochastic BUY?';
             }
+            // } else {
+            //     msg = 'Stochastic BUY?';
+            // }
         }
     }
     if (msg) {
@@ -223,12 +230,12 @@ function informTrade(nv, msg) {
         gap: npad(nv.close - target),
         gapPcnt: npercent((nv.close - target) / target),
         volume: numeral(nv.volume).format('0,0'),
-        histo: npercent(nv.histoPercent),
+        histo: npad(nv.close * nv.histoPercent),
         histoAvr: npad(nv.histoAvr)
     };
-    const m = 'Now :{nowNpad}  vol:{volume}\n' +
-        '{buysell}:{targetNpad}  histoAvr:{histoAvr}\n' +
-        'Gap :{gap}    histo(div):{histo}\n' +
+    const m = 'Now :{nowNpad}  volume:{volume}\n' +
+        '{buysell}:{targetNpad}  h(Avr):{histoAvr}\n' +
+        'Gap :{gap}    h(div):{histo}\n' +
         'Gap%: {gapPcnt}'; // .format(v); does'n work
 
     note.danger(m.format(v), msg);
