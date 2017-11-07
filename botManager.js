@@ -43,7 +43,7 @@ const botName='CoinMonitor';
 
 const CHANNEL_NAME = process.env.CHANNEL;
 
-const  MATCH_REGEX = /^sa (?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])([+-]?)((?:\d+.\d+)|(?:\d+))(k?))$/;
+const  MATCH_REGEX = /^sb (?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])([+-]?)((?:\d+.\d+)|(?:\d+))(k?))$/;
 // MATCH_REGX contains all possible sub commands and parameters
 
 // create a bot
@@ -54,21 +54,18 @@ let settings = {
 
 let bot = new Bot(settings);
 
-const WELCOME_MESSAGE = '* Configuration Bot Started *\n\n' +
-    '*sa command syntax*\n\n' +
-    '*sa* _{currency}{subcommand}{amount}_\n\n' +
-    '     _{currency}_ b(BTC), x(XRP), e(ETH), c(BCH)\n' +
-    '     _{subcommand}_ b | s | g | h | n | a\n' +
-    '             buy, sell, gap, histogram, now, adjust\n' +
-    '             note) now, adjust has no {amount}\n' +
-    '     _{amount}_ (+|-|)123.45k';
-
 bot.on('start', function() {
     // more information about additional params https://api.slack.com/methods/chat.postMessage
-    // var params = {
-    //     icon_emoji: ':cat:'
-    // };
-    send(WELCOME_MESSAGE);
+    const BOT_ICON = 'BOT';
+    let m = new coinConfig(BOT_ICON);
+    m.title = 'Welcome to bitcoin Slack Bot';
+    m.title_link = 'https://api.slack.com/';
+    m.addFieldFull('sb {currency}{subcommand}{amount}', ' ')
+        .addFieldFull('{currency}', '◦     b:BTC,x:XRP,e:ETH,c:BCH,n:Now\n       (note)  Now shows all configs')
+        .addFieldFull('{subcommand}', '◦      b | s | g | h | n | a\n           buy, sell, gap, histogram,\n             now, adjust\n       (note) now, adjust has no {amount}')
+        .addFieldFull('{amount}', '◦      (+|-|)123.45(k)')
+    ;
+    sendWithAttach(BOT_ICON, 'SlackBot just started ..', [m]);
     logger.debug('bot just started');
 });
 
@@ -78,7 +75,7 @@ bot.on('message', function(data) {
         return;
     }
 
-    if (data.text.length < 4 || !data.text.startsWith('sa ')) {
+    if (data.text.length < 4 || !data.text.startsWith('sb ')) {
         return;
     }
 
@@ -92,21 +89,21 @@ bot.on('message', function(data) {
         let match = MATCH_REGEX.exec(text);
 
         if (!match) {
-            send('Invalid sa command syntax  : ' + text);
+            send('Invalid slackbot command  : ' + text);
             return;
         }
         // match.forEach((e, i) => console.log(i + ': ' + e));
 
-        if (match[1]) { // sa n
+        if (match[1]) { // sb n
             showAllCoins(coinTypes, 'Current Config');
-        } else {  // sa bX
+        } else {  // sb bX
             if (match[2]) {
                 if (match[3] === 'n') {
                     showOneCoin(coinType.get(match[2]).value, 'Current Configuration Values');
                 } else if (match[3] === 'a') {
                     adjustConfig(coinType.get(match[2]).value);
                 } else {
-                    send('Invalid sa subcommand  : ' + text);
+                    send('Invalid slackbot subcommand  : ' + text);
                 }
             } else {
                 let config = {

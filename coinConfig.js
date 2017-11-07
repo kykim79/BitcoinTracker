@@ -5,7 +5,7 @@ const CHART_URL = process.env.CHART_URL;
 module.exports = class configCoin {
     constructor(coin) {
         try {
-            this.title = coin; // Big blue head
+            this.title = coin + ' _chart_'; // Big blue head
             this.title_link = CHART_URL + coinTypes.indexOf(coin); // link when title was pressed
             this.text = '';
             this.fields = [];
@@ -22,6 +22,10 @@ module.exports = class configCoin {
 
     addField(titleKey, titleVal, short=true) {
         this.fields.push({ title: titleKey + titleVal, short: short });
+        return this;
+    }
+    addFieldFull(title, value, short=false) {
+        this.fields.push({ title: title, value: value, short: short });
         return this;
     }
 };
