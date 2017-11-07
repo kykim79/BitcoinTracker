@@ -1,8 +1,0 @@
-{
-  "analyzer": {
-    "gapAllowance" : 0.023,
-    "buyPrice": 5134000,
-    "sellPrice": 5755000,
-    "histogram": 40000
-  }
-}

@@ -2,16 +2,19 @@ let fs = require('fs');
 let json2csv = require('json2csv');
 let events = require('events');
 
-// LOGGER
-let log4js = require('log4js');
-let logger = log4js.getLogger('chartFeeder:' + process.env.CURRENCY.toLowerCase());
-
 let emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
+const CURRENCY = process.env.CURRENCY;
+const currency = CURRENCY.toLowerCase();
+
 const CHART_FIELDS = ['date', 'open', 'high', 'low', 'close', 'volume'];
 const CHART_FIELD_NAMES = ['date', 'open', 'high', 'low', 'close', 'volume'];
-const FILE_NAME = process.env.CHART_DATA;
+const FILE_NAME = process.env.CHART_DATA + currency + '/CandleData.csv';
+
+// LOGGER d
+let log4js = require('log4js');
+let logger = log4js.getLogger('chartFeeder:' + currency);
 
 let ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);

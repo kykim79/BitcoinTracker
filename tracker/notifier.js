@@ -5,7 +5,7 @@ format.extend(String.prototype);
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
-const WEBHOOK = process.env.WEBHOOK;
+const WEB_HOOK = process.env.WEB_HOOK;
 const ICON_URL = process.env.ICON_URL + CURRENCY + '.png';
 const coinType = require('./coinType.js');
 const coinTypes = coinType.enums.map((c) => c.value);
@@ -23,7 +23,7 @@ exports.danger = (line, title) => sendToSlack(line, title, true, notiType.DANGER
 exports.attach = (line, title) => sendToSlack(line, title, false);
 
 let slackPost = require('slackpost');
-let post = slackPost.post(WEBHOOK);
+let post = slackPost.post(WEB_HOOK);
 post.setUsername(CURRENCY).enableFieldMarkdown();
 const EOL = require('os').EOL;
 

@@ -8,7 +8,7 @@ let fs = require('fs');
 let pad = require('pad');
 let numeral = require('numeral');
 let roundTo = require('round-to');
-let replaceall = require('replaceall');
+// let replaceall = require('replaceall');
 
 // date, time conversion
 let moment = require('moment');
@@ -36,7 +36,7 @@ let log4js = require('log4js');
 let logger = log4js.getLogger('analyzer:' + currency);
 
 let npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
-let npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
+let npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
 let note = require('./notifier.js');
 let TradeType = require('./tradeType.js');
 let isFirstTime = true; // inform current setting when this module is started
@@ -46,14 +46,13 @@ let analyzer = readAnalyzer(CONFIG_FILE);
 watcher.on('change', (info) => {
     analyzer = readAnalyzer(info.path);
     analyzer.histogram = roundTo((analyzer.sellPrice + analyzer.buyPrice) / 2 * analyzer.histoPercent, 2);
-    const v = 'Sell:{sell}, histo:{histo}\nBuy :{buy}, gap:{gap}'.format({
+    const v = 'Buy :{buy}  histo:{histo}\nSell:{sell}  gap:{gap}'.format({
         sell: npad(analyzer.sellPrice),
         buy: npad(analyzer.buyPrice),
         gap: npercent(analyzer.gapAllowance),
         histo: npercent(analyzer.histoPercent)
     });
     note.info(v, '*Configuration Changed*');   // will be removed later
-    logger.info('Config Changed : ' + replaceall(require('os').EOL, '; ', v));
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes

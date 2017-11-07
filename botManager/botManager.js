@@ -16,9 +16,12 @@ let coinType = require('./coinType.js');
 let coinTypes = coinType.enums.map((c) => c.value);
 let roundTo = require('round-to');
 
+const CONFIG = process.env.CONFIG;
+const CONFIG_FILENAME = '/trackerConfig.json';
+
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(process.env.CONFIG + '/loggerConfig.json');
+log4js.configure(CONFIG + 'bot/loggerConfig.json');
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,
@@ -30,16 +33,14 @@ let logger = log4js.getLogger('botmanager');
 
 let npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
 let npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
-const CONFIG_FOLDER = './config/';
-const CONFIG_FILE = '/trackerConfig.json';
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
-const WEBTOKEN = process.env.WEBTOKEN;
+const WEB_TOKEN = process.env.WEB_TOKEN;
 const ICON_URL = process.env.ICON_URL;
 
 // const CHANNEL_NAME = '#cryptocurrency';
-const botTOKEN='xoxb-261765742902-L5maHrT9IVDOKJFXm159lxmg'; // for #cryptocurrency
-const botName='CoinMonitor';
-// const botName='satoshi_nakamoto';
+const BOT_TOKEN=process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
+const BOT_NAME='CoinMonitor';
+// const BOT_NAME='satoshi_nakamoto';
 
 const CHANNEL_NAME = process.env.CHANNEL;
 
@@ -48,8 +49,8 @@ const  MATCH_REGEX = /^sb (?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])([+-]
 
 // create a bot
 let settings = {
-    token: botTOKEN,
-    name: botName
+    token: BOT_TOKEN,
+    name: BOT_NAME
 };
 
 let bot = new Bot(settings);
@@ -123,8 +124,8 @@ bot.on('message', function(data) {
 
 function updateConfig(c) {
 
-    let targetFile = CONFIG_FOLDER + c.cointype.toLowerCase() + CONFIG_FILE;
-    let cf = JSON.parse(fs.readFileSync(targetFile));
+    let configFile = CONFIG + c.cointype.toLowerCase() + CONFIG_FILENAME;
+    let cf = JSON.parse(fs.readFileSync(configFile));
     switch (c.configField) {
     case 's':   // sellPrice
         cf.analyzer.sellPrice = updatePrice(c.sign, c.amount, cf.analyzer.sellPrice);
@@ -146,7 +147,7 @@ function updateConfig(c) {
         send('undefined config field: ' + c.configField);   // should not happen
         process.exit(11);
     }
-    fs.writeFileSync(targetFile, JSON.stringify(cf, null, 1), 'utf-8');
+    fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
     return c.cointype;
 }
 
@@ -166,10 +167,10 @@ function updatePrice(sign, amount, price) {
 
 function buildMessage(coin, text, attachs = null) {
     let msg = {
-        token: WEBTOKEN,
+        token: WEB_TOKEN,
         channel: CHANNEL_NAME,
         as_user: false,
-        username: botName,
+        username: BOT_NAME,
         icon_url: ICON_URL + coin + '.png',
         text: text
     };
@@ -206,7 +207,7 @@ function showAllCoins(cointypes, msg) {
 }
 
 function showOneCoin(cointype, msg) {
-    let request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
+    // let request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
     let response = (value) => showOneCoinType(cointype, value);
     Promise.try(() => {
         return bhttp.get(BITHUMB_URL +  cointype);
@@ -233,12 +234,12 @@ function adjustConfig(cointype) {
 
 function adjustSellBuy(cointype, value) {
     try {
-        let targetFile = CONFIG_FOLDER + cointype.toLowerCase() + CONFIG_FILE;
-        let cf = JSON.parse(fs.readFileSync(targetFile));
+        let configFile = CONFIG + cointype.toLowerCase() + CONFIG_FILENAME;
+        let cf = JSON.parse(fs.readFileSync(configFile));
         let n = Number(value.body.data[0].price);
         cf.analyzer.buyPrice = roundTo(n * (1 - cf.analyzer.gapAllowance * 3),0);
         cf.analyzer.sellPrice = roundTo(n * (1 + cf.analyzer.gapAllowance * 3),0);
-        fs.writeFileSync(CONFIG_FOLDER + cointype.toLowerCase() + CONFIG_FILE, JSON.stringify(cf, null, 1), 'utf-8');
+        fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
         return makeCoinConfig(cointype, value);
     }
     catch (e) {
@@ -248,7 +249,7 @@ function adjustSellBuy(cointype, value) {
 
 function makeCoinConfig(cointype, value) {
     try {
-        let cf = JSON.parse(fs.readFileSync(CONFIG_FOLDER + cointype.toLowerCase() + CONFIG_FILE)).analyzer;
+        let cf = JSON.parse(fs.readFileSync(CONFIG + cointype.toLowerCase() + CONFIG_FILENAME)).analyzer;
         return new coinConfig(cointype)
             .addField('Buy   ', npad(cf.buyPrice))
             .addField('Histo(div) ', npercent(cf.histoPercent))

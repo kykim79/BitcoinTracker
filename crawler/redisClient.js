@@ -1,13 +1,15 @@
-let redis = require('redis');
 
 let format = require('string-format');
 format.extend(String.prototype);
 
 const CURRENCY = process.env.CURRENCY;
+const currency = CURRENCY.toLowerCase();
 
 // LOGGER
 let log4js = require('log4js');
-let logger = log4js.getLogger('redisClient:' + CURRENCY.toLowerCase());
+let logger = log4js.getLogger('redisClient:' + currency);
+
+let redis = require('redis');
 
 let option = {
     host: process.env.REDIS_HOST,

@@ -6,13 +6,15 @@ format.extend(String.prototype);
 
 String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
-const CRON_SCHEDULE = process.env.SELECTOR_CRON.unquoted();
+const SELECTOR_CRON = process.env.SELECTOR_CRON.unquoted();
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
+const LOG = process.env.LOG
+const CONFIG = process.env.CONFIG;
 
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(process.env.CONFIG + '/loggerConfig.json');
+log4js.configure(CONFIG + currency + '/loggerConfig.json');
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,
@@ -37,7 +39,7 @@ let heartbeat = (res) => {
     const epoch = Date.now();
     if (epoch - lastepoch > TWENTY_MINUTES) {
         lastepoch = epoch;
-        logger.debug('running. cron: {}, res size {}'.format(CRON_SCHEDULE, res.length));
+        logger.debug('running. cron: {}, res size {}'.format(SELECTOR_CRON, res.length));
         let redisEpoch = JSON.parse(res[res.length-1]).epoch;
 
         if (epoch - redisEpoch > TWENTY_MINUTES) {
@@ -66,4 +68,4 @@ let select = () => {
 
 select(); // immediate run once when started..
 
-new CronJob(CRON_SCHEDULE, select, null, true, TIMEZONE);
+new CronJob(SELECTOR_CRON, select, null, true, TIMEZONE);
