@@ -21,6 +21,6 @@ export function getData() {
     /* global fetch */
     const promiseMSFT = fetch('./data/CandleData.csv')
         .then(response => response.text())
-	 	.then(data => csvParse(data, parseData(parseDate)));
+        .then(data => csvParse(data, parseData(parseDate)));
     return promiseMSFT;
 }

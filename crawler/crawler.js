@@ -14,7 +14,7 @@ const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(process.env.LOGGER_CONFIG);
+log4js.configure(process.env.CONFIG + '/loggerConfig.json');
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,

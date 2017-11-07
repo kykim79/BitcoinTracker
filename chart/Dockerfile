@@ -6,7 +6,7 @@ RUN echo "Asia/Seoul" > /etc/timezone && dpkg-reconfigure -f noninteractive tzda
 
 RUN mkdir -p /app
 
-COPY ./package.json /app/
+COPY package.json /app/
 
 RUN cd /app; npm install
 
@@ -14,6 +14,6 @@ WORKDIR /app
 
 ADD . /app
 
-VOLUME [ "/app/public/data", "/app/public/images" ]
+VOLUME [ "/app/public/data" ]
 
 CMD npm start
