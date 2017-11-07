@@ -1,0 +1,31 @@
+{
+  "name": "botManager",
+  "version": "0.0.1",
+  "description": "",
+  "main": "botManager.js",
+  "repository": "",
+  "author": "kwonyoung kim <kykim79@gmail.com>",
+  "dependencies": {
+    "bhttp": "^1.2.4",
+    "bluebird": "^3.5.1",
+    "dateformat": "^2.0.0",
+    "enum": "^2.4.0",
+    "fs": "0.0.1-security",
+    "log4js": "^2.3.3",
+    "log4js-extend": "^0.2.1",
+    "numeral": "^2.0.6",
+    "pad": "^1.1.0",
+    "request": "^2.81.0",
+    "round-to": "^2.0.0",
+    "slackbots": "^1.1.0",
+    "string-format": "^0.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^4.10.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-react": "^7.4.0",
+    "eslint-plugin-standard": "^3.0.1"
+  }
+}

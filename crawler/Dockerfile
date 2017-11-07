@@ -6,12 +6,16 @@ RUN echo "Asia/Seoul" > /etc/timezone && dpkg-reconfigure -f noninteractive tzda
 
 RUN mkdir -p /app
 
-COPY . app/
+COPY package.json /app
 
 RUN cd /app; npm install
 
 WORKDIR /app
 
-VOLUME [ "/app/public/data", "app/public/image" ]
+ADD . /app
 
-CMD npm start
+RUN mkdir -p /app/config
+
+VOLUME [ "/app/config", "/app/log" ]
+
+CMD node crawler.js

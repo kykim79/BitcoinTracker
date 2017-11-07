@@ -2,125 +2,171 @@ version: '2.0'
 
 services:
 
+# --------------------------------------------
+ botmanager:
+  build:
+   context: ./botManager
+  environment:
+   - CONFIG=./config
+   - CHANNEL=#test
+   - ICON_URL=http://localhost/
+   - CHART_URL=http://localhost:400
+   - WEBTOKEN=
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+
+# --------------------------------------------
+ crawler_btc:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BTC
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+
+ crawler_eth:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BTC
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+
+ crawler_xrp:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=XRP
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+
+ crawler_bch:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BCH
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+
+ crawler_btg:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BTG
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+
+# --------------------------------------------
  tracker_btc:
   build:
-   context: .
-   dockerfile: ./Dockerfile-tracker
+   context: ./tracker
   env_file:
    - tracker.env
   environment:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
   volumes:
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/btc/:/app/chartData/
-   - ./log/:/app/log/
 
  tracker_eth:
   build:
-   context: .
-   dockerfile: ./Dockerfile-tracker
+   context: ./tracker
   env_file:
    - tracker.env
   environment:
    - CURRENCY=ETH
    - PRICE_ROUND_RADIX=-1
   volumes:
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/eth/:/app/chartData/
-   - ./log/:/app/log/
 
  tracker_xrp:
   build:
-   context: .
-   dockerfile: ./Dockerfile-tracker
+   context: ./tracker
   env_file:
    - tracker.env
   environment:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
   volumes:
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/xrp/:/app/chartData/
-   - ./log/:/app/log/
 
  tracker_bch:
   build:
-   context: .
-   dockerfile: ./Dockerfile-tracker
+   context: ./tracker
   env_file:
    - tracker.env
   environment:
    - CURRENCY=BCH
    - PRICE_ROUND_RADIX=-1
   volumes:
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/xrp/:/app/chartData/
-   - ./log/:/app/log/
 
  tracker_btg:
   build:
-   context: .
-   dockerfile: ./Dockerfile-tracker
+   context: ./tracker
   env_file:
    - tracker.env
   environment:
    - CURRENCY=BTG
    - PRICE_ROUND_RADIX=0
   volumes:
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/btg/:/app/chartData/
-   - ./log/:/app/log/
 
- botmanager:
-  build:
-   context: .
-   dockerfile: ./Dockerfile-botmanager
-  environment:
-   - LOGGER_CONFIG=./config/bot/loggerConfig.json
-   - CHANNEL=#cointest
-   - ICON_URL=http://riopapa.zzux.com/
-   - CHART_URL=http://riopapa.zzux.com:400
-  volumes:
-   - ./config/:/app/config/
-   - ./log/:/app/log/
-
+# --------------------------------------------
  chart_btc:
   build:
    context: ./chart
-   dockerfile: ./Dockerfile-chart
   ports:
    - "4000:3000"
   volumes:
-   - ./chartData/btc/:/app/public/data/
-   - ./chartData/btc/:/app/public/image/
+   - ./chartData/btc/:/app/public/data
 
  chart_eth:
   build:
    context: ./chart
-   dockerfile: ./Dockerfile-chart
   ports:
    - "4002:3000"
   volumes:
    - ./chartData/eth/:/app/public/data/
-   - ./chartData/eth/:/app/public/image/
 
  chart_xrp:
   build:
    context: ./chart
-   dockerfile: ./Dockerfile-chart
   ports:
    - "4001:3000"
   volumes:
    - ./chartData/xrp/:/app/public/data/
-   - ./chartData/xrp/:/app/public/image/
 
  chart_bch:
   build:
    context: ./chart
-   dockerfile: ./Dockerfile-chart
   ports:
    - "4003:3000"
   volumes:
    - ./chartData/bch/:/app/public/data/
-   - ./chartData/bch/:/app/public/image/

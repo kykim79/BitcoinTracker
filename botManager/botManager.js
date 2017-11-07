@@ -18,7 +18,7 @@ let roundTo = require('round-to');
 
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(process.env.LOGGER_CONFIG);
+log4js.configure(process.env.CONFIG + '/loggerConfig.json');
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,
@@ -33,7 +33,7 @@ let npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
 const CONFIG_FOLDER = './config/';
 const CONFIG_FILE = '/trackerConfig.json';
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
-const WEBTOKEN = 'xoxp-146635173889-147997134374-263670048758-f86cb300f91c49ab741993f259d81459'; // for #cryptocurrency
+const WEBTOKEN = process.env.WEBTOKEN;
 const ICON_URL = process.env.ICON_URL;
 
 // const CHANNEL_NAME = '#cryptocurrency';
