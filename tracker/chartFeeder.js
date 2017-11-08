@@ -10,14 +10,16 @@ const currency = CURRENCY.toLowerCase();
 
 const CHART_FIELDS = ['date', 'open', 'high', 'low', 'close', 'volume'];
 const CHART_FIELD_NAMES = ['date', 'open', 'high', 'low', 'close', 'volume'];
-const FILE_NAME = process.env.CHART_DATA + currency + '/CandleData.csv';
+const CHART_FILENAME = process.env.CHART_DATA + currency + '/CandleData.csv';
 
-// LOGGER d
+// LOGGER
 let log4js = require('log4js');
 let logger = log4js.getLogger('chartFeeder:' + currency);
 
 let ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
+
+logger.debug('chart file ' + CHART_FILENAME);
 
 function listener(args) {
     try {
@@ -40,8 +42,8 @@ function writeChartData(data, firstLine) {
     const line = json2csv(opts) + require('os').EOL;
 
     if(firstLine) {
-        fs.writeFileSync(FILE_NAME, line, 'utf-8');
+        fs.writeFileSync(CHART_FILENAME, line, 'utf-8');
     } else {
-        fs.appendFileSync(FILE_NAME, line, 'utf-8');
+        fs.appendFileSync(CHART_FILENAME, line, 'utf-8');
     }
 }

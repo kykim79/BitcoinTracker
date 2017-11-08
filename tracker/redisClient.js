@@ -28,7 +28,7 @@ let option = {
 let client = redis.createClient(option);
 
 client.on('connect', () => {
-    logger.warn('redis connected.');
+    logger.info('redis connected.');
 });
 
 client.on('end', () => {

@@ -4,9 +4,9 @@ let CronJob = require('cron').CronJob;
 let format = require('string-format');
 format.extend(String.prototype);
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
+// String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
-const CRON_SCHEDULE = process.env.CRON_SCHEDULE.unquoted();
+const CRON_SCHEDULE = process.env.CRON_SCHEDULE; // .unquoted();
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const LOG = process.env.LOG;
@@ -33,7 +33,7 @@ const TWENTY_MINUTES = 1200000;
 
 let lastepoch = 0;
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
+// String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
 let heartbeat = (res) => {
     const epoch = Date.now();
