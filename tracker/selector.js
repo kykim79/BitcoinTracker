@@ -9,7 +9,7 @@ String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');}
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE.unquoted();
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
-const LOG = process.env.LOG
+const LOG = process.env.LOG;
 const CONFIG = process.env.CONFIG;
 
 // LOGGER

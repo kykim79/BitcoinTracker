@@ -62,8 +62,14 @@ bot.on('start', function() {
     m.title = 'Welcome to bitcoin Slack Bot';
     m.title_link = 'https://api.slack.com/';
     m.addFieldFull('sb {currency}{subcommand}{amount}', ' ')
-        .addFieldFull('{currency}', '◦     b:BTC,x:XRP,e:ETH,c:BCH,n:Now\n       (note)  Now shows all configs')
-        .addFieldFull('{subcommand}', '◦      b | s | g | h | n | a\n           buy, sell, gap, histogram,\n             now, adjust\n       (note) now, adjust has no {amount}')
+        .addFieldFull('{currency}',
+            '◦     b:BTC,x:XRP,e:ETH,c:BCH,n:Now\n' +
+            '       (note)  Now shows all configs')
+        .addFieldFull('{subcommand}',
+            '◦      b | s | g | h | n | a\n' +
+            '           buy, sell, gap, histogram,\n' +
+            '             now, adjust\n' +
+            '       (note) now, adjust has no {amount}')
         .addFieldFull('{amount}', '◦      (+|-|)123.45(k)')
     ;
     sendWithAttach(BOT_ICON, 'SlackBot just started ..', [m]);
@@ -122,26 +128,27 @@ bot.on('message', function(data) {
     }
 });
 
+
 function updateConfig(c) {
 
     let configFile = CONFIG + c.cointype.toLowerCase() + CONFIG_FILENAME;
     let cf = JSON.parse(fs.readFileSync(configFile));
     switch (c.configField) {
     case 's':   // sellPrice
-        cf.analyzer.sellPrice = updatePrice(c.sign, c.amount, cf.analyzer.sellPrice);
-        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
+        cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     case 'b':   // buyPrice
-        cf.analyzer.buyPrice = updatePrice(c.sign, c.amount, cf.analyzer.buyPrice);
-        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
+        cf.buyPrice = updatePrice(c.sign, c.amount, cf.buyPrice);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     case 'g':   // gapAllowance
-        cf.analyzer.gapAllowance = roundTo(c.amount / 100,4);
-        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
+        cf.gapAllowance = roundTo(c.amount / 100,4);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     case 'h':   // histogram
-        cf.analyzer.histoPercent = roundTo(c.amount / 100,6);
-        cf.analyzer.histogram = roundTo((cf.analyzer.sellPrice + cf.analyzer.buyPrice) / 2 * cf.analyzer.histoPercent, 2);
+        cf.histoPercent = roundTo(c.amount / 100,6);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     default:
         send('undefined config field: ' + c.configField);   // should not happen
@@ -237,8 +244,8 @@ function adjustSellBuy(cointype, value) {
         let configFile = CONFIG + cointype.toLowerCase() + CONFIG_FILENAME;
         let cf = JSON.parse(fs.readFileSync(configFile));
         let n = Number(value.body.data[0].price);
-        cf.analyzer.buyPrice = roundTo(n * (1 - cf.analyzer.gapAllowance * 3),0);
-        cf.analyzer.sellPrice = roundTo(n * (1 + cf.analyzer.gapAllowance * 3),0);
+        cf.buyPrice = roundTo(n * (1 - cf.gapAllowance * 3),0);
+        cf.sellPrice = roundTo(n * (1 + cf.gapAllowance * 3),0);
         fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
         return makeCoinConfig(cointype, value);
     }
@@ -249,7 +256,7 @@ function adjustSellBuy(cointype, value) {
 
 function makeCoinConfig(cointype, value) {
     try {
-        let cf = JSON.parse(fs.readFileSync(CONFIG + cointype.toLowerCase() + CONFIG_FILENAME)).analyzer;
+        let cf = JSON.parse(fs.readFileSync(CONFIG + cointype.toLowerCase() + CONFIG_FILENAME));
         return new coinConfig(cointype)
             .addField('Buy   ', npad(cf.buyPrice))
             .addField('Histo(div) ', npercent(cf.histoPercent))

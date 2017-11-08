@@ -111,7 +111,7 @@ function write(newCoins) {
         if(coinInfo.volume !== 0 && coinInfo.price !== null) {
             redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
             writtenKeys.push(moment(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
-            writeTradeLog(e, coinInfo);
+            // writeTradeLog(e, coinInfo);
         }
     });
 }
