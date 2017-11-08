@@ -6,7 +6,7 @@ format.extend(String.prototype);
 
 String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
-const SELECTOR_CRON = process.env.SELECTOR_CRON.unquoted();
+const CRON_SCHEDULE = process.env.CRON_SCHEDULE.unquoted();
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const LOG = process.env.LOG
@@ -39,7 +39,7 @@ let heartbeat = (res) => {
     const epoch = Date.now();
     if (epoch - lastepoch > TWENTY_MINUTES) {
         lastepoch = epoch;
-        logger.debug('running. cron: {}, res size {}'.format(SELECTOR_CRON, res.length));
+        logger.debug('running. cron: {}, res size {}'.format(CRON_SCHEDULE, res.length));
         let redisEpoch = JSON.parse(res[res.length-1]).epoch;
 
         if (epoch - redisEpoch > TWENTY_MINUTES) {
@@ -68,4 +68,4 @@ let select = () => {
 
 select(); // immediate run once when started..
 
-new CronJob(SELECTOR_CRON, select, null, true, TIMEZONE);
+new CronJob(CRON_SCHEDULE, select, null, true, TIMEZONE);

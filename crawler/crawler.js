@@ -9,9 +9,9 @@ String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');}
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 
-const CRAWLER_CRON = process.env.CRAWLER_CRON.unquoted();
+const CRON_SCHEDULE = process.env.CRON_SCHEDULE.unquoted();
 const MAX_COUNT = process.env.MAX_COUNT;
-const LIVE = process.env.LIVE;
+const DEV_MODE = process.env.DEV_MODE;
 const CONFIG = process.env.CONFIG;
 const LOG = process.env.LOG;
 const TIMEZONE = 'Asia/Seoul';
@@ -36,8 +36,6 @@ let streamRaw = new rollers.RollingFileStream(LOG + currency + '/raw.log', 10000
 
 let redisClient = require('./redisClient.js');
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
-
 let resize = (max) => {
     redisClient.zcard(CURRENCY, (err, res) => {
         if(err) { throw err; }
@@ -48,13 +46,13 @@ let resize = (max) => {
 };
 
 let lastepoch = 0;
-const TWENTY_MINUTE = 1200;
+const TWENTY_MINUTE = 1200000;
 
 let heartbeat = () => {
-    const epoch = Math.round(Date.now() / 1000);
+    const epoch = Date.now();
     if (epoch - lastepoch > TWENTY_MINUTE) {
         lastepoch = epoch;
-        logger.debug('running. cron: ' + CRAWLER_CRON);
+        logger.debug('running. cron: ' + CRON_SCHEDULE);
     }
 };
 
@@ -68,8 +66,10 @@ let crawl = () => {
     Promise.try(() => {
         return bhttp.get(BITHUMB_URL);
     }).then((response) => {
-        write(getNewCoins(response.body));
-        resize(MAX_COUNT);
+        if (!DEV_MODE) {
+            write(getNewCoins(response.body));
+            resize(MAX_COUNT);
+        }
     }).catch((e) => {
         logger.error(e);
     });
@@ -78,7 +78,7 @@ let crawl = () => {
 };
 
 function getNewCoins(body) {
-        // writeLogRaw(body);
+    // writeLogRaw(body);
 
     let coinMap = new Map();
     body.data.forEach(e => {
@@ -108,7 +108,7 @@ function getNewCoins(body) {
 function write(newCoins) {
     newCoins.forEach(e => {
         const coinInfo = new CoinInfo(e);
-        if(coinInfo.volume !== 0 && coinInfo.price !== null && LIVE) {
+        if(coinInfo.volume !== 0 && coinInfo.price !== null) {
             redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
             writtenKeys.push(moment(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
             writeTradeLog(e, coinInfo);
@@ -116,7 +116,7 @@ function write(newCoins) {
     });
 }
 
-new CronJob(CRAWLER_CRON, crawl, null, true, TIMEZONE);
+new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
 
 function writeTradeLog(transactions, coinInfo) {
     try {
