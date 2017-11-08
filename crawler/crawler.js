@@ -4,12 +4,12 @@ let Map = require('hashmap');
 let CoinInfo = require('./coinInfo.js');
 let CronJob = require('cron').CronJob;
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
+// String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 
-const CRON_SCHEDULE = process.env.CRON_SCHEDULE.unquoted();
+const CRON_SCHEDULE = process.env.CRON_SCHEDULE; // .unquoted();
 const MAX_COUNT = process.env.MAX_COUNT;
 const DEV_MODE = process.env.DEV_MODE;
 const CONFIG = process.env.CONFIG;
