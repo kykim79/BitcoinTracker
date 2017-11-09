@@ -6,16 +6,11 @@ services:
  botmanager:
   build:
    context: ./botManager
-  environment:
-   - CONFIG=./config
-   - CHANNEL=#test
-   - ICON_URL=http://localhost/
-   - CHART_URL=http://localhost:400
-   - WEBTOKEN=
+  env_file:
+   - ./botmanager.env
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-  image: devilica/botmanager
   image: devilica/coin_botmanager
 
 # --------------------------------------------
@@ -91,7 +86,7 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/btc/:/app/chartData/
+   - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
 
  tracker_eth:
@@ -105,7 +100,7 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/eth/:/app/chartData/
+   - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
 
  tracker_xrp:
@@ -119,7 +114,7 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/xrp/:/app/chartData/
+   - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
 
  tracker_bch:
@@ -133,7 +128,7 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/xrp/:/app/chartData/
+   - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
 
  tracker_btg:
@@ -147,7 +142,7 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/btg/:/app/chartData/
+   - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
 # --------------------------------------------
  chart_btc:
