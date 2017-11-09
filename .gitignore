@@ -124,7 +124,9 @@ typings/
 
 # this project only
 log/
-config/*.json
 config/
-chart/public/currency.png
 chartData/
+
+# environment variables file that will be used on docker-compose.yml
+*.env
+
