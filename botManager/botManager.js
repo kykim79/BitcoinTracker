@@ -21,7 +21,7 @@ const CONFIG_FILENAME = '/trackerConfig.json';
 
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(CONFIG + 'bot/loggerConfig.json');
+log4js.configure(CONFIG + '/loggerConfig.json');
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,

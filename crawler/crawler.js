@@ -4,12 +4,12 @@ let Map = require('hashmap');
 let CoinInfo = require('./coinInfo.js');
 let CronJob = require('cron').CronJob;
 
-// String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
+String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 
-const CRON_SCHEDULE = process.env.CRON_SCHEDULE; // .unquoted();
+const CRON_SCHEDULE = process.env.CRAWLER_CRON.unquoted();
 const MAX_COUNT = process.env.MAX_COUNT;
 const DEV_MODE = process.env.DEV_MODE;
 const CONFIG = process.env.CONFIG;
@@ -18,7 +18,7 @@ const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(CONFIG + currency + '/loggerConfig.json');
+log4js.configure(CONFIG + '/loggerConfig.json');
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,
@@ -63,16 +63,17 @@ let Promise = require('bluebird');
 let bhttp = require('bhttp');
 
 let crawl = () => {
-    Promise.try(() => {
-        return bhttp.get(BITHUMB_URL);
-    }).then((response) => {
-        if (!DEV_MODE) {
+    Promise.try(() => bhttp.get(BITHUMB_URL))
+        .then((response) => {
+            if(DEV_MODE) {
+                logger.warn('DEV_MODE is active.');
+                return;
+            }
             write(getNewCoins(response.body));
             resize(MAX_COUNT);
-        }
-    }).catch((e) => {
-        logger.error(e);
-    });
+        }).catch((e) => {
+            logger.error(e);
+        });
 
     heartbeat();
 };

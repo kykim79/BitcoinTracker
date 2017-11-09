@@ -9,7 +9,6 @@ let fs = require('fs');
 let pad = require('pad');
 let numeral = require('numeral');
 let roundTo = require('round-to');
-// let replaceall = require('replaceall');
 
 // date, time conversion
 let moment = require('moment');
