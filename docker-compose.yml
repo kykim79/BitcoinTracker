@@ -1,56 +1,182 @@
 version: '2.0'
 
 services:
+
+# --------------------------------------------
+ botmanager:
+  build:
+   context: ./botmanager
+  env_file:
+   - ./botmanager.env
+  volumes:
+   - ./log/botmanager/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_botmanager
+
+# --------------------------------------------
+ crawler_btc:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BTC
+  volumes:
+   - ./log/btc/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_crawler
+
+ crawler_eth:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BTC
+  volumes:
+   - ./log/eth/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_crawler
+
+ crawler_xrp:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=XRP
+  volumes:
+   - ./log/xrp/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_crawler
+
+ crawler_bch:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BCH
+  volumes:
+   - ./log/bch/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_crawler
+
+ crawler_btg:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - CURRENCY=BTG
+  volumes:
+   - ./log/btg/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_crawler
+
+# --------------------------------------------
  tracker_btc:
   build:
-   context: .
-   dockerfile: ./Dockerfile-tracker
+   context: ./tracker
   env_file:
    - tracker.env
   environment:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
-   - WEBHOOK=https://hooks.slack.com/services/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
   volumes:
-   - ./config/btc/:/app/config/
-   - ./chartData/btc/:/app/chartData/
    - ./log/btc/:/app/log/
-  restart: unless-stopped
+   - ./config/:/app/config/
+   - ./chartData/:/app/chartData/
+  image: devilica/coin_tracker
+
+ tracker_eth:
+  build:
+   context: ./tracker
+  env_file:
+   - tracker.env
+  environment:
+   - CURRENCY=ETH
+   - PRICE_ROUND_RADIX=-1
+  volumes:
+   - ./log/eth/:/app/log/
+   - ./config/:/app/config/
+   - ./chartData/:/app/chartData/
+  image: devilica/coin_tracker
+
  tracker_xrp:
   build:
-   context: .
-   dockerfile: ./Dockerfile-tracker
+   context: ./tracker
   env_file:
    - tracker.env
   environment:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
-   - WEBHOOK=https://hooks.slack.com/services/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
   volumes:
-   - ./config/xrp/:/app/config/
-   - ./chartData/xrp/:/app/chartData/
    - ./log/xrp/:/app/log/
-  restart: unless-stopped
+   - ./config/:/app/config/
+   - ./chartData/:/app/chartData/
+  image: devilica/coin_tracker
+
+ tracker_bch:
+  build:
+   context: ./tracker
+  env_file:
+   - tracker.env
+  environment:
+   - CURRENCY=BCH
+   - PRICE_ROUND_RADIX=-1
+  volumes:
+   - ./log/bch/:/app/log/
+   - ./config/:/app/config/
+   - ./chartData/:/app/chartData/
+  image: devilica/coin_tracker
+
+ tracker_btg:
+  build:
+   context: ./tracker
+  env_file:
+   - tracker.env
+  environment:
+   - CURRENCY=BTG
+   - PRICE_ROUND_RADIX=0
+  volumes:
+   - ./log/btg/:/app/log/
+   - ./config/:/app/config/
+   - ./chartData/:/app/chartData/
+  image: devilica/coin_tracker
+# --------------------------------------------
  chart_btc:
   build:
    context: ./chart
-   dockerfile: ./Dockerfile-chart
-   args:
-    - CURRENCY=BTC
   ports:
    - "4000:3000"
   volumes:
-   - ./chartData/btc/:/app/public/data/
-  restart: unless-stopped
+   - ./chartData/btc/:/app/public/data
+  image: devilica/coin_chart
+
+ chart_eth:
+  build:
+   context: ./chart
+  ports:
+   - "4002:3000"
+  volumes:
+   - ./chartData/eth/:/app/public/data/
+  image: devilica/coin_chart
+
  chart_xrp:
   build:
    context: ./chart
-   dockerfile: ./Dockerfile-chart
-   args:
-    - CURRENCY=XRP
   ports:
    - "4001:3000"
   volumes:
    - ./chartData/xrp/:/app/public/data/
-  restart: unless-stopped
+  image: devilica/coin_chart
 
+ chart_bch:
+  build:
+   context: ./chart
+  ports:
+   - "4003:3000"
+  volumes:
+   - ./chartData/bch/:/app/public/data/
+  image: devilica/coin_chart

@@ -4,20 +4,18 @@ MAINTAINER KwonYoung Kim <kykim79@gmail.com>
 
 RUN echo "Asia/Seoul" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
 
-RUN mkdir -p /app 
+RUN mkdir -p /app
 
 COPY package.json /app
 
 RUN cd /app; npm install
 
-WORKDIR /app 
+WORKDIR /app
 
 ADD . /app
 
 RUN mkdir -p /app/config
 
-RUN mkdir -p /app/chartData
+VOLUME [ "/app/config", "/app/log" ]
 
-VOLUME [ "/app/config", "/app/chartData", "/app/log" ] 
-
-CMD node tracker.js
+CMD node crawler.js

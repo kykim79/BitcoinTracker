@@ -6,18 +6,14 @@ RUN echo "Asia/Seoul" > /etc/timezone && dpkg-reconfigure -f noninteractive tzda
 
 RUN mkdir -p /app
 
-COPY . app/
-
-ARG CURRENCY
-
-COPY ./src/images/${CURRENCY}.png /app/public/currency.png
+COPY package.json /app/
 
 RUN cd /app; npm install
 
 WORKDIR /app
 
+ADD . /app
+
 VOLUME [ "/app/public/data" ]
 
 CMD npm start
-
-
