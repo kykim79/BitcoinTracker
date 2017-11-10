@@ -32,7 +32,7 @@ services:
   env_file:
    - ./crawler.env
   environment:
-   - CURRENCY=BTC
+   - CURRENCY=ETH
   volumes:
    - ./log/eth/:/app/log/
    - ./config/:/app/config/
