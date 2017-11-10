@@ -52,7 +52,7 @@ watcher.on('change', (info) => {
         gap: npercent(config.gapAllowance),
         histo: npercent(config.histoPercent)
     });
-    note.info(v, '*Configuration Changed*');   // will be removed later
+    note.info(v, 'Configuration Changed');   // will be removed later
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
@@ -149,12 +149,12 @@ function analyzeHistogram(nv) {
         if (nv.lastHistogram >= 0 && nv.histogram <= 0 &&
             (Math.abs(config.sellPrice - nv.close) / nv.close) < config.gapAllowance) {
             nv.tradeType = TradeType.SELL;
-            msg = (nv.close >= config.sellPrice) ? '*Over, Should SELL*' : 'SELL POINT';
+            msg = (nv.close >= config.sellPrice) ? 'Over, Should SELL' : 'SELL POINT';
         }
         else if (nv.lastHistogram <= 0 && nv.histogram >= 0 &&
             (Math.abs(config.buyPrice - nv.close) / nv.close) < config.gapAllowance) {
             nv.tradeType = TradeType.BUY;
-            msg = (nv.close <= config.buyPrice) ? '*Under, Should BUY*' : 'BUY POINT';
+            msg = (nv.close <= config.buyPrice) ? 'Under, Should BUY' : 'BUY POINT';
         }
         if (msg) {
             informTrade(nv,msg);
@@ -176,7 +176,7 @@ function analyzeStochastic(nv) {
         if (nv.dNow < 80 || nv.kNow < 80) {
             nv.tradeType = TradeType.SELL;
             if ((Math.abs(config.sellPrice - nv.close) / nv.close) < config.gapAllowance) {
-                msg = '*Stochastic SELL SELL*';
+                msg = 'Stochastic SELL SELL';
             }
             // else {
             //     msg = 'Stochastic SELL?';
@@ -187,7 +187,7 @@ function analyzeStochastic(nv) {
         if (nv.dNow > 20 || nv.kNow > 20) {
             nv.tradeType = TradeType.BUY;
             if ((Math.abs(config.buyPrice - nv.close) / nv.close) < config.gapAllowance) {
-                msg = '*Stochastic BUY BUY*';
+                msg = 'Stochastic BUY BUY';
             }
             // } else {
             //     msg = 'Stochastic BUY?';
