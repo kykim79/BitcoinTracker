@@ -49,7 +49,7 @@ let heartbeat = (res) => {
                 lastTime : moment(new Date(redisEpoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')
             };
             const f = 'Latest date in db is {lastTime}';
-            note.danger(f.format(v), '*Check Database Status*');
+            note.danger(f.format(v), 'Check Database Status');
         }
     }
 };
