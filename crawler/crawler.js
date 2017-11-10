@@ -63,11 +63,6 @@ let Promise = require('bluebird');
 let bhttp = require('bhttp');
 
 let crawl = () => {
-    if(DEV_MODE) {
-        logger.warn('DEV_MODE is active.');
-        return;
-    }
-
     Promise.try(() => bhttp.get(BITHUMB_URL))
         .then((response) => {
             write(getNewCoins(response.body));
