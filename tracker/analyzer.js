@@ -239,6 +239,12 @@ function informTrade(nv, msg) {
 }
 
 function keepLog(nv) {
+    const m = format('epoch:{epoch}, open:{open}, high:{high}, ' +
+        'low:{low}, close:{close}, volume: {volume}, MACD:{MACD}, signal:{signal}, ' +
+        'histogram:{histogram}, histoAvr:{histoAvr}, dNow:{dNow}, kNow:{kNow},' +
+        'tradeType:{tradeType}, msgText:{msgText}', nv);
+
+    logger.debug(m);
 
     try {
         let str = [

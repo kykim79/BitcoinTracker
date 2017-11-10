@@ -216,9 +216,7 @@ function showAllCoins(cointypes, msg) {
 function showOneCoin(cointype, msg) {
     // let request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
     let response = (value) => showOneCoinType(cointype, value);
-    Promise.try(() => {
-        return bhttp.get(BITHUMB_URL +  cointype);
-    })
+    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
         .then(response)
         .then(attach => sendWithAttach(cointype, msg, [attach]))
         .catch(e => logger.error(e));
@@ -231,9 +229,7 @@ function showOneCoinType(cointype, value) {
 function adjustConfig(cointype) {
     let request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
     let response = (value) => adjustSellBuy(cointype, value);
-    Promise.try(() => {
-        return bhttp.get(BITHUMB_URL +  cointype);
-    })
+    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
         .then(response)
         .then(attach => sendWithAttach(cointype, 'Sell, Buy Price Adjusted', [attach]))
         .catch(e => logger.error(e));
