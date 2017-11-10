@@ -5,11 +5,11 @@ services:
 # --------------------------------------------
  botmanager:
   build:
-   context: ./botManager
+   context: ./botmanager
   env_file:
    - ./botmanager.env
   volumes:
-   - ./log/:/app/log/
+   - ./log/botx/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_botmanager
 
@@ -22,7 +22,7 @@ services:
   environment:
    - CURRENCY=BTC
   volumes:
-   - ./log/:/app/log/
+   - ./log/btc/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -34,7 +34,7 @@ services:
   environment:
    - CURRENCY=BTC
   volumes:
-   - ./log/:/app/log/
+   - ./log/eth/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -46,7 +46,7 @@ services:
   environment:
    - CURRENCY=XRP
   volumes:
-   - ./log/:/app/log/
+   - ./log/xrp/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -58,7 +58,7 @@ services:
   environment:
    - CURRENCY=BCH
   volumes:
-   - ./log/:/app/log/
+   - ./log/bch/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -70,7 +70,7 @@ services:
   environment:
    - CURRENCY=BTG
   volumes:
-   - ./log/:/app/log/
+   - ./log/btg/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -84,7 +84,7 @@ services:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
   volumes:
-   - ./log/:/app/log/
+   - ./log/btc/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
@@ -98,7 +98,7 @@ services:
    - CURRENCY=ETH
    - PRICE_ROUND_RADIX=-1
   volumes:
-   - ./log/:/app/log/
+   - ./log/eth/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
@@ -112,7 +112,7 @@ services:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
   volumes:
-   - ./log/:/app/log/
+   - ./log/xrp/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
@@ -126,7 +126,7 @@ services:
    - CURRENCY=BCH
    - PRICE_ROUND_RADIX=-1
   volumes:
-   - ./log/:/app/log/
+   - ./log/bch/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
@@ -140,7 +140,7 @@ services:
    - CURRENCY=BTG
    - PRICE_ROUND_RADIX=0
   volumes:
-   - ./log/:/app/log/
+   - ./log/btg/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
