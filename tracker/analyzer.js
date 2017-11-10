@@ -52,7 +52,7 @@ watcher.on('change', (info) => {
         gap: npercent(config.gapAllowance),
         histo: npercent(config.histoPercent)
     });
-    note.info(v, '*Configuration Changed*');   // will be removed later
+    note.info(v, 'Configuration Changed');   // will be removed later
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
@@ -98,9 +98,9 @@ function listener(ohlcs) {
         isFirstTime = false;
     }
 
-    nowValues.msgText += analyzeHistogram(nowValues);
-    nowValues.msgText += analyzeStochastic(nowValues);
-    nowValues.msgText += analyzeBoundary(nowValues);
+    nowValues = analyzeHistogram(nowValues);
+    nowValues = analyzeStochastic(nowValues);
+    nowValues = analyzeBoundary(nowValues);
 
     keepLog(nowValues);
 }
@@ -140,7 +140,7 @@ function justStarted(nowValues, config, tableSize) {
     const m = 'Buy  :{buy}   tblSz :{size}\n' +
         'Now  :{now}   gap :{gap}\n' +
         'Sell:{sell}   h(div):{histo}'; // .format(v); does not work
-    note.info(m.format(v), '_Analyzing Started_');
+    note.info(m.format(v), 'Analyzing Started');
 }
 
 function analyzeHistogram(nv) {
@@ -149,12 +149,12 @@ function analyzeHistogram(nv) {
         if (nv.lastHistogram >= 0 && nv.histogram <= 0 &&
             (Math.abs(config.sellPrice - nv.close) / nv.close) < config.gapAllowance) {
             nv.tradeType = TradeType.SELL;
-            msg = (nv.close >= config.sellPrice) ? '*Over, Should SELL*' : 'SELL POINT';
+            msg = (nv.close >= config.sellPrice) ? 'Over, Should SELL' : 'SELL POINT';
         }
         else if (nv.lastHistogram <= 0 && nv.histogram >= 0 &&
             (Math.abs(config.buyPrice - nv.close) / nv.close) < config.gapAllowance) {
             nv.tradeType = TradeType.BUY;
-            msg = (nv.close <= config.buyPrice) ? '*Under, Should BUY*' : 'BUY POINT';
+            msg = (nv.close <= config.buyPrice) ? 'Under, Should BUY' : 'BUY POINT';
         }
         if (msg) {
             informTrade(nv,msg);
@@ -163,7 +163,8 @@ function analyzeHistogram(nv) {
     else {
         logger.debug('last [' + histoCount + '] histoAvr ' + nv.histoAvr + ' < histogram ' + config.histogram + '(' + npercent(config.histoPercent) + ')');
     }
-    return msg;
+    nv.msgText += msg;
+    return nv;
 }
 
 function analyzeStochastic(nv) {
@@ -176,53 +177,49 @@ function analyzeStochastic(nv) {
         if (nv.dNow < 80 || nv.kNow < 80) {
             nv.tradeType = TradeType.SELL;
             if ((Math.abs(config.sellPrice - nv.close) / nv.close) < config.gapAllowance) {
-                msg = '*Stochastic SELL SELL*';
+                msg = 'Stochastic SELL SELL';
             }
-            // else {
-            //     msg = 'Stochastic SELL?';
-            // }
         }
     }
     else if (nv.dLast <= 20 && nv.kLast <= 20) {
         if (nv.dNow > 20 || nv.kNow > 20) {
             nv.tradeType = TradeType.BUY;
             if ((Math.abs(config.buyPrice - nv.close) / nv.close) < config.gapAllowance) {
-                msg = '*Stochastic BUY BUY*';
+                msg = 'Stochastic BUY BUY';
             }
-            // } else {
-            //     msg = 'Stochastic BUY?';
-            // }
         }
     }
     if (msg) {
         informTrade(nv,msg);
         logger.debug(msg + ' : dLast ' + nv.dLast + ', kLast ' + nv.kLast + ', dNow  ' + nv.dNow + ', kNow  ' + nv.kNow);
     }
-    return msg;
+    nv.msgText += msg;
+    return nv;
 }
 
 function analyzeBoundary(nv) {
     let msg = '';
     if (nv.close > config.sellPrice) {
         nv.tradeType = TradeType.SELL;
-        msg = '_Going Over sellPrice_';
+        msg = 'Going Over sellPrice';
     }
     else if (nv.close < config.buyPrice) {
         nv.tradeType = TradeType.BUY;
-        msg = '_Going Under buyPrice_';
+        msg = 'Going Under buyPrice';
     }
     if (msg) {
         informTrade(nv,msg);
         logger.debug('Boundary alert ' + msg);
     }
-    return msg;
+    nv.msgText += msg;
+    return nv;
 }
 
 function informTrade(nv, msg) {
     const target = ( nv.tradeType === TradeType.SELL) ? config.sellPrice : config.buyPrice;
     const v = {
         nowNpad: npad(nv.close),
-        buysell: ( nv.tradeType === TradeType.SELL) ? 'SELL' : 'BUY ',
+        buysell: pad(nv.tradeType.key, 4),
         targetNpad: npad(target),
         gap: npad(nv.close - target),
         gapPcnt: npercent((nv.close - target) / target),
