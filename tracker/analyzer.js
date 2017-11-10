@@ -170,7 +170,7 @@ function analyzeHistogram(nv) {
 function analyzeStochastic(nv) {
 
     if (nv.histoAvr < config.histogram) {
-        return '';
+        return nv;
     }
     let msg = '';
     if (nv.dLast >= 80 && nv.kLast >= 80) {
