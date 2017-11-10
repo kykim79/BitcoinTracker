@@ -9,7 +9,7 @@ services:
   env_file:
    - ./botmanager.env
   volumes:
-   - ./log/botx/:/app/log/
+   - ./log/botmanager/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_botmanager
 
