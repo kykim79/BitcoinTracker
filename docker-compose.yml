@@ -20,6 +20,7 @@ services:
   env_file:
    - ./crawler.env
   environment:
+   - PRICE_ROUND_RADIX=-3
    - CURRENCY=BTC
   volumes:
    - ./log/btc/:/app/log/
@@ -32,6 +33,7 @@ services:
   env_file:
    - ./crawler.env
   environment:
+   - PRICE_ROUND_RADIX=-1
    - CURRENCY=ETH
   volumes:
    - ./log/eth/:/app/log/
@@ -44,6 +46,7 @@ services:
   env_file:
    - ./crawler.env
   environment:
+   - PRICE_ROUND_RADIX=0
    - CURRENCY=XRP
   volumes:
    - ./log/xrp/:/app/log/
@@ -56,6 +59,7 @@ services:
   env_file:
    - ./crawler.env
   environment:
+   - PRICE_ROUND_RADIX=-1
    - CURRENCY=BCH
   volumes:
    - ./log/bch/:/app/log/
@@ -68,6 +72,7 @@ services:
   env_file:
    - ./crawler.env
   environment:
+   - PRICE_ROUND_RADIX=0
    - CURRENCY=BTG
   volumes:
    - ./log/btg/:/app/log/
@@ -80,6 +85,7 @@ services:
    context: ./tracker
   env_file:
    - tracker.env
+   - ./config/btc/tracker.env
   environment:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
@@ -94,6 +100,7 @@ services:
    context: ./tracker
   env_file:
    - tracker.env
+   - ./config/eth/tracker.env
   environment:
    - CURRENCY=ETH
    - PRICE_ROUND_RADIX=-1
@@ -108,6 +115,7 @@ services:
    context: ./tracker
   env_file:
    - tracker.env
+   - ./config/xrp/tracker.env
   environment:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
@@ -122,6 +130,7 @@ services:
    context: ./tracker
   env_file:
    - tracker.env
+   - ./config/bch/tracker.env
   environment:
    - CURRENCY=BCH
    - PRICE_ROUND_RADIX=-1
@@ -136,6 +145,7 @@ services:
    context: ./tracker
   env_file:
    - tracker.env
+   - ./config/btg/tracker.env
   environment:
    - CURRENCY=BTG
    - PRICE_ROUND_RADIX=0
