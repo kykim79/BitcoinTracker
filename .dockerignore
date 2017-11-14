@@ -11,3 +11,4 @@ chartData/
 chart/
 config/
 log/
+.env

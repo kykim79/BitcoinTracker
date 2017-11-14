@@ -13,11 +13,13 @@
     "fs": "0.0.1-security",
     "log4js": "^2.3.3",
     "log4js-extend": "^0.2.1",
+    "mocha": "^4.0.1",
     "numeral": "^2.0.6",
     "pad": "^1.1.0",
     "request": "^2.81.0",
     "round-to": "^2.0.0",
     "slackbots": "^1.1.0",
+    "slackpost": "^1.2.0",
     "string-format": "^0.5.0"
   },
   "devDependencies": {
@@ -27,5 +29,10 @@
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-react": "^7.4.0",
     "eslint-plugin-standard": "^3.0.1"
+  },
+  "scripts": {
+    "test": "mocha",
+    "start-dev": "source dev.env; node botManager.js",
+    "start-prod": "source prod.env; node botManager.js"
   }
 }
