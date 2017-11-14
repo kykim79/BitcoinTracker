@@ -1,4 +1,4 @@
-FROM node:6.2.2
+FROM node:6.12.0-slim
 
 MAINTAINER KwonYoung Kim <kykim79@gmail.com>
 

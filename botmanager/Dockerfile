@@ -1,10 +1,13 @@
-FROM node:6.2.2
+FROM node:6.12.0-alpine
 
 MAINTAINER KwonYoung Kim <kykim79@gmail.com>
 
-RUN echo "Asia/Seoul" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
+ENV TIMEZONE Asia/Seoul
 
-RUN mkdir -p /app 
+RUN 	apk add --no-cache tzdata && \
+	echo "${TIMEZONE}" > /etc/timezone && \
+	ln -sf /usr/share/zoneinfo/${TIME_ZONE} /etc/localtime && \
+	mkdir -p /app 
 
 COPY package.json /app
 
