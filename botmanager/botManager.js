@@ -31,8 +31,6 @@ log4js_extend(log4js, {
 });
 const logger = log4js.getLogger('botmanager');
 
-//
-
 const npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
 const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
@@ -54,8 +52,6 @@ const USERS = process.env.USERS;
 const CHART_URL = process.env.CHART_URL;
 
 const MATCH_REGEX = /^sb\s*(?:(?:[]?)|(?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))\s*$/i;
-// MATCH_REGX contains all possible sub commands and parameters
-
 
 // create a bot
 const settings = {
