@@ -2,6 +2,6 @@
   "gapAllowance" : 0.01,
   "buyPrice": -1,
   "sellPrice": -1,
-  "histoPercent": 0.002,
+  "histoPercent": 0.015,
   "histogram": 0
 }

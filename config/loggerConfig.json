@@ -5,7 +5,7 @@
       "type": "console",
       "layout": {
         "type": "pattern",
-        "pattern": "%[[%r] [%5.5p] %c -%] %m%n"
+        "pattern": "%[[%r] [%5.5p] %c -%] %m"
       }
     },
     "file": { 

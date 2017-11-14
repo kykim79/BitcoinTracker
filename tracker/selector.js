@@ -6,7 +6,7 @@ format.extend(String.prototype);
 
 String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
-const CRON_SCHEDULE = process.env.SELECTOR_CRON.unquoted();
+const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const LOG = process.env.LOG;
