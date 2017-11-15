@@ -1,19 +1,16 @@
-FROM node:6.12.0-alpine
+FROM node:6.12.0-slim
 
 MAINTAINER KwonYoung Kim <kykim79@gmail.com>
 
-ENV TIMEZONE Asia/Seoul
+ENV TZ Asia/Seoul
 
-RUN 	apk add --no-cache tzdata && \
-	echo "${TIMEZONE}" > /etc/timezone && \
-	ln -sf /usr/share/zoneinfo/${TIME_ZONE} /etc/localtime && \
-	mkdir -p /app 
+RUN echo "${TZ}" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata && mkdir -p /app
 
 COPY package.json /app
 
 RUN cd /app; npm install
 
-WORKDIR /app 
+WORKDIR /app
 
 ADD . /app
 
