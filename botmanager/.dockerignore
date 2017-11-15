@@ -1,3 +1,4 @@
+.dockerignore
 Dockerfile
 node_modules/
 *.iml
@@ -6,9 +7,7 @@ node_modules/
 *.env
 .git
 .gitignore
-.idea
-chartData/
-chart/
 config/
 log/
 .env
+test.js

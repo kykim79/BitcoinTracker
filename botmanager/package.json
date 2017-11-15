@@ -9,6 +9,7 @@
     "bhttp": "^1.2.4",
     "bluebird": "^3.5.1",
     "dateformat": "^2.0.0",
+    "dotenv": "^4.0.0",
     "enum": "^2.4.0",
     "fs": "0.0.1-security",
     "log4js": "^2.3.3",

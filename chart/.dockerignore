@@ -1,0 +1,13 @@
+.dockerignore
+Dockerfile
+node_modules/
+*.iml
+*.md
+*.yml
+*.env
+.git
+.gitignore
+config/
+log/
+.env
+test.js
