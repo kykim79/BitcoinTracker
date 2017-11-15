@@ -1,20 +1,22 @@
 
 // require list //
-let format = require('string-format');
+require('dotenv').load();
+const format = require('string-format');
 format.extend(String.prototype);
 const fs = require('fs');
-let pad = require('pad');
-let numeral = require('numeral');
-let request = require('request');
-let querystring = require('querystring');
-let Bot = require('slackbots');
-let Promise = require('bluebird');
-let bhttp = require('bhttp');
-let coinConfig = require('./coinConfig.js');
-let coinType = require('./coinType.js');
+const pad = require('pad');
+const numeral = require('numeral');
+const request = require('request');
+const querystring = require('querystring');
+const Bot = require('slackbots');
+const Promise = require('bluebird');
+const bhttp = require('bhttp');
+const coinConfig = require('./coinConfig.js');
+const coinType = require('./coinType.js');
+const EOL = require('os').EOL;
 
-let coinTypes = coinType.enums.map((c) => c.value);
-let roundTo = require('round-to');
+const coinTypes = coinType.enums.map((c) => c.value);
+const roundTo = require('round-to');
 
 const CONFIG = process.env.CONFIG;
 const CONFIG_FILENAME = '/trackerConfig.json';
@@ -27,54 +29,72 @@ log4js_extend(log4js, {
     path: __dirname,
     format: '(@name:@line:@column)'
 });
-let logger = log4js.getLogger('botmanager');
+const logger = log4js.getLogger('botmanager');
 
-//
-
-let npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
-let npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
+const npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
+const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
 const WEB_TOKEN = process.env.WEB_TOKEN;
 const ICON_URL = process.env.ICON_URL;
+const WEB_HOOK = process.env.WEB_HOOK;
 
 // const CHANNEL_NAME = '#cryptocurrency';
-const BOT_TOKEN=process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
-const BOT_NAME='CoinMonitor';
-// const BOT_NAME='satoshi_nakamoto';
+const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
+const BOT_NAME = 'CoinMonitor';
+const BOT_ICON = 'BOT';
+let slackPost = require('slackpost');
+let post = slackPost.post(WEB_HOOK);
+post.setUsername(BOT_NAME).enableFieldMarkdown();
 
-const CHANNEL_NAME = process.env.CHANNEL;
 
-const  MATCH_REGEX = /^sb (?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])([+-]?)((?:\d+.\d+)|(?:\d+))(k?))$/;
-// MATCH_REGX contains all possible sub commands and parameters
+const CHANNEL = process.env.CHANNEL;
+const USERS = process.env.USERS;
+const CHART_URL = process.env.CHART_URL;
+
+const MATCH_REGEX = /^sb\s*(?:(?:[]?)|(?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))\s*$/i;
 
 // create a bot
-let settings = {
+const settings = {
     token: BOT_TOKEN,
     name: BOT_NAME
 };
 
-let bot = new Bot(settings);
+const bot = new Bot(settings);
 
 bot.on('start', function() {
     // more information about additional params https://api.slack.com/methods/chat.postMessage
-    const BOT_ICON = 'BOT';
-    let m = new coinConfig(BOT_ICON);
-    m.title = 'Welcome to bitcoin Slack Bot';
-    m.title_link = 'https://api.slack.com/';
-    m.addFieldFull('sb {currency}{subcommand}{amount}', ' ')
-        .addFieldFull('{currency}',
-            '◦     b:BTC,x:XRP,e:ETH,c:BCH,n:Now\n' +
-            '       (note)  Now shows all configs')
-        .addFieldFull('{subcommand}',
-            '◦      b | s | g | h | n | a\n' +
-            '           buy, sell, gap, histogram,\n' +
-            '             now, adjust\n' +
-            '       (note) now, adjust has no {amount}')
-        .addFieldFull('{amount}', '◦      (+|-|)123.45(k)')
-    ;
-    sendWithAttach(BOT_ICON, 'SlackBot just started ..', [m]);
     logger.debug('bot just started');
+    showUsage();
 });
+
+function channelIdToName(id) {
+    let channels = bot.getChannels();
+    if ((typeof channels !== 'undefined')
+        && (typeof channels._value !== 'undefined')
+        && (typeof channels._value.channels !== 'undefined')) {
+        channels = channels._value.channels;
+        for (var i=0; i < channels.length; i++) {
+            if (channels[i].id === id) {
+                return channels[i].name;
+            }
+        }
+    }
+    return '';
+}
+function userIdToName(id) {
+    let users = bot.getUsers();
+    if ((typeof users !== 'undefined')
+        && (users._value !== 'undefined')
+        && (users._value.members !== 'undefined')) {
+        users = users._value.members;
+        for (var i=0; i < users.length; i++ ) {
+            if (users[i].id === id) {
+                return users[i].name;
+            }
+        }
+    }
+    return '';
+}
 
 bot.on('message', function(data) {
 
@@ -82,45 +102,56 @@ bot.on('message', function(data) {
         return;
     }
 
-    if (data.text.length < 4 || !data.text.startsWith('sb ')) {
+    const text = data.text.trim().toLowerCase();
+
+    if (text.length < 2 || !text.startsWith('sb')) {
         return;
     }
-
-    logger.debug('command = [' + data.text + ']');
-    let text = data.text.trim();
-
+    logger.debug('command = [' + text + ']');
+    const channelName = '#' + channelIdToName(data.channel);
+    if (channelName !== CHANNEL) {
+        // send('Input fromm wrong channel[' + channelName + '], command ignored.');
+        return;
+    }
+    const userName = userIdToName(data.user);
+    if (USERS.indexOf(userName) === -1) {
+        send('You [' + userName + '] are not authorized user, command ignored.');
+        return;
+    }
     try {
-        // var channelName = channelIdToName(data.channel);
-        // var userName = userIdToName(data.user);
-
-        let match = MATCH_REGEX.exec(text);
+        const match = MATCH_REGEX.exec(text);
 
         if (!match) {
-            send('Invalid slackbot command  : ' + text);
+            send('Invalid slackbot command  [' + text + ']');
             return;
         }
         // match.forEach((e, i) => console.log(i + ': ' + e));
 
-        if (match[1]) { // sb n
+        if (match[0] === 'sb') {        // sb only
+            showUsage();
+        }
+        else if (match[1] === 'n') {    // sb n
             showAllCoins(coinTypes, 'Current Config');
-        } else {  // sb bX
-            if (match[2]) {
-                if (match[3] === 'n') {
-                    showOneCoin(coinType.get(match[2]).value, 'Current Configuration Values');
-                } else if (match[3] === 'a') {
-                    adjustConfig(coinType.get(match[2]).value);
-                } else {
-                    send('Invalid slackbot subcommand  : ' + text);
-                }
-            } else {
-                let config = {
-                    cointype: coinType.get(match[4]).value,
-                    configField: match[5],
-                    sign: match[6],
-                    amount: match[8] === 'k' ? Number(match[7]) * 1000 : Number(match[7])
-                };
-                showOneCoin(updateConfig(config), 'New Configuration');
+        }
+        else if (match[2]) {           // should be sb Xn  or sb Xa
+            if (match[3] === 'n') {
+                showOneCoin(coinType.get(match[2]).value, 'Current Configuration Values');
             }
+            else if (match[3] === 'a') {
+                adjustConfig(coinType.get(match[2]).value);
+            }
+            else {
+                send('Subcommand after coin should be "n" or "a"  : [' + text + ']'); // actually regex error
+            }
+        }
+        else {
+            const config = {
+                cointype: coinType.get(match[4]).value,
+                configField: match[5],
+                sign: match[6],
+                amount: match[8] === 'k' ? Number(match[7]) * 1000 : Number(match[7])
+            };
+            showOneCoin(updateConfig(config), 'New Configuration');
         }
     }
     catch (e) {
@@ -128,11 +159,10 @@ bot.on('message', function(data) {
     }
 });
 
-
 function updateConfig(c) {
 
-    let configFile = CONFIG + c.cointype.toLowerCase() + CONFIG_FILENAME;
-    let cf = JSON.parse(fs.readFileSync(configFile));
+    const configFile = CONFIG + '/' + c.cointype.toLowerCase() + CONFIG_FILENAME;
+    const cf = JSON.parse(fs.readFileSync(configFile));
     switch (c.configField) {
     case 's':   // sellPrice
         cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice);
@@ -158,7 +188,7 @@ function updateConfig(c) {
     return c.cointype;
 }
 
-function updatePrice(sign, amount, price) {
+function updatePrice (sign, amount, price) {
     switch (sign) {
     case '+':
         price += amount;
@@ -171,14 +201,15 @@ function updatePrice(sign, amount, price) {
     }
     return price;
 }
+module.exports = updatePrice;
 
-function buildMessage(coin, text, attachs = null) {
-    let msg = {
+function buildMessage(iconName, text, attachs = null) {
+    const msg = {
         token: WEB_TOKEN,
-        channel: CHANNEL_NAME,
+        channel: CHANNEL,
         as_user: false,
         username: BOT_NAME,
-        icon_url: ICON_URL + coin + '.png',
+        icon_url: ICON_URL + iconName + '.png',
         text: text
     };
     if(attachs) {
@@ -188,7 +219,7 @@ function buildMessage(coin, text, attachs = null) {
 }
 
 function send(text) {
-    requestMessage(buildMessage('BOT', text));
+    requestMessage(buildMessage(BOT_ICON, text));
 }
 
 function sendWithAttach(coin, text, attachs) {
@@ -204,18 +235,41 @@ function requestMessage(msg) {
     });
 }
 
+function showUsage() {
+    sendToSlack(buildUsageMsg(),'Monitor Cryptocurrency prices\n (Ver. 17-11-14)');
+}
+
+function buildUsageMsg() {
+    return '*Usage :*\n' +
+        '*sb* _{currency}{subcommand}{amount}_\n\n' +
+        '_{currency}_\n' +
+        '   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *n*:Now\n\n' +
+        '_{subcommand}_\n' +
+        '   *b*: buyPrice,           *s*: sellPrice\n' +
+        '   *a*: adjust based on nowPrice\n' +
+        '   *g*: gapAllowance,    *h*: histoPercent\n' +
+        '   *n*: nowPrice\n\n' +
+        '_{amount}_\n' +
+        '   *1234000* : set to 1,234,000\n' +
+        '   *1234k* : set to 12,340,000\n' +
+        '   *+100* : add 100 to current set\n' +
+        '   *-3k* : subtract 3000 from current set\n' +
+        '   *1.03* : set to 1.03% (gap or histo only)\n\n' +
+        '(note) Uppercase accepted, spaces allowed';
+}
+
 function showAllCoins(cointypes, msg) {
-    let request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
-    let response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
+    const request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
+    const response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
     Promise.all(cointypes.map(e => request(e)))
         .then(response)
-        .then(attachs => sendWithAttach('BOT', msg, attachs))
+        .then(attachs => sendWithAttach(BOT_ICON, msg, attachs))
         .catch(e => logger.error(e));
 }
 
 function showOneCoin(cointype, msg) {
-    // let request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
-    let response = (value) => showOneCoinType(cointype, value);
+    // const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
+    const response = (value) => showOneCoinType(cointype, value);
     Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
         .then(response)
         .then(attach => sendWithAttach(cointype, msg, [attach]))
@@ -227,8 +281,8 @@ function showOneCoinType(cointype, value) {
 }
 
 function adjustConfig(cointype) {
-    let request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
-    let response = (value) => adjustSellBuy(cointype, value);
+    const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
+    const response = (value) => adjustSellBuy(cointype, value);
     Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
         .then(response)
         .then(attach => sendWithAttach(cointype, 'Sell, Buy Price Adjusted', [attach]))
@@ -237,9 +291,9 @@ function adjustConfig(cointype) {
 
 function adjustSellBuy(cointype, value) {
     try {
-        let configFile = CONFIG + cointype.toLowerCase() + CONFIG_FILENAME;
-        let cf = JSON.parse(fs.readFileSync(configFile));
-        let n = Number(value.body.data[0].price);
+        const configFile = CONFIG + '/' + cointype.toLowerCase() + CONFIG_FILENAME;
+        const cf = JSON.parse(fs.readFileSync(configFile));
+        const n = Number(value.body.data[0].price);
         cf.buyPrice = roundTo(n * (1 - cf.gapAllowance * 3),0);
         cf.sellPrice = roundTo(n * (1 + cf.gapAllowance * 3),0);
         fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
@@ -252,15 +306,29 @@ function adjustSellBuy(cointype, value) {
 
 function makeCoinConfig(cointype, value) {
     try {
-        let cf = JSON.parse(fs.readFileSync(CONFIG + cointype.toLowerCase() + CONFIG_FILENAME));
+        const cf = JSON.parse(fs.readFileSync(CONFIG + '/' + cointype.toLowerCase() + CONFIG_FILENAME));
         return new coinConfig(cointype)
             .addField('Buy   ', npad(cf.buyPrice))
-            .addField('Histo(div) ', npercent(cf.histoPercent))
+            .addField('histo(div) ', npercent(cf.histoPercent))
             .addField('Now ', npad(Number(value.body.data[0].price)))
             .addField('gapAllow ', npercent(cf.gapAllowance))
             .addField('Sell     ', npad(cf.sellPrice));
     } catch (e) {
         // throw new Error('coinType:{0}, value:{1}'.format(coinType, value), e);
         throw new Error(e);
+    }
+}
+
+function sendToSlack(line, title) {
+    try {
+        post
+            .setColor(0)
+            .setTitle(title,CHART_URL)
+            .setRichText(line,true)
+            .setIconURL(ICON_URL + BOT_ICON + '.png')
+            .enableUnfurlLinks()
+            .send((err) => { if (err) throw err; });
+    } catch(e) {
+        logger.error(e);
     }
 }

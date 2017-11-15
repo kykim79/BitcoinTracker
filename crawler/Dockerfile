@@ -1,10 +1,10 @@
-FROM node:6.2.2
+FROM node:6.12.0-slim
 
 MAINTAINER KwonYoung Kim <kykim79@gmail.com>
 
-RUN echo "Asia/Seoul" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata
+ENV TZ Asia/Seoul
 
-RUN mkdir -p /app
+RUN echo "${TZ}" > /etc/timezone && dpkg-reconfigure -f noninteractive tzdata && mkdir -p /app
 
 COPY package.json /app
 
