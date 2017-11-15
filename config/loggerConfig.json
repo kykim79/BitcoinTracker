@@ -1,23 +1,23 @@
 {
   "replaceConsole": true,
   "appenders": {
-    "console": { 
+    "console": {
       "type": "console",
       "layout": {
         "type": "pattern",
         "pattern": "%[[%r] [%5.5p] %c -%] %m"
       }
     },
-    "file": { 
-      "type": "file", 
-      "filename": "./log/coin.log", 
+    "file": {
+      "type": "file",
+      "filename": "./log/coin.log",
       "maxLogSize": 200000
     }
   },
   "categories": {
-    "default": { 
-      "appenders": [ "file", "console" ], 
+    "default": {
+      "appenders": [ "file", "console" ],
       "level": "debug"
     }
-  }      
+  }
 }
