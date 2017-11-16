@@ -47,7 +47,7 @@ let config = readConfigFile(CONFIG_FILE).data;
 watcher.on('change', (info) => {
     config = readConfigFile(info.path).data;
     config.histogram = roundTo((config.sellPrice + config.buyPrice) / 2 * config.histoPercent, 2);
-    const v = 'Buy :{buy}  histo:{histo}\nSell:{sell}  gap:{gap}'.format({
+    const v = 'Buy :{buy}  gap:{gap}\nSell:{sell}  histo:{histo}'.format({
         sell: npad(config.sellPrice),
         buy: npad(config.buyPrice),
         gap: npercent(config.gapAllowance),
@@ -57,17 +57,25 @@ watcher.on('change', (info) => {
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
+let lastepoch = 0;
 
 const ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
 
+/**
+ * lister : main
+ *
+ * - triggered by ohlcBuilder.js
+ * - build required tables for MACD, Stochastic
+ * - calculate MACD, Stochastic values
+ * - alert to slack if values are within range
+ *
+ * @param ohlcs {Array} : prices array [{epoch, price, volume, date, high, low, close, open}]
+ * @return none
+ */
+
 function listener(ohlcs) {
 
-    // ohlcs  =
-    // [
-    //     {epoch, price, volume, date, high, low, close, open},
-    //     {epoch, price, volume, date, high, low, close, open}
-    // ]
     const closes = ohlcs.map(_ => _.close);
     const highs = ohlcs.map(_ => _.high);
     const lows = ohlcs.map(_ => _.low);
@@ -80,7 +88,7 @@ function listener(ohlcs) {
         return;
     }
 
-    let nowValues = ohlcs[ohlcs.length - 1];
+    let nowValues = ohlcs[ohlcs.length - 1];    // last value
     // nowValues.MACD = macds[tableSize - 1].MACD;
     // nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
@@ -93,9 +101,9 @@ function listener(ohlcs) {
     nowValues.tradeType = '';
     nowValues.msgText = '';
     nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 3);
-    nowValues.histoSign = isSignChanged(macds[tableSize - histoCount].histogram,macds[tableSize-1].histogram) ||
-                        isSignChanged(macds[tableSize - histoCount + 1].histogram,macds[tableSize-1].histogram) ||
-                        isSignChanged(macds[tableSize - histoCount + 2].histogram,macds[tableSize-1].histogram);
+    nowValues.histoSign = isSignChanged(macds[tableSize - 2].histogram,macds[tableSize-1].histogram) ||
+                        isSignChanged(macds[tableSize - 3].histogram,macds[tableSize-1].histogram) ||
+                        isSignChanged(macds[tableSize - 4].histogram,macds[tableSize-1].histogram);
 
     if (isFirstTime) {
         justStarted(nowValues, config, tableSize);
@@ -109,9 +117,17 @@ function listener(ohlcs) {
     keepLog(nowValues);
 }
 
-function calculateMACD(closes) {
+/**
+ * calculateMACD : calculate MACD values
+ *
+ * - require "technicalindicators": "^1.0.20"
+ * - generate MACD array
+ *
+ * @param closes {Array} : close prices array [close]
+ * @return MACD {Array} : [{MACD, signal, histogram}]
+ */
 
-    // closes [ close price old,.... close price now ]
+function calculateMACD(closes) {
 
     let m = {
         values: closes,
@@ -130,12 +146,19 @@ function isSignChanged(before,after) {
     return (before >= 0 && after <= 0) || (before <= 0 && after >= 0);
 }
 
+/**
+ * calculateStochastic : calculate Stochastic values
+ *
+ * - require "technicalindicators": "^1.0.20"
+ * - generate Stochastic array
+ *
+ * @param highs {Array} : close prices array [close]
+ * @param lows {Array} : close prices array [close]
+ * @param closes {Array} : close prices array [close]
+ * @return Stochastic {Array} : [d, k}]
+ */
 
 function calculateStochastic(highs, lows, closes) {
-
-    // highs  [ high  price old, ... , high  price now ]
-    // lows   [ low   price old, ... , low   price now ]
-    // closes [ close price old, ... , close price now ]
 
     let s = {
         high: highs,
@@ -146,6 +169,16 @@ function calculateStochastic(highs, lows, closes) {
     };
     return Stochastic.calculate(s);
 }
+
+/**
+ * justStarted : inform to slack that this analytic program has been started
+ *
+ *
+ * @param nowValues {Object} : gathered and calculated current values
+ * @param config {Object} : current configuration setting
+ * @param tableSize {var} : length of MACD array
+ * @return none
+ */
 
 function justStarted(nowValues, config, tableSize) {
 
@@ -166,6 +199,14 @@ function justStarted(nowValues, config, tableSize) {
         'Sell:{sell}   h(div):{histo}', v);
     note.info(m, 'Analyzing Started');
 }
+
+/**
+ * analyzeHistogram : annalyze histogram values against configuration setting and then alert if right time
+ *
+ *
+ * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @return nv.msgText if any
+ */
 
 function analyzeHistogram(nv) {
 
@@ -189,7 +230,7 @@ function analyzeHistogram(nv) {
     }
 
     // if histogram average is not too small and histogram sign has been changed, alert
-    // very similar effect with above nv.histoSign
+    // very similar analysis with above nv.histoSign
 
     else if (nv.histoAvr > config.histogram) {
         if (nv.lastHistogram >= 0 && nv.histogram <= 0 &&
@@ -212,6 +253,14 @@ function analyzeHistogram(nv) {
     }
     return nv;
 }
+
+/**
+ * analyzeStochastic : annalyze Stochastic values against configuration setting and then alert if right time
+ *
+ *
+ * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @return nv.msgText if any
+ */
 
 function analyzeStochastic(nv) {
 
@@ -244,6 +293,14 @@ function analyzeStochastic(nv) {
     return nv;
 }
 
+/**
+ * analyzeBoundary : review if current prices goes out of configured buy,sell prices
+ *
+ *
+ * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @return nv.msgText if any
+ */
+
 function analyzeBoundary(nv) {
 
     // nv(nowValues) : current price info, calcualted analytic values
@@ -266,6 +323,16 @@ function analyzeBoundary(nv) {
     }
     return nv;
 }
+
+
+/**
+ * informTrade : send message to slack via web-hook
+ *
+ *
+ * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @param msg {text} : header message
+ * @return none
+ */
 
 function informTrade(nv, msg) {
 
@@ -293,32 +360,46 @@ function informTrade(nv, msg) {
     note.danger(m.format(v), msg);
 }
 
+/**
+ * keepLog : append nowValues into log file
+ *
+ *
+ * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @return none
+ */
+
 function keepLog(nv) {
 
-    // nv(nowValues) : current price info, calcualted analytic values
+    if (lastepoch !== nv.epoch) {   // ignore if same record
+        lastepoch = nv.epoch;
+        try {
+            let str = [
+                CURRENCY,
+                moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
+                // nv.open,
+                // nv.high,
+                // nv.low,
+                nv.close,
+                roundTo(nv.volume, 2),
+                // roundTo(nv.MACD, 2),
+                // roundTo(nv.signal, 2),
+                nv.histogram,
+                nv.histoAvr,
+                nv.dNow,
+                nv.kNow,
+                nv.tradeType,
+                nv.msgText
+            ].join(', ');
+            stream.write(str + require('os').EOL);
+        } catch (e) {
+            logger.error(e);
+        }
+    }
 
-    // write transaction values to review analysis logics
-
-    try {
-        let str = [
-            CURRENCY,
-            moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
-            // nv.open,
-            // nv.high,
-            // nv.low,
-            nv.close,
-            roundTo(nv.volume, 2),
-            // roundTo(nv.MACD, 2),
-            // roundTo(nv.signal, 2),
-            nv.histogram,
-            nv.histoAvr,
-            nv.dNow,
-            nv.kNow,
-            nv.tradeType,
-            nv.msgText
-        ].join(', ');
-        stream.write(str + require('os').EOL);
-    } catch (e) {
-        logger.error(e);
+    // sometimes write value header (07:5x)
+    let d = new Date(lastepoch);
+    if (d.getHours() === 14 && d.getMinutes() > 56) {
+        const head = 'coin, date and time  ,   close,   vol, histogram, hisAvr, dNow, kNow, B/S, msgText';
+        stream.write(head + require('os').EOL);
     }
 }

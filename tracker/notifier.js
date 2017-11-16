@@ -10,6 +10,7 @@ const ICON_URL = process.env.ICON_URL + CURRENCY + '.png';
 const coinType = require('./coinType.js');
 const coinTypes = coinType.enums.map((c) => c.value);
 const CHART_URL = process.env.CHART_URL + coinTypes.indexOf(CURRENCY);
+const TRACKER_NAME = process.env.TRACKER_NAME;
 
 // LOGGER
 let log4js = require('log4js');
@@ -24,11 +25,22 @@ exports.attach = (line, title) => sendToSlack(line, title, false);
 
 let slackPost = require('slackpost');
 let post = slackPost.post(WEB_HOOK);
-post.setUsername(CURRENCY).enableFieldMarkdown();
+post.setUsername(TRACKER_NAME + ' : ' + CURRENCY).enableFieldMarkdown();
 const EOL = require('os').EOL;
 
 let msgLine = (line) => '```{0}```'.format(line);
 let logLine = (line, title) => replaceall(EOL, '; ', title + ', ' + line);
+
+/**
+ * sendToSlack : post message and write to log
+ *
+ *
+ * @input line : text message which cotains markdown
+ * @input title : header message
+ * @input markdown : always true
+ * @input type : one of notiType enum
+ * @return none
+ */
 
 function sendToSlack(line, title, markdown, type=notiType.INFO) {
     try {
