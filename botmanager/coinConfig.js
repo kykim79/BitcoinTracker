@@ -21,8 +21,9 @@ module.exports = class configCoin {
         }
     }
 
-    addField(titleKey, titleVal, short=true) {
-        this.fields.push({ title: titleKey + titleVal, short: short });
+    addField(titleKey, titleKey2, value = '') {
+        this.fields.push({ title: titleKey + titleKey2, value: value, short: true});
+        // this.fields.push({ title: titleKey + titleKey2, value: value, short: true, mrkdwn_in: ['title','text'] });
         return this;
     }
     addFieldFull(title, value, short=false) {

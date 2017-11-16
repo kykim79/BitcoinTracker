@@ -269,12 +269,14 @@ function adjustConfigSellBuy(cointype, value) {
 function makeCoinConfig(cointype, value) {
     try {
         const cf = JSON.parse(fs.readFileSync(CONFIG + cointype.toLowerCase() + CONFIG_FILENAME));
+        const nowPrice = Number(value.body.data[0].price);
         return new coinConfig(cointype)
-            .addField('Buy   ', npad(cf.buyPrice))
+            .addField('Buy:     ', npercent((nowPrice - cf.buyPrice ) / nowPrice), '   ' + npad(cf.buyPrice))
             .addField('gapAllow ', npercent(cf.gapAllowance))
-            .addField('Now ', npad(Number(value.body.data[0].price)))
+            .addField('Now:', '',  '   ' + npad(nowPrice))
             .addField('histo(div) ', npercent(cf.histoPercent))
-            .addField('Sell     ', npad(cf.sellPrice));
+            .addField('Sell:     ', npercent((cf.sellPrice - nowPrice) / nowPrice),  '   ' + npad(cf.sellPrice))
+        ;
     } catch (e) {
         // throw new Error('coinType:{0}, value:{1}'.format(coinType, value), e);
         throw new Error(e);
