@@ -3,7 +3,7 @@ const coinTypes = coinType.enums.map((c) => c.value);
 const CHART_URL = process.env.CHART_URL;
 const findKey = (value) => coinType.enums.find((e) => e.value === value).key;
 
-module.exports = class configCoin {
+module.exports = class coinConfig {
     constructor(coin = 'BTC') {
         try {
             this.title = coin + ' (' + findKey(coin) + ')'; // Big blue head

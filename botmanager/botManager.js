@@ -11,9 +11,11 @@ const querystring = require('querystring');
 const Bot = require('slackbots');
 const Promise = require('bluebird');
 const bhttp = require('bhttp');
-const coinConfig = require('./coinConfig.js');
-const coinType = require('./coinType.js');
+const coinConfig = require('./coinConfig');
+const coinType = require('./coinType');
 const EOL = require('os').EOL;
+
+const CommandHelper = require('./commandHelper');
 
 const coinTypes = coinType.enums.map((c) => c.value);
 const roundTo = require('round-to');
@@ -51,7 +53,85 @@ const CHANNEL = process.env.CHANNEL;
 const USERS = process.env.USERS;
 const CHART_URL = process.env.CHART_URL;
 
-const MATCH_REGEX = /^sb\s*(?:(?:[]?)|(?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))\s*$/i;
+let showUsage = () =>  sendToSlack(buildUsageMsg(),'Monitor Cryptocurrency prices\n (Ver. 17-11-14)');
+
+let showAllCoins = (match, [cointypes, msg]) => {
+    const request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
+    const response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
+    Promise.all(cointypes.map(e => request(e)))
+        .then(response)
+        .then(attachs => sendWithAttach(BOT_ICON, msg, attachs))
+        .catch(e => logger.error(e));
+};
+
+let updateCoin = (match, [msg]) => {
+    updateConfig(match);
+    showCoin(match, msg);
+};
+
+let showCurrCoin = (match, [msg]) => showCoin(match, msg);
+
+let showCoin = (match, msg) => {
+    const ct = coinType.get(match[1]).value;
+    const response = (value) => showCoinType(ct, value);
+    Promise.try(() => bhttp.get(BITHUMB_URL +  ct))
+        .then(response)
+        .then(attach => sendWithAttach(ct, msg, [attach]))
+        .catch(e => logger.error(e));
+};
+
+let adjustConfig = (match, msg) => {
+    const ct = coinType.get(match[1]).value;
+    const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
+    const response = (value) => adjustSellBuy(ct, value);
+    Promise.try(() => bhttp.get(BITHUMB_URL +  ct))
+        .then(response)
+        .then(attach => sendWithAttach(ct, 'Sell, Buy Price Adjusted', [attach]))
+        .catch(e => logger.error(e));
+};
+
+let updateConfig = (match) => {
+    const c = {
+        cointype: coinType.get(match[1]).value,
+        configField: match[2],
+        sign: match[3],
+        amount: match[5] === 'k' ? Number(match[4]) * 1000 : Number(match[4])
+    };
+
+    const configFile = CONFIG + '/' + c.cointype.toLowerCase() + CONFIG_FILENAME;
+    const cf = JSON.parse(fs.readFileSync(configFile));
+    switch (c.configField) {
+    case 's':   // sellPrice
+        cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
+        break;
+    case 'b':   // buyPrice
+        cf.buyPrice = updatePrice(c.sign, c.amount, cf.buyPrice);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
+        break;
+    case 'g':   // gapAllowance
+        cf.gapAllowance = roundTo(c.amount / 100, 4);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
+        break;
+    case 'h':   // histogram
+        cf.histoPercent = roundTo(c.amount / 100, 6);
+        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
+        break;
+    default:
+        send('undefined config field: ' + c.configField);   // should not happen
+        process.exit(11);
+    }
+    fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
+};
+
+const MATCH_REGEX = /^sb\s*(?:(?:([n]))|(?:([bxce])([na]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))?\s*$/i;
+
+const commandHelper = new CommandHelper()
+    .addCommand(/^sb\s*$/, showUsage)
+    .addCommand(/^sb\s*n$/, showAllCoins, [coinTypes, 'Current Config'])
+    .addCommand(/^sb\s*([bxce])n$/, showCurrCoin, ['Current Configuration Values'])
+    .addCommand(/^sb\s*([bxce])a$/, adjustConfig, [])
+    .addCommand(/^sb\s*([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)$/, updateCoin, ['New Configuration']);
 
 // create a bot
 const settings = {
@@ -69,31 +149,16 @@ bot.on('start', function() {
 
 function channelIdToName(id) {
     let channels = bot.getChannels();
-    if ((typeof channels !== 'undefined')
-        && (typeof channels._value !== 'undefined')
-        && (typeof channels._value.channels !== 'undefined')) {
-        channels = channels._value.channels;
-        for (var i=0; i < channels.length; i++) {
-            if (channels[i].id === id) {
-                return channels[i].name;
-            }
-        }
-    }
-    return '';
+    return (channels && channels._value && channels._value.channels)
+        ? '#' + channels._value.channels.find(e => e.id === id).name
+        : '';
 }
+
 function userIdToName(id) {
     let users = bot.getUsers();
-    if ((typeof users !== 'undefined')
-        && (users._value !== 'undefined')
-        && (users._value.members !== 'undefined')) {
-        users = users._value.members;
-        for (var i=0; i < users.length; i++ ) {
-            if (users[i].id === id) {
-                return users[i].name;
-            }
-        }
-    }
-    return '';
+    return (users && users._value && users._value.members)
+        ? users._value.members.find(e => e.id === id).name
+        : '';
 }
 
 bot.on('message', function(data) {
@@ -108,85 +173,19 @@ bot.on('message', function(data) {
         return;
     }
     logger.debug('command = [' + text + ']');
-    const channelName = '#' + channelIdToName(data.channel);
-    if (channelName !== CHANNEL) {
-        // send('Input fromm wrong channel[' + channelName + '], command ignored.');
+
+    if ((channelIdToName(data.channel)) !== CHANNEL || !USERS.includes(userIdToName(data.user))) {
+        send('Unauthorized channel or user.');
         return;
     }
-    const userName = userIdToName(data.user);
-    if (USERS.indexOf(userName) === -1) {
-        send('You [' + userName + '] are not authorized user, command ignored.');
-        return;
-    }
+
     try {
-        const match = MATCH_REGEX.exec(text);
-
-        if (!match) {
-            send('Invalid slackbot command  [' + text + ']');
-            return;
-        }
-        // match.forEach((e, i) => console.log(i + ': ' + e));
-
-        if (match[0] === 'sb') {        // sb only
-            showUsage();
-        }
-        else if (match[1] === 'n') {    // sb n
-            showAllCoins(coinTypes, 'Current Config');
-        }
-        else if (match[2]) {           // should be sb Xn  or sb Xa
-            if (match[3] === 'n') {
-                showOneCoin(coinType.get(match[2]).value, 'Current Configuration Values');
-            }
-            else if (match[3] === 'a') {
-                adjustConfig(coinType.get(match[2]).value);
-            }
-            else {
-                send('Subcommand after coin should be "n" or "a"  : [' + text + ']'); // actually regex error
-            }
-        }
-        else {
-            const config = {
-                cointype: coinType.get(match[4]).value,
-                configField: match[5],
-                sign: match[6],
-                amount: match[8] === 'k' ? Number(match[7]) * 1000 : Number(match[7])
-            };
-            showOneCoin(updateConfig(config), 'New Configuration');
-        }
+        commandHelper.execute(text);
     }
     catch (e) {
         logger.error(e);
     }
 });
-
-function updateConfig(c) {
-
-    const configFile = CONFIG + '/' + c.cointype.toLowerCase() + CONFIG_FILENAME;
-    const cf = JSON.parse(fs.readFileSync(configFile));
-    switch (c.configField) {
-    case 's':   // sellPrice
-        cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
-        break;
-    case 'b':   // buyPrice
-        cf.buyPrice = updatePrice(c.sign, c.amount, cf.buyPrice);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
-        break;
-    case 'g':   // gapAllowance
-        cf.gapAllowance = roundTo(c.amount / 100,4);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
-        break;
-    case 'h':   // histogram
-        cf.histoPercent = roundTo(c.amount / 100,6);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
-        break;
-    default:
-        send('undefined config field: ' + c.configField);   // should not happen
-        process.exit(11);
-    }
-    fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
-    return c.cointype;
-}
 
 function updatePrice (sign, amount, price) {
     switch (sign) {
@@ -235,10 +234,6 @@ function requestMessage(msg) {
     });
 }
 
-function showUsage() {
-    sendToSlack(buildUsageMsg(),'Monitor Cryptocurrency prices\n (Ver. 17-11-14)');
-}
-
 function buildUsageMsg() {
     return '*Usage :*\n' +
         '*sb* _{currency}{subcommand}{amount}_\n\n' +
@@ -258,35 +253,8 @@ function buildUsageMsg() {
         '(note) Uppercase accepted, spaces allowed';
 }
 
-function showAllCoins(cointypes, msg) {
-    const request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
-    const response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
-    Promise.all(cointypes.map(e => request(e)))
-        .then(response)
-        .then(attachs => sendWithAttach(BOT_ICON, msg, attachs))
-        .catch(e => logger.error(e));
-}
-
-function showOneCoin(cointype, msg) {
-    // const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
-    const response = (value) => showOneCoinType(cointype, value);
-    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
-        .then(response)
-        .then(attach => sendWithAttach(cointype, msg, [attach]))
-        .catch(e => logger.error(e));
-}
-
-function showOneCoinType(cointype, value) {
+function showCoinType(cointype, value) {
     return makeCoinConfig(cointype, value);
-}
-
-function adjustConfig(cointype) {
-    const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
-    const response = (value) => adjustSellBuy(cointype, value);
-    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
-        .then(response)
-        .then(attach => sendWithAttach(cointype, 'Sell, Buy Price Adjusted', [attach]))
-        .catch(e => logger.error(e));
 }
 
 function adjustSellBuy(cointype, value) {
