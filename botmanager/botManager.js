@@ -88,19 +88,22 @@ bot.on('message', function(data) {
     if (data.type !== 'message') {
         return;
     }
-    logger.debug('command = [' + data.text + ']');
 
     const text = data.text.trim().toLowerCase();
+
+    if (text) {
+        logger.debug('command = [' + text + ']');
+    }
 
     if (text.length < 2 || !text.startsWith('sb')) {
         return;
     }
-    let channelName = '#' + channelIdToName(data.channel);
+    const channelName = '#' + channelIdToName(data.channel);
     if (channelName !== CHANNEL) {
         // send('Input fromm wrong channel[' + channelName + '], command ignored.');
         return;
     }
-    let userName = userIdToName(data.user);
+    const userName = userIdToName(data.user);
     if (USERS.indexOf(userName) === -1) {
         replier.sendText('You [' + userName + '] are not authorized user, command ignored.');
         return;
@@ -119,7 +122,7 @@ bot.on('message', function(data) {
             showUsage();
         }
         else if (match[1] === 'n') {    // sb n
-            showAllCoins(coinTypes, 'Current Config');
+            showAllCoins();
         }
         else if (match[2]) {           // should be sb Xn  or sb Xa
             if (match[3] === 'n') {
@@ -220,12 +223,12 @@ function buildUsageMsg() {
         '(note) Uppercase accepted, spaces allowed';
 }
 
-function showAllCoins(cointypes, msg) {
+function showAllCoins() {
     const request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
-    const response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
-    Promise.all(cointypes.map(e => request(e)))
+    const response = (values) => values.map((value, i) => makeCoinConfig(coinTypes[i], value));
+    Promise.all(coinTypes.map(e => request(e)))
         .then(response)
-        .then(attachs => replier.sendAttach(BOT_ICON, msg, attachs))
+        .then(attachs => replier.sendAttach(BOT_ICON, 'Current Configuration', attachs))
         .catch(e => logger.error(e));
 }
 
@@ -270,12 +273,15 @@ function makeCoinConfig(cointype, value) {
     try {
         const cf = JSON.parse(fs.readFileSync(CONFIG + cointype.toLowerCase() + CONFIG_FILENAME));
         const nowPrice = Number(value.body.data[0].price);
+        const volume = value.body.data.map(_ => Number(_.units_traded)).reduce((e1, e2) => e1 + e2);
+        const blank = '       ';
         return new coinConfig(cointype)
-            .addField('Buy:     ', npercent((nowPrice - cf.buyPrice ) / nowPrice), '   ' + npad(cf.buyPrice))
-            .addField('gapAllow ', npercent(cf.gapAllowance))
-            .addField('Now:', '',  '   ' + npad(nowPrice))
-            .addField('histo(div) ', npercent(cf.histoPercent))
-            .addField('Sell:     ', npercent((cf.sellPrice - nowPrice) / nowPrice),  '   ' + npad(cf.sellPrice))
+            .addField('Buy:     ', npercent((nowPrice - cf.buyPrice ) / nowPrice), blank + npad(cf.buyPrice))
+            .addField('gapAllow ', npercent(cf.gapAllowance), blank + npad(cf.gapAllowance * nowPrice))
+            .addField('Now:', '',  blank + npad(nowPrice))
+            .addField('histo(div) ', npercent(cf.histoPercent), blank + npad(cf.histoPercent * nowPrice))
+            .addField('Sell:     ', npercent((cf.sellPrice - nowPrice) / nowPrice),  blank + npad(cf.sellPrice))
+            .addField('volume ', '', blank + numeral(volume).format('0,0.000'))
         ;
     } catch (e) {
         // throw new Error('coinType:{0}, value:{1}'.format(coinType, value), e);
