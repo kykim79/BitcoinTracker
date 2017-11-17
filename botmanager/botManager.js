@@ -91,19 +91,21 @@ bot.on('message', function(data) {
 
     const text = data.text.trim().toLowerCase();
 
-    if (text) {
+    // if (text) {
         logger.debug('command = [' + text + ']');
-    }
+    // }
 
     if (text.length < 2 || !text.startsWith('sb')) {
         return;
     }
     const channelName = '#' + channelIdToName(data.channel);
+    logger.debug(channelName);
     if (channelName !== CHANNEL) {
         // send('Input fromm wrong channel[' + channelName + '], command ignored.');
         return;
     }
     const userName = userIdToName(data.user);
+    logger.debug(userName);
     if (USERS.indexOf(userName) === -1) {
         replier.sendText('You [' + userName + '] are not authorized user, command ignored.');
         return;
@@ -116,7 +118,7 @@ bot.on('message', function(data) {
             return;
         }
 
-        // match.forEach((e, i) => console.log(i + ': ' + e));
+        match.forEach((e, i) => console.log(i + ': ' + e));
 
         if (match[0] === 'sb') {        // sb only
             showUsage();

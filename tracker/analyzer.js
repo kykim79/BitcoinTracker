@@ -76,6 +76,14 @@ logger.debug('[' + npad(123456) + ']');
 
 function listener(ohlcs) {
 
+
+    let nowValues = ohlcs[ohlcs.length - 1];    // last value
+    if (nowValues.epoch === lastepoch) {
+        logger.debug('Same ohlc table as before ' + moment(new Date(nowValues.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'));
+        return;
+    }
+    lastepoch = nowValues.epoch;
+
     const closes = ohlcs.map(_ => _.close);
     const highs = ohlcs.map(_ => _.high);
     const lows = ohlcs.map(_ => _.low);
@@ -88,7 +96,6 @@ function listener(ohlcs) {
         return;
     }
 
-    let nowValues = ohlcs[ohlcs.length - 1];    // last value
     // nowValues.MACD = macds[tableSize - 1].MACD;
     // nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
@@ -376,30 +383,27 @@ function informTrade(nv, msg) {
 
 function keepLog(nv) {
 
-    if (lastepoch !== nv.epoch) {   // ignore if same record
-        lastepoch = nv.epoch;
-        try {
-            let str = [
-                CURRENCY,
-                moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
-                // nv.open,
-                // nv.high,
-                // nv.low,
-                nv.close,
-                roundTo(nv.volume, 2),
-                // roundTo(nv.MACD, 2),
-                // roundTo(nv.signal, 2),
-                nv.histogram,
-                nv.histoAvr,
-                nv.dNow,
-                nv.kNow,
-                nv.tradeType,
-                nv.msgText
-            ].join(', ');
-            stream.write(str + require('os').EOL);
-        } catch (e) {
-            logger.error(e);
-        }
+    try {
+        let str = [
+            CURRENCY,
+            moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
+            // nv.open,
+            // nv.high,
+            // nv.low,
+            nv.close,
+            roundTo(nv.volume, 2),
+            // roundTo(nv.MACD, 2),
+            // roundTo(nv.signal, 2),
+            nv.histogram,
+            nv.histoAvr,
+            nv.dNow,
+            nv.kNow,
+            nv.tradeType,
+            nv.msgText
+        ].join(', ');
+        stream.write(str + require('os').EOL);
+    } catch (e) {
+        logger.error(e);
     }
 
     // sometimes write value header
