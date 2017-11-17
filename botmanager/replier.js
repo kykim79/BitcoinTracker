@@ -78,7 +78,7 @@ function buildMessage(iconName, text, attachs = null) {
 
 function requestMessage(msg) {
     let webMsg = 'http://slack.com/api/chat.postMessage?' + querystring.stringify(msg);
-    request(webMsg, function(error, response, body) {
+    request(webMsg, function(error, response) {
         if (error || response.statusCode !== 200) {
             logger.error(error);
         }

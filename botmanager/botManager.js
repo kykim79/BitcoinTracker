@@ -41,7 +41,7 @@ const BOT_NAME = process.env.BOT_NAME;
 const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
 const BOT_ICON = process.env.BOT_ICON;
 
-const MATCH_REGEX = /^sb\s*(?:(?:[]?)|(?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))\s*$/i;
+const MATCH_REGEX = /^sb\s*(?:(?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))\s*$/i;
 
 // create a bot
 const settings = {
@@ -246,7 +246,7 @@ function showOneCoinType(cointype, value) {
 }
 
 function adjustConfig(cointype) {
-    const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
+    // const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
     const response = (value) => adjustConfigSellBuy(cointype, value);
     Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
         .then(response)
