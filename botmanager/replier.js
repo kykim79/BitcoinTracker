@@ -32,10 +32,12 @@ exports.sendSlack = (line, title) => sendToSlack(line, title);
 
 function send(text) {
     requestMessage(buildMessage(BOT_ICON, text));
+    logger.debug(text);
 }
 
 function sendWithAttach(iconName, text, attachs) {
     requestMessage(buildMessage(iconName, text, attachs));
+    logger.debug(text);
 }
 
 function sendToSlack(line, title) {
@@ -47,6 +49,7 @@ function sendToSlack(line, title) {
             .setIconURL(ICON_URL + BOT_ICON + '.png')
             .enableUnfurlLinks()
             .send((err) => { if (err) throw err; });
+        logger.debug(title);
     } catch(e) {
         logger.error(e);
     }

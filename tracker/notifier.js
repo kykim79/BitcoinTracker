@@ -23,9 +23,11 @@ exports.warn = (line, title) => sendToSlack(line, title, true, notiType.WARN);
 exports.danger = (line, title) => sendToSlack(line, title, true, notiType.DANGER);
 exports.attach = (line, title) => sendToSlack(line, title, false);
 
+const findKey = (value) => coinType.enums.find((e) => e.value === value).key;
+
 let slackPost = require('slackpost');
 let post = slackPost.post(WEB_HOOK);
-post.setUsername(TRACKER_NAME + ' : ' + CURRENCY).enableFieldMarkdown();
+post.setUsername(TRACKER_NAME + ' : ' + CURRENCY + ' (' + findKey(CURRENCY) + ')').enableFieldMarkdown();
 const EOL = require('os').EOL;
 
 let msgLine = (line) => '```{0}```'.format(line);
@@ -57,7 +59,6 @@ function sendToSlack(line, title, markdown, type=notiType.INFO) {
         logger.error(e);
     }
 }
-
 
 function log(m, type) {
     switch (type.value) {

@@ -4,6 +4,7 @@ format.extend(String.prototype);
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const LOG = process.env.LOG;
+const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 
 // let fs = require('fs');
 
@@ -36,7 +37,8 @@ let readConfigFile = (path) => new json.read(path);
 const log4js = require('log4js');
 let logger = log4js.getLogger('analyzer:' + currency);
 
-let npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
+let npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
+
 const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
 const note = require('./notifier.js');
 const TradeType = require('./tradeType.js');
@@ -44,16 +46,11 @@ let isFirstTime = true; // inform current setting when this module is started
 
 let config = readConfigFile(CONFIG_FILE).data;
 
+
 watcher.on('change', (info) => {
     config = readConfigFile(info.path).data;
-    config.histogram = roundTo((config.sellPrice + config.buyPrice) / 2 * config.histoPercent, 2);
-    const v = 'Buy :{buy}  gap:{gap}\nSell:{sell}  histo:{histo}'.format({
-        sell: npad(config.sellPrice),
-        buy: npad(config.buyPrice),
-        gap: npercent(config.gapAllowance),
-        histo: npercent(config.histoPercent)
-    });
-    note.info(v, 'Configuration Changed');   // will be removed later
+    logger.debug('histogram value : ' +config.histogram);
+    // config.histogram = roundTo((config.sellPrice + config.buyPrice) / 2 * config.histoPercent, 2);
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
@@ -61,6 +58,9 @@ let lastepoch = 0;
 
 const ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
+
+
+logger.debug('[' + npad(123456) + ']');
 
 /**
  * lister : main
@@ -195,7 +195,7 @@ function justStarted(nowValues, config, tableSize) {
         histo: npercent(config.histoPercent)
     };
     const m = format('Buy  :{buy}   tblSz :{size}\n' +
-        'Now  :{now}   gap :{gap}\n' +
+        'Now  :{now}   gap   :{gap}\n' +
         'Sell:{sell}   h(div):{histo}', v);
     note.info(m, 'Analyzing Started');
 }
@@ -221,11 +221,11 @@ function analyzeHistogram(nv) {
     if (nv.histoSign) {
         if (nv.histogram <= 0 && (Math.abs(config.sellPrice - nv.close) / nv.close) < config.gapAllowance) {
             nv.tradeType = TradeType.SELL;
-            msg = (nv.close >= config.sellPrice) ? 'Over! SELL, histo Changed' : 'Histo says SELL';
+            msg = (nv.close >= config.sellPrice) ? '*SELL*, histo sign Changed' : 'Histo says SELL';
         }
         else if (nv.histogram >= 0 && (Math.abs(config.buyPrice - nv.close) / nv.close) < config.gapAllowance) {
             nv.tradeType = TradeType.BUY;
-            msg = (nv.close <= config.buyPrice) ? 'Under! BUY, histo Changed' : 'Histo says BUY';
+            msg = (nv.close <= config.buyPrice) ? '*BUY*, histo sign changed' : 'Histo says BUY';
         }
     }
 
@@ -266,9 +266,9 @@ function analyzeStochastic(nv) {
 
     // nv(nowValues) : current price info, calcualted analytic values
 
-    if (nv.histoAvr < config.histogram) {
-        return nv;
-    }
+    // if (nv.histoAvr < config.histogram) {
+    //     return nv;
+    // }
     let msg = '';
     if (nv.dLast >= 80 && nv.kLast >= 80) {
         if (nv.dNow < 80 || nv.kNow < 80) {
@@ -310,11 +310,11 @@ function analyzeBoundary(nv) {
     let msg = '';
     if (nv.close > config.sellPrice) {
         nv.tradeType = TradeType.SELL;
-        msg = 'Going Over SELL boundary';
+        msg = 'Going Over _SELL_ boundary';
     }
     else if (nv.close < config.buyPrice) {
         nv.tradeType = TradeType.BUY;
-        msg = 'Going Under BUY boundary';
+        msg = 'Going Under _BUY_ boundary';
     }
     if (msg) {
         informTrade(nv,msg);
@@ -348,14 +348,20 @@ function informTrade(nv, msg) {
         targetNpad: npad(target),
         gap: npad(nv.close - target),
         gapPcnt: npercent((nv.close - target) / target),
-        volume: numeral(nv.volume).format('0,0'),
-        histo: npad(nv.close * nv.histoPercent),
-        histoAvr: npad( nv.histoAvr)
+        volume: npad(nv.volume),
+        histogram: npad(config.histogram),
+        histopct: npercent(nv.histoPercent),
+        histoAvr: npad( nv.histoAvr),
+        dl: numeral(nv.dLast).format('0.0'),
+        kl: numeral(nv.kLast).format('0.0'),
+        dn: numeral(nv.dNow).format('0.0'),
+        kn: numeral(nv.kNow).format('0.0')
     };
-    const m = 'Now :{nowNpad}  volume:{volume}\n' +
-        '{buysell}:{targetNpad}  h(Avr):{histoAvr}\n' +
-        'Gap :{gap}    h(div):{histo}\n' +
-        'Gap%: {gapPcnt}'; // .format(v); does'n work
+    const m = 'Now :{nowNpad}  h(set):{histogram}\n' +
+        '{buysell}:{targetNpad}  h(pct): {histopct}\n' +
+        'Gap :{gap}   h(avr):{histoAvr}\n' +
+        'Gap%:    {gapPcnt}    volume: {volume}\n' +
+        'dk ({dl},{kl}) => ({dn},{kn})';
 
     note.danger(m.format(v), msg);
 }
@@ -396,9 +402,9 @@ function keepLog(nv) {
         }
     }
 
-    // sometimes write value header (07:5x)
+    // sometimes write value header
     let d = new Date(lastepoch);
-    if (d.getHours() === 14 && d.getMinutes() > 56) {
+    if (d.getMinutes() > 56 && (d.getHours() % 2 === 1)) {
         const head = 'coin, date and time  ,   close,   vol, histogram, hisAvr, dNow, kNow, B/S, msgText';
         stream.write(head + require('os').EOL);
     }

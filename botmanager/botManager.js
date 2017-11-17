@@ -182,6 +182,7 @@ function updateConfig(c) {
         process.exit(11);
     }
     fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
+    logger.debug('Update configration completed..');
     return c.cointype;
 }
 
@@ -201,7 +202,9 @@ function updatePrice (sign, amount, price) {
 module.exports = updatePrice;
 
 function showUsage() {
-    replier.sendSlack(buildUsageMsg(),'Monitor Cryptocurrency prices\n (Ver. 17-11-14)');
+    const m = 'Monitor Cryptocurrency prices\n (Ver. 17-11-14)';
+    replier.sendSlack(buildUsageMsg(),m);
+    logger.debug(m);
 }
 
 function buildUsageMsg() {
