@@ -47,7 +47,7 @@ function buildMessage(iconName, text, attachs = null) {
         text: ''
     };
     if(attachs) {
-        attachs[0].title += ', ' + text;
+        attachs[0].title += ',  ' + text;
         msg.attachments = JSON.stringify(attachs);
     }
     else {
@@ -63,7 +63,7 @@ function sendMarkDownedText(line, title, url) {
         post
             .setUsername(BOT_NAME)
             .enableFieldMarkdown()
-            .setColor(0)
+            .setColor('#6bbf8e')
             .setTitle(title, url)
             .setRichText(line,true)
             .setIconURL(ICON_URL + BOT_ICON + '.png')

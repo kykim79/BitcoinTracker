@@ -138,8 +138,8 @@ bot.on('message', function(data) {
         }
         else {
             const config = {
-                coin: COINS_KEY[COINS_CMD.indexOf(match[2])],
-                configField: match[5],
+                coin: COINS_KEY[COINS_CMD.indexOf(match[4])],
+                command: match[5],
                 sign: match[6],
                 amount: match[8] === 'k' ? Number(match[7]) * 1000 : Number(match[7])
             };
@@ -154,7 +154,7 @@ bot.on('message', function(data) {
 
 /**
  * updateConfig : update Configuration.json by commands input
- * @param c(command) {cointype(BTC), configField('b','s'), sign(+/-), amount(1234)
+ * @param c(command) {cointype(BTC), command('b','s'), sign(+/-), amount(1234)
  * @returns none
  */
 
@@ -162,7 +162,7 @@ function updateConfig(c) {
 
     const configFile = CONFIG  + c.coin.toLowerCase() + CONFIG_FILENAME;
     const cf = JSON.parse(fs.readFileSync(configFile));
-    switch (c.configField) {
+    switch (c.command) {
     case 's':   // sellPrice
         cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice);
         cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
@@ -180,7 +180,7 @@ function updateConfig(c) {
         cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     default:
-        replier.sendText('undefined config field: ' + c.configField);   // should not happen
+        replier.sendText('undefined config field: ' + c.command);   // should not happen
         process.exit(11);
     }
     fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
@@ -213,7 +213,7 @@ function buildUsageMsg() {
     return '                 _(Ver. 2017-11-19)_\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
         '      {bxecn}  {bsaghn}  {(+/-)123(k)}\n' +
-        '_Refer github for more detail_\nhttps://goo.gl/dkEUaR';    // => 'https://github.com/kykim79/BitcoinTracker'
+        '_Refer github README.md for more detail_\nhttps://goo.gl/dkEUaR';    // => 'https://github.com/kykim79/BitcoinTracker'
 }
 
 function showAllCoins() {
