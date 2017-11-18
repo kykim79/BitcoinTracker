@@ -11,10 +11,7 @@ const currency = CURRENCY.toLowerCase();
 const CHART_FIELDS = ['date', 'open', 'high', 'low', 'close', 'volume'];
 const CHART_FIELD_NAMES = ['date', 'open', 'high', 'low', 'close', 'volume'];
 const CHART_FILENAME = process.env.CHART_DATA + currency + '/CandleData.csv';
-
-// LOGGER
-let log4js = require('log4js');
-let logger = log4js.getLogger('chartFeeder:' + currency);
+const logger = require('./logger.js').getLogger('chartfeeder:' + currency);
 
 let ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
