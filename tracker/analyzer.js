@@ -54,13 +54,9 @@ watcher.on('change', (info) => {
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
-let lastepoch = 0;
 
 const ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
-
-
-logger.debug('[' + npad(123456) + ']');
 
 /**
  * lister : main
@@ -76,14 +72,6 @@ logger.debug('[' + npad(123456) + ']');
 
 function listener(ohlcs) {
 
-
-    let nowValues = ohlcs[ohlcs.length - 1];    // last value
-    if (nowValues.epoch === lastepoch) {
-        logger.debug('Same ohlc table as before ' + moment(new Date(nowValues.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'));
-        return;
-    }
-    lastepoch = nowValues.epoch;
-
     const closes = ohlcs.map(_ => _.close);
     const highs = ohlcs.map(_ => _.high);
     const lows = ohlcs.map(_ => _.low);
@@ -95,6 +83,8 @@ function listener(ohlcs) {
     if (tableSize < histoCount) {
         return;
     }
+
+    let nowValues = ohlcs[ohlcs.length - 1];    // last value
 
     // nowValues.MACD = macds[tableSize - 1].MACD;
     // nowValues.signal = macds[tableSize - 1].signal;
@@ -407,8 +397,8 @@ function keepLog(nv) {
     }
 
     // sometimes write value header
-    let d = new Date(lastepoch);
-    if (d.getMinutes() > 56 && (d.getHours() % 2 === 1)) {
+    let d = new Date(nv.epoch);
+    if (d.getMinutes() > 55 && (d.getHours() % 2 === 1)) {
         const head = 'coin, date and time  ,   close,   vol, histogram, hisAvr, dNow, kNow, B/S, msgText';
         stream.write(head + require('os').EOL);
     }

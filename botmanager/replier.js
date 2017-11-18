@@ -63,7 +63,7 @@ function sendMarkDownedText(line, title, url) {
         post
             .setUsername(BOT_NAME)
             .enableFieldMarkdown()
-            .setColor('#6bbf8e')
+            .setColor(slackPost.COLOR_LIST['GOOD'])
             .setTitle(title, url)
             .setRichText(line,true)
             .setIconURL(ICON_URL + BOT_ICON + '.png')

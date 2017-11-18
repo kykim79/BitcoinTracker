@@ -23,6 +23,7 @@ let emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
 let lastHeadCoins = [];
+let lastTime;
 
 function listener(args) {
     try {
@@ -43,9 +44,10 @@ function listener(args) {
         //    {epoch, price, volume, date, high, low, close, open}
         //]
 
-        validateDates(ohlcInfos);
+        if (validateDates(ohlcInfos)) {
+            emitter.emit('event', ohlcInfos);
+        }
 
-        emitter.emit('event', ohlcInfos);
     } catch(e) {
         logger.error(e);
     }
@@ -93,4 +95,11 @@ function validateDates(ohlcInfos) {
                 ohlcInfos[ohlcInfos.length - 2].date.substring(8),
                 ohlcInfos[ohlcInfos.length - 1].date.substring(8)));
     }
+    let nowTime = ohlcInfos[ohlcInfos.length - 1].date.substring(8);    // last value
+    if (nowTime === lastTime) {
+        logger.debug('Same TimeStamp as before ' + nowTime);
+        return false;
+    }
+    lastTime = nowTime;
+    return true;
 }
