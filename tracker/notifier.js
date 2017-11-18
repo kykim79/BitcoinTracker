@@ -7,9 +7,10 @@ const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const WEB_HOOK = process.env.WEB_HOOK;
 const ICON_URL = process.env.ICON_URL + CURRENCY + '.png';
-const coinType = require('./coinType.js');
-const coinTypes = coinType.enums.map((c) => c.value);
-const CHART_URL = process.env.CHART_URL + coinTypes.indexOf(CURRENCY);
+const COINS_KEY = process.env.COINS_KEY.split(',');
+const COINS_CMD = process.env.COINS_CMD.split(',');
+
+const CHART_URL = process.env.CHART_URL + COINS_KEY.indexOf(CURRENCY);
 const TRACKER_NAME = process.env.TRACKER_NAME;
 
 // LOGGER
@@ -23,11 +24,9 @@ exports.warn = (line, title) => sendToSlack(line, title, true, notiType.WARN);
 exports.danger = (line, title) => sendToSlack(line, title, true, notiType.DANGER);
 exports.attach = (line, title) => sendToSlack(line, title, false);
 
-const findKey = (value) => coinType.enums.find((e) => e.value === value).key;
-
 let slackPost = require('slackpost');
 let post = slackPost.post(WEB_HOOK);
-post.setUsername(TRACKER_NAME + ' : ' + CURRENCY + ' (' + findKey(CURRENCY) + ')').enableFieldMarkdown();
+post.setUsername(TRACKER_NAME + ' : ' + CURRENCY + ' (' +  COINS_CMD[COINS_KEY.indexOf(CURRENCY)] + ')').enableFieldMarkdown();
 const EOL = require('os').EOL;
 
 let msgLine = (line) => '```{0}```'.format(line);

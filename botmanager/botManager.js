@@ -11,6 +11,7 @@ const bhttp = require('bhttp');
 
 const show = require('./showStatus.js');
 const replier = require('./replier.js');
+const who = require('./getSlackName.js');
 
 const roundTo = require('round-to');
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
@@ -31,6 +32,7 @@ const logger = log4js.getLogger('botmanager');
 
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
+const coins_cmd = COINS_CMD.reduce((c1, c2) => c1 + c2);
 
 const CHANNEL = process.env.CHANNEL;
 const USERS = process.env.USERS.split(',');
@@ -55,32 +57,6 @@ bot.on('start', function() {
     showUsage();
 });
 
-function channelIdToName(id) {
-    let channels = bot.getChannels();
-    if (typeof channels !== 'undefined' && typeof channels._value !== 'undefined' && typeof channels._value.channels !== 'undefined') {
-        channels = channels._value.channels;
-        for (let i = 0; i < channels.length; i++) {
-            if (channels[i].id === id) {
-                return channels[i].name;
-            }
-        }
-    }
-    return '';
-}
-
-function userIdToName(id) {
-    let users = bot.getUsers();
-    if ((typeof users !== 'undefined') && (users._value !== 'undefined') && (users._value.members !== 'undefined')) {
-        users = users._value.members;
-        for (let i=0; i < users.length; i++ ) {
-            if (users[i].id === id) {
-                return users[i].name;
-            }
-        }
-    }
-    return '';
-}
-
 bot.on('message', function(data) {
 
     if (data.type !== 'message') {
@@ -89,25 +65,17 @@ bot.on('message', function(data) {
 
     const text = data.text.trim().toLowerCase();
 
-    // if (text) {
     logger.debug('command = [' + text + ']');
-    // }
 
     if (text.length < 2 || !text.startsWith('sb')) {
         return;
     }
-    const channelName = '#' + channelIdToName(data.channel);
-    logger.debug(channelName);
-    if (channelName !== CHANNEL) {
-        // send('Input fromm wrong channel[' + channelName + '], command ignored.');
+
+    if ((who.channel(bot, data.channel)) !== CHANNEL || !USERS.includes(who.user(bot, data.user))) {
+        replier.sendText('Unauthorized channel or user.');
         return;
     }
-    const userName = userIdToName(data.user);
-    logger.debug(userName);
-    if (USERS.indexOf(userName) === -1) {
-        replier.sendText('You [' + userName + '] are not authorized user, command ignored.');
-        return;
-    }
+
     try {
         const match = MATCH_REGEX.exec(text);
 
@@ -115,6 +83,7 @@ bot.on('message', function(data) {
             replier.sendText('Invalid slackbot command  [' + text + ']');
             return;
         }
+        logger.debug('regex matched');
 
         match.forEach((e, i) => logger.debug(i + ': ' + e));
 
@@ -126,7 +95,6 @@ bot.on('message', function(data) {
         }
         else if (match[2]) {           // should be sb Xn  or sb Xa
             if (match[3] === 'n') {
-                logger.debug(match[2] + '> ' + COINS_CMD.indexOf(match[2]));
                 show.info(COINS_KEY[COINS_CMD.indexOf(match[2])], 'Current Configuration Values');
             }
             else if (match[3] === 'a') {
@@ -204,16 +172,14 @@ function updatePrice (sign, amount, price) {
 module.exports = updatePrice;
 
 function showUsage() {
-    const m =  'Monitor Cryptocurrency prices Usage';
-    replier.sendSlack(buildUsageMsg(), m, 'https://github.com/kykim79/BitcoinTracker');
-    logger.debug(m);
-}
-
-function buildUsageMsg() {
-    return '                 _(Ver. 2017-11-19)_\n' +
+    const header =  'Monitor CrytoCoins _[' + process.env.COINS_KEY + ']_';
+    const usage = '*USAGE*             _(Ver. 2017-11-19)_\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
-        '      {bxecn}  {bsaghn}  {(+/-)123(k)}\n' +
-        '_Refer github README.md for more detail_\nhttps://goo.gl/dkEUaR';    // => 'https://github.com/kykim79/BitcoinTracker'
+        '      {' + coins_cmd + 'n}  {bsaghn}  {(+/-)123(k)}\n' +
+        '_Refer github_ README.md _for more detail_\nhttps://goo.gl/dkEUaR';    // => 'https://github.com/kykim79/BitcoinTracker'
+
+    replier.sendSlack(usage, header, 'https://github.com/kykim79/BitcoinTracker');
+    logger.debug(header);
 }
 
 function showAllCoins() {

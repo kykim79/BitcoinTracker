@@ -6,7 +6,7 @@ const COINS_CMD = process.env.COINS_CMD.split(',');
 module.exports = class configCoin {
     constructor(coin = 'BTC') {
         try {
-            this.title = '_' + coin + '(' + COINS_CMD[COINS_KEY.indexOf(coin)] + ')_'; // Big blue head
+            this.title =  coin + '(' + COINS_CMD[COINS_KEY.indexOf(coin)] + ')'; // Big blue head
             this.title_link = CHART_URL + COINS_KEY.indexOf(coin); // link when title was pressed
             this.text = '';
             this.fields = [];

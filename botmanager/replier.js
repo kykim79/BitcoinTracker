@@ -47,7 +47,7 @@ function buildMessage(iconName, text, attachs = null) {
         text: ''
     };
     if(attachs) {
-        attachs[0].title += ',  ' + text;
+        attachs[0].title += ',  _' + text + '_';
         msg.attachments = JSON.stringify(attachs);
     }
     else {
