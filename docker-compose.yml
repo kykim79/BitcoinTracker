@@ -14,6 +14,19 @@ services:
   image: devilica/coin_botmanager
 
 # --------------------------------------------
+ crawler_bch:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - PRICE_ROUND_RADIX=-1
+   - CURRENCY=BCH
+  volumes:
+   - ./log/bch/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_crawler
+
  crawler_btc:
   build:
    context: ./crawler
@@ -53,33 +66,22 @@ services:
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
- crawler_bch:
+# --------------------------------------------
+ tracker_bch:
   build:
-   context: ./crawler
+   context: ./tracker
   env_file:
-   - ./crawler.env
+   - tracker.env
+   - ./config/bch/tracker.env
   environment:
-   - PRICE_ROUND_RADIX=-1
    - CURRENCY=BCH
+   - PRICE_ROUND_RADIX=-1
   volumes:
    - ./log/bch/:/app/log/
    - ./config/:/app/config/
-  image: devilica/coin_crawler
+   - ./chartData/:/app/chartData/
+  image: devilica/coin_tracker
 
- crawler_btg:
-  build:
-   context: ./crawler
-  env_file:
-   - ./crawler.env
-  environment:
-   - PRICE_ROUND_RADIX=0
-   - CURRENCY=BTG
-  volumes:
-   - ./log/btg/:/app/log/
-   - ./config/:/app/config/
-  image: devilica/coin_crawler
-
-# --------------------------------------------
  tracker_btc:
   build:
    context: ./tracker
@@ -125,41 +127,22 @@ services:
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
 
- tracker_bch:
-  build:
-   context: ./tracker
-  env_file:
-   - tracker.env
-   - ./config/bch/tracker.env
-  environment:
-   - CURRENCY=BCH
-   - PRICE_ROUND_RADIX=-1
-  volumes:
-   - ./log/bch/:/app/log/
-   - ./config/:/app/config/
-   - ./chartData/:/app/chartData/
-  image: devilica/coin_tracker
-
- tracker_btg:
-  build:
-   context: ./tracker
-  env_file:
-   - tracker.env
-   - ./config/btg/tracker.env
-  environment:
-   - CURRENCY=BTG
-   - PRICE_ROUND_RADIX=0
-  volumes:
-   - ./log/btg/:/app/log/
-   - ./config/:/app/config/
-   - ./chartData/:/app/chartData/
-  image: devilica/coin_tracker
 # --------------------------------------------
- chart_btc:
+
+ chart_bch:
   build:
    context: ./chart
   ports:
    - "4000:3000"
+  volumes:
+   - ./chartData/bch/:/app/public/data/
+  image: devilica/coin_chart
+
+ chart_btc:
+  build:
+   context: ./chart
+  ports:
+   - "4001:3000"
   volumes:
    - ./chartData/btc/:/app/public/data
   image: devilica/coin_chart
@@ -177,16 +160,7 @@ services:
   build:
    context: ./chart
   ports:
-   - "4001:3000"
-  volumes:
-   - ./chartData/xrp/:/app/public/data/
-  image: devilica/coin_chart
-
- chart_bch:
-  build:
-   context: ./chart
-  ports:
    - "4003:3000"
   volumes:
-   - ./chartData/bch/:/app/public/data/
+   - ./chartData/xrp/:/app/public/data/
   image: devilica/coin_chart

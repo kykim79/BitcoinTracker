@@ -4,21 +4,16 @@ require('dotenv').load();
 const format = require('string-format');
 format.extend(String.prototype);
 const fs = require('fs');
-const pad = require('pad');
-const numeral = require('numeral');
+
 const Bot = require('slackbots');
 const Promise = require('bluebird');
 const bhttp = require('bhttp');
-const coinConfig = require('./coinConfig.js');
-const coinType = require('./coinType.js');
 
-const coinTypes = coinType.enums.map((c) => c.value);
-const roundTo = require('round-to');
-const npad = (number) => (number < 1000000) ? pad(5, numeral((number)).format('0,0')) : pad(9, numeral((number)).format('0,0'));
-const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
-const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
-
+const show = require('./showStatus.js');
 const replier = require('./replier.js');
+
+const roundTo = require('round-to');
+const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
 
 // environment variables
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
@@ -34,12 +29,15 @@ log4js_extend(log4js, {
 });
 const logger = log4js.getLogger('botmanager');
 
+const COINS_KEY = process.env.COINS_KEY.split(',');
+const COINS_CMD = process.env.COINS_CMD.split(',');
+
 const CHANNEL = process.env.CHANNEL;
-const USERS = process.env.USERS;
+const USERS = process.env.USERS.split(',');
+
 
 const BOT_NAME = process.env.BOT_NAME;
 const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
-const BOT_ICON = process.env.BOT_ICON;
 
 const MATCH_REGEX = /^sb\s*(?:(?:([n]))|(?:([bxce])([n|a]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))\s*$/i;
 
@@ -92,7 +90,7 @@ bot.on('message', function(data) {
     const text = data.text.trim().toLowerCase();
 
     // if (text) {
-        logger.debug('command = [' + text + ']');
+    logger.debug('command = [' + text + ']');
     // }
 
     if (text.length < 2 || !text.startsWith('sb')) {
@@ -118,7 +116,7 @@ bot.on('message', function(data) {
             return;
         }
 
-        match.forEach((e, i) => console.log(i + ': ' + e));
+        match.forEach((e, i) => logger.debug(i + ': ' + e));
 
         if (match[0] === 'sb') {        // sb only
             showUsage();
@@ -128,10 +126,11 @@ bot.on('message', function(data) {
         }
         else if (match[2]) {           // should be sb Xn  or sb Xa
             if (match[3] === 'n') {
-                showOneCoin(coinType.get(match[2]).value, 'Current Configuration Values');
+                logger.debug(match[2] + '> ' + COINS_CMD.indexOf(match[2]));
+                show.info(COINS_KEY[COINS_CMD.indexOf(match[2])], 'Current Configuration Values');
             }
             else if (match[3] === 'a') {
-                adjustConfig(coinType.get(match[2]).value);
+                adjustConfig(COINS_KEY[COINS_CMD.indexOf(match[2])]);
             }
             else {
                 replier.sendText('Subcommand after coin should be "n" or "a"  : [' + text + ']'); // actually regex error
@@ -139,12 +138,13 @@ bot.on('message', function(data) {
         }
         else {
             const config = {
-                cointype: coinType.get(match[4]).value,
+                coin: COINS_KEY[COINS_CMD.indexOf(match[2])],
                 configField: match[5],
                 sign: match[6],
                 amount: match[8] === 'k' ? Number(match[7]) * 1000 : Number(match[7])
             };
-            showOneCoin(updateConfig(config), 'New Configuration');
+            updateConfig(config);
+            show.info(config.coin, 'New Configuration');
         }
     }
     catch (e) {
@@ -155,12 +155,12 @@ bot.on('message', function(data) {
 /**
  * updateConfig : update Configuration.json by commands input
  * @param c(command) {cointype(BTC), configField('b','s'), sign(+/-), amount(1234)
- * @returns {*}
+ * @returns none
  */
 
 function updateConfig(c) {
 
-    const configFile = CONFIG  + c.cointype.toLowerCase() + CONFIG_FILENAME;
+    const configFile = CONFIG  + c.coin.toLowerCase() + CONFIG_FILENAME;
     const cf = JSON.parse(fs.readFileSync(configFile));
     switch (c.configField) {
     case 's':   // sellPrice
@@ -185,7 +185,7 @@ function updateConfig(c) {
     }
     fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
     logger.debug('Update configration completed..');
-    return c.cointype;
+    // return c.cointype;
 }
 
 function updatePrice (sign, amount, price) {
@@ -204,54 +204,23 @@ function updatePrice (sign, amount, price) {
 module.exports = updatePrice;
 
 function showUsage() {
-    const m = 'Monitor Cryptocurrency prices\n (Ver. 17-11-14)';
-    replier.sendSlack(buildUsageMsg(),m);
+    const m =  'Monitor Cryptocurrency prices Usage';
+    replier.sendSlack(buildUsageMsg(), m, 'https://github.com/kykim79/BitcoinTracker');
     logger.debug(m);
 }
 
 function buildUsageMsg() {
-    return '*Usage :*\n\n' +
-        '*sb* _{currency}{subcommand}{amount}_\n\n' +
-        '_{currency}_\n' +
-        '   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *n*:Now\n\n' +
-        '_{subcommand}_\n' +
-        '   *b*: buyPrice,           *s*: sellPrice\n' +
-        '   *a*: adjust based on nowPrice\n' +
-        '   *g*: gapAllowance,    *h*: histoPercent\n' +
-        '   *n*: nowPrice\n\n' +
-        '_{amount}_\n' +
-        '   *1234000* : set to 1,234,000\n' +
-        '   *1234k* : set to 12,340,000\n' +
-        '   *+100* : add 100 to current set\n' +
-        '   *-3k* : subtract 3000 from current set\n' +
-        '   *1.03* : set to 1.03% (gap or histo only)\n\n' +
-        '(note) Uppercase accepted, spaces allowed';
+    return '                 _(Ver. 2017-11-19)_\n' +
+        '*sb* _{currency}{subcommand}{amount}_\n' +
+        '      {bxecn}  {bsaghn}  {(+/-)123(k)}\n' +
+        '_Refer github for more detail_\nhttps://goo.gl/dkEUaR';    // => 'https://github.com/kykim79/BitcoinTracker'
 }
 
 function showAllCoins() {
-    const request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
-    const response = (values) => values.map((value, i) => makeCoinConfig(coinTypes[i], value));
-    Promise.all(coinTypes.map(e => request(e)))
-        .then(response)
-        .then(attachs => replier.sendAttach(BOT_ICON, 'Current Configuration', attachs))
-        .catch(e => logger.error(e));
-}
-
-function showOneCoin(cointype, msg) {
-    // const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
-    const response = (value) => showOneCoinType(cointype, value);
-    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
-        .then(response)
-        .then(attach => replier.sendAttach(cointype, msg, [attach]))
-        .catch(e => logger.error(e));
-}
-
-function showOneCoinType(cointype, value) {
-    return makeCoinConfig(cointype, value);
+    COINS_KEY.forEach(_ => show.info(_, 'Current Configuration'));
 }
 
 function adjustConfig(cointype) {
-    // const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
     const response = (value) => adjustConfigSellBuy(cointype, value);
     Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
         .then(response)
@@ -267,30 +236,9 @@ function adjustConfigSellBuy(cointype, value) {
         cf.buyPrice = roundTo(n * (1 - cf.gapAllowance * 3),0);
         cf.sellPrice = roundTo(n * (1 + cf.gapAllowance * 3),0);
         fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
-        return makeCoinConfig(cointype, value);
+        return show.attach(cointype, value);
     }
     catch (e) {
         logger.error(e);
     }
 }
-
-function makeCoinConfig(cointype, value) {
-    try {
-        const cf = JSON.parse(fs.readFileSync(CONFIG + cointype.toLowerCase() + CONFIG_FILENAME));
-        const nowPrice = Number(value.body.data[0].price);
-        const volume = value.body.data.map(_ => Number(_.units_traded)).reduce((e1, e2) => e1 + e2);
-        const blank = '       ';
-        return new coinConfig(cointype)
-            .addField('Buy:     ', npercent((nowPrice - cf.buyPrice ) / nowPrice), blank + npad(cf.buyPrice))
-            .addField('gapAllow ', npercent(cf.gapAllowance), blank + npad(cf.gapAllowance * nowPrice))
-            .addField('Now:', '',  blank + npad(nowPrice))
-            .addField('histo(div) ', npercent(cf.histoPercent), blank + npad(cf.histoPercent * nowPrice))
-            .addField('Sell:     ', npercent((cf.sellPrice - nowPrice) / nowPrice),  blank + npad(cf.sellPrice))
-            .addField('volume ', '', blank + numeral(volume).format('0,0.000'))
-        ;
-    } catch (e) {
-        // throw new Error('coinType:{0}, value:{1}'.format(coinType, value), e);
-        throw new Error(e);
-    }
-}
-

@@ -1,13 +1,13 @@
-const coinType = require('./coinType.js');
-const coinTypes = coinType.enums.map((c) => c.value);
+
 const CHART_URL = process.env.CHART_URL;
-const findKey = (value) => coinType.enums.find((e) => e.value === value).key;
+const COINS_KEY = process.env.COINS_KEY.split(',');
+const COINS_CMD = process.env.COINS_CMD.split(',');
 
 module.exports = class configCoin {
     constructor(coin = 'BTC') {
         try {
-            this.title = coin + ' (' + findKey(coin) + ')'; // Big blue head
-            this.title_link = CHART_URL + coinTypes.indexOf(coin); // link when title was pressed
+            this.title = '_' + coin + '(' + COINS_CMD[COINS_KEY.indexOf(coin)] + ')_'; // Big blue head
+            this.title_link = CHART_URL + COINS_KEY.indexOf(coin); // link when title was pressed
             this.text = '';
             this.fields = [];
 

@@ -231,20 +231,26 @@ kill -9 9340
 - BTC,ETH,XRP,ZEC, BCH coin icons are ready
 
 
-# Variables Control by Slack
-## command name : 
-- sa    (nickname from satosh :-P)
+# Usage
 
-## Syntax for parameter changes
+##sb _{currency}{subcommand}{amount}_
 
-sa {currency}{subcommand}{amount}
-    {subcommand} b|s|g|h|n or {+|-}  buy, sell, gap, histogram, now  or  incremental Plus/Minus 
-    {currency} b (BTC), x(XRP), e (ETH), c (BCH), ....
-    {amount} 1234567,  123.45, 6780k (k = 1000)
- 
-## example
-sa bs6800000   <- set BTC sellPrice to 6800000
-sa eb345k      <- set ETH buyPrice to 345000
-sa bb-1k       <- set BTC buyPrice down 1000
-sa xg0.012     <- set XRP gapAllowance to 0.012
-sa n           <- show all currency now status
+###_{currency}_
+
+-   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *n*:Now
+   
+###_{subcommand}_
+
+-   *b*: buyPrice,           *s*: sellPrice
+-   *a*: adjust based on nowPrice
+-   *g*: gapAllowance,    *h*: histoPercent
+-   *n*: nowPrice
+   
+###_{amount}_
+
+-   *1234000* : set to 1,234,000
+-   *1234k* : set to 12,340,000
+-   *+100* : add 100 to current set
+-   *-3k* : subtract 3000 from current set
+-   *1.03* : set to 1.03% (gap or histo only)
+-   (note) Uppercase accepted, spaces allowed

@@ -23,14 +23,11 @@ const WEB_HOOK = process.env.WEB_HOOK;
 const BOT_ICON = process.env.BOT_ICON;
 const BOT_NAME = process.env.BOT_NAME;
 
-let post = slackPost.post(WEB_HOOK);
-post.setUsername(BOT_NAME).enableFieldMarkdown();
-
-exports.sendText = (text) => send(text);
+exports.sendText = (text) => sendTextOnly(text);
 exports.sendAttach = (iconName, text, attachs) => sendWithAttach(iconName, text, attachs);
-exports.sendSlack = (line, title) => sendToSlack(line, title);
+exports.sendSlack = (line, title, url) => sendMarkDownedText(line, title, url);
 
-function send(text) {
+function sendTextOnly(text) {
     requestMessage(buildMessage(BOT_ICON, text));
     logger.debug(text);
 }
@@ -38,21 +35,6 @@ function send(text) {
 function sendWithAttach(iconName, text, attachs) {
     requestMessage(buildMessage(iconName, text, attachs));
     logger.debug(text);
-}
-
-function sendToSlack(line, title) {
-    try {
-        post
-            .setColor(0)
-            .setTitle(title,'slack.com')
-            .setRichText(line,true)
-            .setIconURL(ICON_URL + BOT_ICON + '.png')
-            .enableUnfurlLinks()
-            .send((err) => { if (err) throw err; });
-        logger.debug(title);
-    } catch(e) {
-        logger.error(e);
-    }
 }
 
 function buildMessage(iconName, text, attachs = null) {
@@ -65,18 +47,32 @@ function buildMessage(iconName, text, attachs = null) {
         text: ''
     };
     if(attachs) {
-        if (attachs.length === 1) {
-            attachs[0].title += ', ' + text;
-        }
-        else {
-            msg.text = text;
-        }
+        attachs[0].title += ', ' + text;
         msg.attachments = JSON.stringify(attachs);
     }
     else {
         msg.text = text;
     }
     return msg;
+}
+
+function sendMarkDownedText(line, title, url) {
+    try {
+
+        let post = slackPost.post(WEB_HOOK);
+        post
+            .setUsername(BOT_NAME)
+            .enableFieldMarkdown()
+            .setColor(0)
+            .setTitle(title, url)
+            .setRichText(line,true)
+            .setIconURL(ICON_URL + BOT_ICON + '.png')
+            .enableUnfurlLinks()
+            .send((err) => { if (err) throw err; });
+        logger.debug(title);
+    } catch(e) {
+        logger.error(e);
+    }
 }
 
 function requestMessage(msg) {
