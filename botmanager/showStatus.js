@@ -7,6 +7,7 @@ const Promise = require('bluebird');
 
 const coinConfig = require('./coinConfig.js');
 const replier = require('./replier.js');
+const logger = require('./logger.js').getLogger('showStatus');
 
 const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
@@ -14,16 +15,6 @@ const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILENAME = '/trackerConfig.json';  // should start with '/'
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
-
-// LOGGER
-let log4js = require('log4js');
-log4js.configure(CONFIG + 'loggerConfig.json');
-let log4js_extend = require('log4js-extend');
-log4js_extend(log4js, {
-    path: __dirname,
-    format: '(@name:@line:@column)'
-});
-const logger = log4js.getLogger('showstatus');
 
 exports.info = (coin, msg) => showCoinStatus(coin, msg);
 exports.attach = (coin, value) => buildAttach(coin, value);

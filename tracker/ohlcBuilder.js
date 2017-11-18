@@ -9,8 +9,7 @@ let SPLIT_SIZE = Number(process.env.SPLIT_SIZE);
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 
-let log4js = require('log4js');
-let logger = log4js.getLogger('ohlcBuilder:'  + currency);
+const logger = require('./logger.js').getLogger('ohlcbuilder:' + currency);
 
 let moment = require('moment');
 require('moment-timezone');

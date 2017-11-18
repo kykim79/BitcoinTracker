@@ -12,6 +12,7 @@ const bhttp = require('bhttp');
 const show = require('./showStatus.js');
 const replier = require('./replier.js');
 const who = require('./getSlackName.js');
+const logger = require('./logger.js').getLogger('botmanager');
 
 const roundTo = require('round-to');
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
@@ -19,16 +20,6 @@ const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
 // environment variables
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILENAME = '/trackerConfig.json';  // should start with '/'
-
-// LOGGER
-let log4js = require('log4js');
-log4js.configure(CONFIG + 'loggerConfig.json');
-let log4js_extend = require('log4js-extend');
-log4js_extend(log4js, {
-    path: __dirname,
-    format: '(@name:@line:@column)'
-});
-const logger = log4js.getLogger('botmanager');
 
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
@@ -83,9 +74,8 @@ bot.on('message', function(data) {
             replier.sendText('Invalid slackbot command  [' + text + ']');
             return;
         }
-        logger.debug('regex matched');
 
-        match.forEach((e, i) => logger.debug(i + ': ' + e));
+        // match.forEach((e, i) => logger.debug(i + ': ' + e));
 
         if (match[0] === 'sb') {        // sb only
             showUsage();

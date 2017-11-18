@@ -11,16 +11,7 @@ const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const CONFIG = process.env.CONFIG;
 
-// LOGGER
-let log4js = require('log4js');
-log4js.configure(CONFIG + '/loggerConfig.json');
-let log4js_extend = require('log4js-extend');
-log4js_extend(log4js, {
-    path: __dirname,
-    format: '(@name:@line:@column)'
-});
-
-let logger = log4js.getLogger('selector:' + currency);
+const logger = require('./logger.js').getLogger('selector:' + currency);
 
 let emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
