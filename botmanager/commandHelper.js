@@ -11,13 +11,17 @@ module.exports = class commandHelper {
         }
     }
 
-    addCommand(regex, func, params = undefined) {
+    addCommand(regex, func, params = []) {
         this.commandMap.push({ regex: regex, func: func, params: params });
         return this;
     }
 
     hasCommand(regex) {
         return this.commandMap.some((e) => e.regex === regex);
+    }
+
+    commandCount(regex) {
+        return this.commandMap.filter(e => e.regex === regex).length;
     }
 
     execute(line) {

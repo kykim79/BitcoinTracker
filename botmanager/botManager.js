@@ -53,9 +53,11 @@ const CHANNEL = process.env.CHANNEL;
 const USERS = process.env.USERS;
 const CHART_URL = process.env.CHART_URL;
 
-let showUsage = () =>  sendToSlack(buildUsageMsg(),'Monitor Cryptocurrency prices\n (Ver. 17-11-14)');
+let showUsage = () =>  sendToSlack(buildUsageMsg(), 'Monitor Cryptocurrency prices\n (Ver. 17-11-14)');
 
-let showAllCoins = (match, [cointypes, msg]) => {
+let showAllCoins = (match, params) => {
+    const cointypes = params[0];
+    const msg = params[1];
     const request = (cointype) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + cointype)));
     const response = (values) => values.map((value, i) => makeCoinConfig(cointypes[i], value));
     Promise.all(cointypes.map(e => request(e)))
@@ -64,23 +66,23 @@ let showAllCoins = (match, [cointypes, msg]) => {
         .catch(e => logger.error(e));
 };
 
-let updateCoin = (match, [msg]) => {
+let updateCoin = (match, params) => {
     updateConfig(match);
-    showCoin(match, msg);
+    showCoin(match, params);
 };
 
-let showCurrCoin = (match, [msg]) => showCoin(match, msg);
+let showCurrCoin = (match, params) => showCoin(match, params);
 
-let showCoin = (match, msg) => {
+let showCoin = (match, params) => {
     const ct = coinType.get(match[1]).value;
     const response = (value) => showCoinType(ct, value);
     Promise.try(() => bhttp.get(BITHUMB_URL +  ct))
         .then(response)
-        .then(attach => sendWithAttach(ct, msg, [attach]))
+        .then(attach => sendWithAttach(ct, params[0], [attach]))
         .catch(e => logger.error(e));
 };
 
-let adjustConfig = (match, msg) => {
+let adjustConfig = (match, params) => {
     const ct = coinType.get(match[1]).value;
     const request = (c) => new Promise((resolve, reject) => resolve(bhttp.get(BITHUMB_URL + c)));
     const response = (value) => adjustSellBuy(ct, value);
@@ -123,8 +125,6 @@ let updateConfig = (match) => {
     }
     fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
 };
-
-const MATCH_REGEX = /^sb\s*(?:(?:([n]))|(?:([bxce])([na]))|(?:([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)))?\s*$/i;
 
 const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*$/, showUsage)
