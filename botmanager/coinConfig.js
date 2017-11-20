@@ -3,7 +3,7 @@ const CHART_URL = process.env.CHART_URL;
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
 
-module.exports = class configCoin {
+module.exports = class coinConfig {
     constructor(coin = 'BTC') {
         try {
             this.title =  coin + '(' + COINS_CMD[COINS_KEY.indexOf(coin)] + ')'; // Big blue head
