@@ -7,7 +7,7 @@ const CommandHelper = require('./commandHelper');
 describe('CommandHelper Test', function() {
     const THIS_IS_TEST_RESULT = 'This is test result';
     const TEST_PARAM1 = 'test param1';
-    const TEST_PARAM2 = 'test param1';
+    const TEST_PARAM2 = 'test param2';
 
     let commandHelper;
 
