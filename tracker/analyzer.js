@@ -312,25 +312,27 @@ function informTrade(nv, msg) {
 
     const target = ( nv.tradeType === TradeType.SELL) ? config.sellPrice : config.buyPrice;
     const v = {
-        nowNpad: npad(nv.close),
-        buysell: pad(nv.tradeType.key, 4),
-        targetNpad: npad(target),
+        buy: npad(config.buyPrice),
+        now: npad(nv.close),
+        sell: npad(config.sellPrice),
         gap: npad(nv.close - target),
         gapPcnt: npercent((nv.close - target) / target),
         volume: npad(nv.volume),
-        histogram: npad(config.histogram),
+        histoset: npad(config.histogram),
         histopct: npercent(nv.histoPercent),
         histoAvr: npad( nv.histoAvr),
         dl: numeral(nv.dLast).format('0.0'),
         kl: numeral(nv.kLast).format('0.0'),
         dn: numeral(nv.dNow).format('0.0'),
-        kn: numeral(nv.kNow).format('0.0')
+        kn: numeral(nv.kNow).format('0.0'),
+        ts: moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')
     };
-    const m = 'Now :{nowNpad}  h(set):{histogram}\n' +
-        '{buysell}:{targetNpad}  h(pct): {histopct}\n' +
-        'Gap :{gap}   h(avr):{histoAvr}\n' +
-        'Gap%:    {gapPcnt}    volume: {volume}\n' +
-        'dk ({dl},{kl}) => ({dn},{kn})';
+    const m = 'Buy :{buy}  h(set):{histoset}\n' +
+        'Now :{now}  h(pct): {histopct}\n' +
+        'Sell:{sell}  h(avr):{histoAvr}\n' +
+        'Gap :{gap}  {gapPcnt}\n' +
+        'dk ({dl},{kl}) => ({dn},{kn})\n' +
+        '{ts}  vol:{volume}';
 
     note.danger(m.format(v), msg);
 }

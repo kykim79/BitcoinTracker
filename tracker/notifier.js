@@ -31,16 +31,12 @@ let msgLine = (line) => '```{0}```'.format(line);
 let logLine = (line, title) => replaceall(EOL, '; ', title + ', ' + line);
 
 /**
- * sendToSlack : post message and write to log
  *
- *
- * @input line : text message which cotains markdown
- * @input title : header message
- * @input markdown : always true
- * @input type : one of notiType enum
- * @return none
+ * @param line : text message with contains markdown
+ * @param title : header message
+ * @param markdown : true, false
+ * @param type : notify color (defined in notiType.js)
  */
-
 function sendToSlack(line, title, markdown, type=notiType.INFO) {
     try {
         post
