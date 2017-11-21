@@ -10,7 +10,17 @@ const CHANNEL = process.env.CHANNEL;
 const WEB_HOOK = process.env.WEB_HOOK;
 const BOT_ICON = process.env.BOT_ICON;
 const BOT_NAME = process.env.BOT_NAME;
-const logger = require('./logger.js').getLogger('replier');
+const CONFIG = process.env.CONFIG;  // configuration folder with '/'
+
+// LOGGER
+let log4js = require('log4js');
+log4js.configure(CONFIG + 'loggerConfig.json');
+let log4js_extend = require('log4js-extend');
+log4js_extend(log4js, {
+    path: __dirname,
+    format: '(@name:@line:@column)'
+});
+const logger = log4js.getLogger('replier');
 
 exports.sendText = (text) => sendTextOnly(text);
 exports.sendAttach = (iconName, text, attachs) => sendWithAttach(iconName, text, attachs);

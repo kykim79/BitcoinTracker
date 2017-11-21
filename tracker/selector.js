@@ -9,9 +9,17 @@ String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');}
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
-const CONFIG = process.env.CONFIG;
+const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
-const logger = require('./logger.js').getLogger('selector:' + currency);
+// LOGGER
+let log4js = require('log4js');
+log4js.configure(CONFIG + 'loggerConfig.json');
+let log4js_extend = require('log4js-extend');
+log4js_extend(log4js, {
+    path: __dirname,
+    format: '(@name:@line:@column)'
+});
+const logger = log4js.getLogger('selector:' + currency);
 
 let emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;

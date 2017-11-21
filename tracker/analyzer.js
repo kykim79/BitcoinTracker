@@ -33,7 +33,17 @@ watcher.add(CONFIG_FILE);
 const json = require('json-file');
 let readConfigFile = (path) => new json.read(path);
 
-const logger = require('./logger.js').getLogger('analyzer:' + currency);
+const CONFIG = process.env.CONFIG;  // configuration folder with '/'
+
+// LOGGER
+let log4js = require('log4js');
+log4js.configure(CONFIG + 'loggerConfig.json');
+let log4js_extend = require('log4js-extend');
+log4js_extend(log4js, {
+    path: __dirname,
+    format: '(@name:@line:@column)'
+});
+const logger = log4js.getLogger('analyzer:' + currency);
 
 let npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 
@@ -212,11 +222,11 @@ function analyzeHistogram(nv) {
     // if histogram now has different sign, alert
 
     if (nv.histoSign) {
-        if (nv.histogram <= 0 && (Math.abs(config.sellPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        if ((Math.abs(config.sellPrice - nv.close) / nv.close) <= config.gapAllowance) {
             nv.tradeType = TradeType.SELL;
             msg = (nv.close >= config.sellPrice) ? '*SELL*, histo sign Changed' : '_Histo says_ SELL';
         }
-        else if (nv.histogram >= 0 && (Math.abs(config.buyPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        else if ((Math.abs(config.buyPrice - nv.close) / nv.close) <= config.gapAllowance) {
             nv.tradeType = TradeType.BUY;
             msg = (nv.close <= config.buyPrice) ? '*BUY*, histo sign changed' : '_Histo says_ BUY';
         }
@@ -239,8 +249,9 @@ function analyzeHistogram(nv) {
         logger.debug('last [' + histoCount + '] histoAvr ' + nv.histoAvr + ' < histogram ' + config.histogram + '(' + npercent(config.histoPercent) + ')');
     }
     if (msg) {
-        informTrade(nv,msg);
         nv.msgText += msg;
+        informTrade(nv, msg);
+        logger.debug('Histogram alert ' + msg);
     }
     return nv;
 }
@@ -266,7 +277,8 @@ function analyzeStochastic(nv) {
     }
     if (msg) {
         nv.msgText += msg;
-        informTrade(nv,msg);
+        informTrade(nv, msg);
+        logger.debug('Stochastic alert ' + msg);
     }
     return nv;
 }
@@ -291,9 +303,9 @@ function analyzeBoundary(nv) {
         msg = 'Going Under _BUY_ boundary';
     }
     if (msg) {
-        informTrade(nv,msg);
-        logger.debug('Boundary alert ' + msg);
         nv.msgText += msg;
+        informTrade(nv, msg);
+        logger.debug('Boundary alert ' + msg);
     }
     return nv;
 }
@@ -312,24 +324,27 @@ function informTrade(nv, msg) {
 
     const target = ( nv.tradeType === TradeType.SELL) ? config.sellPrice : config.buyPrice;
     const v = {
-        nowNpad: npad(nv.close),
-        buysell: pad(nv.tradeType.key, 4),
-        targetNpad: npad(target),
+        buy: npad(config.buyPrice),
+        now: npad(nv.close),
+        sell: npad(config.sellPrice),
+        BS: ( nv.tradeType === TradeType.SELL) ? 'Sgap' : 'Bgap',
         gap: npad(nv.close - target),
         gapPcnt: npercent((nv.close - target) / target),
-        volume: npad(nv.volume),
+        vol: npad(nv.volume),
         histogram: npad(config.histogram),
-        histopct: npercent(nv.histoPercent),
         histoAvr: npad( nv.histoAvr),
         dl: numeral(nv.dLast).format('0.0'),
         kl: numeral(nv.kLast).format('0.0'),
         dn: numeral(nv.dNow).format('0.0'),
-        kn: numeral(nv.kNow).format('0.0')
+        kn: numeral(nv.kNow).format('0.0'),
+        ts: moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')
+
     };
-    const m = 'Now :{nowNpad}  h(set):{histogram}\n' +
-        '{buysell}:{targetNpad}  h(pct): {histopct}\n' +
-        'Gap :{gap}   h(avr):{histoAvr}\n' +
-        'Gap%:    {gapPcnt}    volume: {volume}\n' +
+    const m = '{ts}\n' +
+        'Buy :{buy}  h(set):{histogram}\n' +
+        'Now :{now}  h(avr):{histoAvr}\n' +
+        'Sell:{sell}  volume:{vol}\n' +
+        '{BS} :{gap} {gapPcnt}\n' +
         'dk ({dl},{kl}) => ({dn},{kn})';
 
     note.danger(m.format(v), msg);
@@ -349,13 +364,8 @@ function keepLog(nv) {
         let str = [
             CURRENCY,
             moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
-            // nv.open,
-            // nv.high,
-            // nv.low,
             nv.close,
             roundTo(nv.volume, 2),
-            // roundTo(nv.MACD, 2),
-            // roundTo(nv.signal, 2),
             nv.histogram,
             nv.histoAvr,
             nv.dNow,
@@ -370,7 +380,7 @@ function keepLog(nv) {
 
     // sometimes write value header
     let d = new Date(nv.epoch);
-    if (d.getMinutes() > 55 && (d.getHours() % 2 === 1)) {
+    if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
         const head = 'coin, date and time  ,   close,   vol, histogram, hisAvr, dNow, kNow, B/S, msgText';
         stream.write(head + require('os').EOL);
     }

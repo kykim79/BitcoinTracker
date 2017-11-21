@@ -1,5 +1,3 @@
-const coinType = require('./coinType');
-const coinTypes = coinType.enums.map((c) => c.value);
 
 module.exports = class commandHelper {
     constructor() {
