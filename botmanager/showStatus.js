@@ -11,18 +11,13 @@ const replier = require('./replier.js');
 const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
-const CONFIG = process.env.CONFIG;  // configuration folder with '/'
-const CONFIG_FILENAME = '/trackerConfig.json';  // should start with '/'
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
 
-// LOGGER
+// CONFIGRATION && LOGGER
+const CONFIG = process.env.CONFIG;  // configuration folder with '/'
+const CONFIG_FILENAME = process.env.CONFIG_FILENAME;
+
 let log4js = require('log4js');
-log4js.configure(CONFIG + 'loggerConfig.json');
-let log4js_extend = require('log4js-extend');
-log4js_extend(log4js, {
-    path: __dirname,
-    format: '(@name:@line:@column)'
-});
 const logger = log4js.getLogger('showstatus');
 
 exports.info = (coin, msg) => showCoinStatus(coin, msg);
@@ -41,7 +36,7 @@ function showCoinStatus(coin, msg) {
 
 function buildAttach(coin, value) {
     try {
-        const cf = JSON.parse(fs.readFileSync(CONFIG + coin.toLowerCase() + CONFIG_FILENAME));
+        const cf = JSON.parse(fs.readFileSync(CONFIG + coin.toLowerCase() + '/' + CONFIG_FILENAME));
         const nowPrice = Number(value.body.data[0].price);
         const volume = value.body.data.map(_ => Number(_.units_traded)).reduce((e1, e2) => e1 + e2);
         const blank = '       ';
