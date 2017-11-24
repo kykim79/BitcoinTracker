@@ -28,8 +28,6 @@ const Watcher = require('watch-files');
 const watcher = Watcher({
     interval: '0.1s'
 });
-watcher.add(CONFIG_FILE);
-
 const json = require('json-file');
 let readConfigFile = (path) => new json.read(path);
 
@@ -38,14 +36,6 @@ const CONFIG_FILE = CONFIG + currency + '/' + process.env.CONFIG_FILENAME;
 
 // LOGGER
 let log4js = require('log4js');
-let logCf = new json.read(CONFIG + 'loggerConfig.json').data;
-logCf.appenders.file.filename = LOG + currency +  '/coinhistory.log';
-log4js.configure(logCf);
-let log4js_extend = require('log4js-extend');
-log4js_extend(log4js, {
-    path: __dirname,
-    format: '(@name:@line:@column)'
-});
 const logger = log4js.getLogger('analyzer:' + currency);
 
 const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
@@ -59,12 +49,13 @@ let isFirstTime = true; // inform current setting when this module is started
 
 let config = readConfigFile(CONFIG_FILE).data;
 
+watcher.add(CONFIG_FILE);
 watcher.on('change', (info) => {
     config = readConfigFile(info.path).data;
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
-const volumeCount = 4;   // variable for ignoring if too small changes
+const volumeCount = 4;   // if recent volume goes high then...
 
 const ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
