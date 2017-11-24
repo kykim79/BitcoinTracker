@@ -14,13 +14,22 @@ const CommandHelper = require('./commandHelper');
 const show = require('./showStatus.js');
 const replier = require('./replier.js');
 const who = require('./getSlackName.js');
-const logger = require('./logger.js').getLogger('botmanager');
 const roundTo = require('round-to');
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
 
 // environment variables
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILENAME = '/trackerConfig.json';  // should start with '/'
+
+// LOGGER
+let log4js = require('log4js');
+log4js.configure(CONFIG + 'loggerConfig.json');
+let log4js_extend = require('log4js-extend');
+log4js_extend(log4js, {
+    path: __dirname,
+    format: '(@name:@line:@column)'
+});
+const logger = log4js.getLogger('botmanager');
 
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
@@ -41,7 +50,7 @@ function showUsage() {
 
     replier.sendSlack(usage, header, 'https://github.com/kykim79/BitcoinTracker');
     logger.debug(header);
-};
+}
 
 let showAllCoins = (match, params) => COINS_KEY.forEach(_ => show.info(_, params[0]));
 
@@ -57,13 +66,13 @@ let adjustConfig = (match, params) => {
     const response = (value) => adjustSellBuy(cointype, value);
     Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
         .then(response)
-        .then(attach => replier.sendAttach(cointype, 'Sell, Buy Price Adjusted', [attach]))
+        .then(attach => replier.sendAttach(cointype, params[0], [attach]))
         .catch(e => logger.error(e));
 };
 
 /**
  * updateConfig : update Configuration.json by commands input
- * @param c(command) {cointype(BTC), command('b','s'), sign(+/-), amount(1234)
+ * @param match : c(command) {cointype(BTC), command('b','s'), sign(+/-), amount(1234)
  * @returns none
  */
 let updateConfig = (match) => {
@@ -105,7 +114,7 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*$/, showUsage)
     .addCommand(/^sb\s*n$/, showAllCoins, ['Current Config'])
     .addCommand(/^sb\s*([bxce])n$/, showCoin, ['Current Configuration Values'])
-    .addCommand(/^sb\s*([bxce])a$/, adjustConfig, [])
+    .addCommand(/^sb\s*([bxce])a$/, adjustConfig, ['Sell, Buy Price Adjusted'])
     .addCommand(/^sb\s*([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)$/, updateCoin, ['New Configuration']);
 
 // create a bot
@@ -123,6 +132,8 @@ bot.on('start', function() {
 });
 
 bot.on('message', function(data) {
+
+    logger.debug('data.type is ' + data.type);
 
     if (data.type !== 'message') {
         return;
