@@ -13,8 +13,6 @@ const COINS_CMD = process.env.COINS_CMD.split(',');
 const CHART_URL = process.env.CHART_URL + COINS_KEY.indexOf(CURRENCY);
 const TRACKER_NAME = process.env.TRACKER_NAME;
 
-const CONFIG = process.env.CONFIG;  // configuration folder with '/'
-
 let log4js = require('log4js');
 const logger = log4js.getLogger('notifier:' + currency);
 

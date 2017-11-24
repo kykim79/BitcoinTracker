@@ -20,12 +20,11 @@ const moment = require('moment');
 const MACD = require('technicalindicators').MACD;
 const Stochastic = require('technicalindicators').Stochastic;
 
-
 // Stream Roller
 const rollers = require('streamroller');
-const stream = new rollers.RollingFileStream(LOG + 'trend.log', 100000, 3);
+const stream = new rollers.RollingFileStream(LOG + currency + '/' + process.env.TREND_FILENAME, 200000, 3);
 
-const CONFIG_FILE = process.env.CONFIG + currency + '/trackerConfig.json';
+const CONFIG_FILE = process.env.CONFIG + currency + '/' + process.env.CONFIG_FILENAME;
 
 const Watcher = require('watch-files');
 const watcher = Watcher({
@@ -55,6 +54,8 @@ const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
 const note = require('./notifier.js');
 const TradeType = require('./tradeType.js');
+const EOL = require('os').EOL;
+const replaceall = require('replaceall');
 let isFirstTime = true; // inform current setting when this module is started
 
 let config = readConfigFile(CONFIG_FILE).data;
@@ -234,11 +235,11 @@ function analyzeHistogram(nv) {
     // if histogram now has different sign, alert
 
     if (nv.histoSign) {
-        if ((Math.abs(config.sellPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        if (nv.close >= config.sellPrice * (1 - config.gapAllowance)) {
             nv.tradeType = TradeType.SELL;
             msg = (nv.close >= config.sellPrice) ? 'SELL, histo sign Changed' : 'Histo says sell';
         }
-        else if ((Math.abs(config.buyPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        else if (nv.close <= config.buyPrice * (1 + config.gapAllowance)) {
             nv.tradeType = TradeType.BUY;
             msg = (nv.close <= config.buyPrice) ? 'BUY, histo sign changed' : 'Histo says buy';
         }
@@ -274,11 +275,11 @@ function analyzeHistogram(nv) {
 function analyzeStochastic(nv) {
 
     let msg = '';
-    if ((nv.dLast >= 80 && nv.kLast >= 80) && (nv.dNow < 80 || nv.kNow < 80) && ((Math.abs(config.sellPrice - nv.close) / nv.close) <= config.gapAllowance)) {
+    if ((nv.dLast >= 80 && nv.kLast >= 80) && (nv.dNow < 80 || nv.kNow < 80) && nv.close >= config.sellPrice * (1 - config.gapAllowance)) {
         nv.tradeType = TradeType.SELL;
         msg = 'Stochastic SELL SELL';
     }
-    else if ((nv.dLast <= 20 && nv.kLast <= 20) && (nv.dNow > 20 || nv.kNow > 20) && ((Math.abs(config.buyPrice - nv.close) / nv.close) <= config.gapAllowance)) {
+    else if ((nv.dLast <= 20 && nv.kLast <= 20) && (nv.dNow > 20 || nv.kNow > 20) && nv.close <= config.buyPrice * (1 + config.gapAllowance)) {
         nv.tradeType = TradeType.BUY;
         msg = 'Stochastic BUY BUY';
     }
@@ -320,11 +321,11 @@ function analyzeVolume(nv) {
 
     let msg = '';
     if (nv.volumeLast > nv.volumeAvr * 2) {
-        if ((Math.abs(config.sellPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        if (nv.close >= config.sellPrice * (1 - config.gapAllowance)) {
             nv.tradeType = TradeType.SELL;
             msg = 'Volume goes up rapidly, SELL ?';
         }
-        else if ((Math.abs(config.buyPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        else if (nv.close <= config.buyPrice * (1 + config.gapAllowance)) {
             nv.tradeType = TradeType.BUY;
             msg = 'Volume goes up rapidly, BUY ?';
         }
@@ -376,9 +377,9 @@ function keepLog(nv) {
             nv.dNow,
             nv.kNow,
             nv.tradeType,
-            nv.msgText
+            replaceall(EOL, '; ', nv.msgText)
         ].join(', ');
-        stream.write(str + require('os').EOL);
+        stream.write(str + EOL);
     } catch (e) {
         logger.error(e);
     }
@@ -387,6 +388,6 @@ function keepLog(nv) {
     let d = new Date(nv.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
         const head = 'coin, date and time  ,   close,   vol, volAvr, volLast, histogram, hisAvr, dNow, kNow, B/S, msgText';
-        stream.write(head + require('os').EOL);
+        stream.write(head + EOL);
     }
 }

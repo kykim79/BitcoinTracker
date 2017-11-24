@@ -15,8 +15,8 @@ const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILENAME = 'trackerConfig.json';
 
-let log4js = require('log4js');
-const logger = log4js.getLogger('showCoinValues');
+// let log4js = require('log4js');
+// const logger = log4js.getLogger('showCoinValues');
 
 exports.attach = (nv) => buildAttach(nv);
 
@@ -31,8 +31,8 @@ function buildAttach(nv) {
             .addField('gapAllow ', npercent(cf.gapAllowance), npadBlank(cf.gapAllowance * nv.close))
 
             .addField('Sell:     ', npercent((cf.sellPrice - nv.close) / nv.close), npadBlank(cf.sellPrice))
-            .addField('Volume ;  avr ', '', numeral(nv.volume).format('0,0.00') + ' ; ' + numeral(nv.volumeAvr).format('0,0.00') + '\n + ' +
-                'last ' + numeral(nv.volumeLast).format('0,0.00') + ' (' + numeral(nv.volumeLast / nv.volumeAvr * 100).format('0,0') + '%' + ')')
+            .addField('Volume (avr/last)', '', numeral(nv.volume).format('0,0.0')  + '\n'  +
+                numeral(nv.volumeAvr).format('0,0') + ' / ' + numeral(nv.volumeLast).format('0,0') + ' (' + numeral(nv.volumeLast / nv.volumeAvr * 100).format('0,0') + '%)')
 
             .addField('d, k', ' (' + numeral(nv.dLast).format('0') + ', ' + numeral(nv.kLast).format('0') + ')' ,
                 '  => (' + numeral(nv.dNow).format('0') + ', ' + numeral(nv.kNow).format('0') + ')')

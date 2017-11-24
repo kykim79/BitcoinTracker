@@ -1,6 +1,7 @@
 
 // require list //
 require('dotenv').load();
+
 const format = require('string-format');
 format.extend(String.prototype);
 const fs = require('fs');
@@ -48,9 +49,9 @@ const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
 
 function showUsage() {
     const header =  'Monitor CrytoCoins _[' + process.env.COINS_KEY + ']_';
-    const usage = '*USAGE*             _(Ver. 2017-11-19)_\n' +
+    const usage = '*USAGE*             _(Ver. 2017-11-25)_\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
-        '      {' + coins_cmd + 'n}  {bsaghn}  {(+/-)123(k)}\n' +
+        '      {' + coins_cmd + 'n}  {bsaghn}  {(+/-)123(k%)}\n' +
         '_Refer github_ README.md _for more detail_\nhttps://goo.gl/dkEUaR';    // => 'https://github.com/kykim79/BitcoinTracker'
 
     replier.sendSlack(usage, header, 'https://github.com/kykim79/BitcoinTracker');
@@ -85,18 +86,19 @@ let updateConfig = (match) => {
         coin: COINS_KEY[COINS_CMD.indexOf(match[1])],
         command: match[2],
         sign: match[3],
-        amount: match[5] === 'k' ? Number(match[4]) * 1000 : Number(match[4])
+        amount: match[4],
+        percentKilo: match[5]
     };
 
-    const configFile = CONFIG + '/' + c.coin.toLowerCase() + CONFIG_FILENAME;
+    const configFile = CONFIG + c.coin.toLowerCase() + '/' + CONFIG_FILENAME;
     const cf = JSON.parse(fs.readFileSync(configFile));
     switch (c.command) {
     case 's':   // sellPrice
-        cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice);
+        cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice, c.percentKilo);
         cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     case 'b':   // buyPrice
-        cf.buyPrice = updatePrice(c.sign, c.amount, cf.buyPrice);
+        cf.buyPrice = updatePrice(c.sign, c.amount, cf.buyPrice, c.percentKilo);
         cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     case 'g':   // gapAllowance
@@ -120,7 +122,7 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*n$/, showAllCoins, ['Current Config'])
     .addCommand(/^sb\s*([bxce])n$/, showCoin, ['Current Configuration Values'])
     .addCommand(/^sb\s*([bxce])a$/, adjustConfig, ['Sell, Buy Price Adjusted'])
-    .addCommand(/^sb\s*([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))(k?)$/, updateCoin, ['New Configuration']);
+    .addCommand(/^sb\s*([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k|%]?)$/, updateCoin, ['New Configuration']);
 
 // create a bot
 const settings = {
@@ -165,18 +167,36 @@ bot.on('message', function(data) {
     }
 });
 
-function updatePrice (sign, amount, price) {
-    switch (sign) {
+function updatePrice (sign, amount, price, percentKilo) {
+    switch (sign + percentKilo) {    // sign : [+|-|], pK : [k|%|]
     case '+':
         price += amount;
         break;
     case '-':
         price -= amount;
         break;
+    case '+k':
+        price += amount * 1000;
+        break;
+    case '-k':
+        price -= amount * 1000;
+        break;
+    case '+%':
+        price += price * (amount /100);
+        break;
+    case '-%':
+        price -= price * (amount /100);
+        break;
+    case 'k':
+        price = amount * 1000;
+        break;
+    case '%':
+        price = price * amount / 100;
+        break;
     default:
         price = amount;
     }
-    return price;
+    return roundTo(price,0);
 }
 
 function adjustSellBuy(cointype, value) {

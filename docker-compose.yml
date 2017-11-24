@@ -70,6 +70,20 @@ services:
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
+ crawler_btg:
+  build:
+   context: ./crawler
+  env_file:
+   - ./crawler.env
+  environment:
+   - PRICE_ROUND_RADIX=-2
+   - CURRENCY=BTG
+   - CRON_SCHEDULE=5-59/15 * * * * *
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+  image: devilica/coin_crawler
+
 # --------------------------------------------
  tracker_bch:
   build:
@@ -125,6 +139,21 @@ services:
   environment:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+   - ./chartData/:/app/chartData/
+  image: devilica/coin_tracker
+
+ tracker_btg:
+  build:
+   context: ./tracker
+  env_file:
+   - tracker.env
+   - ./config/btc/tracker.env
+  environment:
+   - CURRENCY=BTG
+   - PRICE_ROUND_RADIX=-2
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
