@@ -13,7 +13,17 @@ const COINS_CMD = process.env.COINS_CMD.split(',');
 const CHART_URL = process.env.CHART_URL + COINS_KEY.indexOf(CURRENCY);
 const TRACKER_NAME = process.env.TRACKER_NAME;
 
-const logger = require('./logger.js').getLogger('notifier:' + currency);
+const CONFIG = process.env.CONFIG;  // configuration folder with '/'
+
+// LOGGER
+let log4js = require('log4js');
+log4js.configure(CONFIG + 'loggerConfig.json');
+let log4js_extend = require('log4js-extend');
+log4js_extend(log4js, {
+    path: __dirname,
+    format: '(@name:@line:@column)'
+});
+const logger = log4js.getLogger('notifier:' + currency);
 
 let notiType = require('./notiType.js');
 
@@ -31,12 +41,16 @@ let msgLine = (line) => '```{0}```'.format(line);
 let logLine = (line, title) => replaceall(EOL, '; ', title + ', ' + line);
 
 /**
+ * sendToSlack : post message and write to log
  *
- * @param line : text message with contains markdown
- * @param title : header message
- * @param markdown : true, false
- * @param type : notify color (defined in notiType.js)
+ *
+ * @input line : text message which cotains markdown
+ * @input title : header message
+ * @input markdown : always true
+ * @input type : one of notiType enum
+ * @return none
  */
+
 function sendToSlack(line, title, markdown, type=notiType.INFO) {
     try {
         post

@@ -6,7 +6,17 @@ format.extend(String.prototype);
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 
-const logger = require('./logger.js').getLogger('redisclient:' + currency);
+const CONFIG = process.env.CONFIG;  // configuration folder with '/'
+
+// LOGGER
+let log4js = require('log4js');
+log4js.configure(CONFIG + 'loggerConfig.json');
+let log4js_extend = require('log4js-extend');
+log4js_extend(log4js, {
+    path: __dirname,
+    format: '(@name:@line:@column)'
+});
+const logger = log4js.getLogger('redisclient:' + currency);
 
 let option = {
     host: process.env.REDIS_HOST,
