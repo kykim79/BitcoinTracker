@@ -197,3 +197,12 @@ services:
   volumes:
    - ./chartData/xrp/:/app/public/data/
   image: devilica/coin_chart
+
+ chart_btg:
+  build:
+   context: ./chart
+  ports:
+   - "4004:3000"
+  volumes:
+   - ./chartData/btg/:/app/public/data/
+  image: devilica/coin_chart

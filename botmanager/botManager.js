@@ -122,7 +122,7 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*n$/, showAllCoins, ['Current Config'])
     .addCommand(/^sb\s*([bxce])n$/, showCoin, ['Current Configuration Values'])
     .addCommand(/^sb\s*([bxce])a$/, adjustConfig, ['Sell, Buy Price Adjusted'])
-    .addCommand(/^sb\s*([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k|%]?)$/, updateCoin, ['New Configuration']);
+    .addCommand(/^sb\s*([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, ['New Configuration']);
 
 // create a bot
 const settings = {
