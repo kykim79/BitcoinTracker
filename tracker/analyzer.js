@@ -24,8 +24,6 @@ const Stochastic = require('technicalindicators').Stochastic;
 const rollers = require('streamroller');
 const stream = new rollers.RollingFileStream(LOG + currency + '/' + process.env.TREND_FILENAME, 200000, 3);
 
-const CONFIG_FILE = process.env.CONFIG + currency + '/' + process.env.CONFIG_FILENAME;
-
 const Watcher = require('watch-files');
 const watcher = Watcher({
     interval: '0.1s'
@@ -36,6 +34,7 @@ const json = require('json-file');
 let readConfigFile = (path) => new json.read(path);
 
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
+const CONFIG_FILE = CONFIG + currency + '/' + process.env.CONFIG_FILENAME;
 
 // LOGGER
 let log4js = require('log4js');

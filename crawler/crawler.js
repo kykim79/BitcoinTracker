@@ -35,8 +35,8 @@ const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/' + CURR
 
 // Stream Roller
 let rollers = require('streamroller');
-let stream = new rollers.RollingFileStream(LOG + 'crawler.log', 100000, 2);
-let streamRaw = new rollers.RollingFileStream(LOG  + 'raw.log', 100000, 2);
+let stream = new rollers.RollingFileStream(LOG + currency + '/crawler.log', 100000, 2);
+let streamRaw = new rollers.RollingFileStream(LOG  + currency + '/raw.log', 100000, 2);
 
 let redisClient = require('./redisClient.js');
 
