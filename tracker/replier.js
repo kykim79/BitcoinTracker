@@ -13,14 +13,7 @@ const CHANNEL = process.env.CHANNEL;
 const BOT_NAME = process.env.BOT_NAME;
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
-// LOGGER
 let log4js = require('log4js');
-log4js.configure(CONFIG + 'loggerConfig.json');
-let log4js_extend = require('log4js-extend');
-log4js_extend(log4js, {
-    path: __dirname,
-    format: '(@name:@line:@column)'
-});
 const logger = log4js.getLogger('replier:' + currency);
 
 // exports.sendText = (text) => sendTextOnly(text);

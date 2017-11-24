@@ -40,7 +40,9 @@ const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(CONFIG + 'loggerConfig.json');
+let logCf = new json.read(CONFIG + 'loggerConfig.json').data;
+logCf.appenders.file.filename = LOG + currency +  '/coinhistory.log';
+log4js.configure(logCf);
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,

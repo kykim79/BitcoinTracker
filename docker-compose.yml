@@ -24,7 +24,7 @@ services:
    - CURRENCY=BCH
    - CRON_SCHEDULE=0-59/15 * * * * *
   volumes:
-   - ./log/bch/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -38,7 +38,7 @@ services:
    - CURRENCY=BTC
    - CRON_SCHEDULE=1-59/15 * * * * *
   volumes:
-   - ./log/btc/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -52,7 +52,7 @@ services:
    - CURRENCY=ETH
    - CRON_SCHEDULE=3-59/15 * * * * *
   volumes:
-   - ./log/eth/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -66,7 +66,7 @@ services:
    - CURRENCY=XRP
    - CRON_SCHEDULE=4-59/15 * * * * *
   volumes:
-   - ./log/xrp/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -81,7 +81,7 @@ services:
    - CURRENCY=BCH
    - PRICE_ROUND_RADIX=-1
   volumes:
-   - ./log/bch/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
@@ -96,7 +96,7 @@ services:
    - CURRENCY=BTC
    - PRICE_ROUND_RADIX=-3
   volumes:
-   - ./log/btc/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
@@ -111,7 +111,7 @@ services:
    - CURRENCY=ETH
    - PRICE_ROUND_RADIX=-1
   volumes:
-   - ./log/eth/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
@@ -126,7 +126,7 @@ services:
    - CURRENCY=XRP
    - PRICE_ROUND_RADIX=0
   volumes:
-   - ./log/xrp/:/app/log/
+   - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker

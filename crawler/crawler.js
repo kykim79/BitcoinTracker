@@ -11,19 +11,24 @@ const currency = CURRENCY.toLowerCase();
 
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
 const MAX_COUNT = process.env.MAX_COUNT;
-const CONFIG = process.env.CONFIG;
-const LOG = process.env.LOG;
 const TIMEZONE = 'Asia/Seoul';
 
-// LOGGER
+// CONFIGRATION && LOGGER
+const CONFIG = process.env.CONFIG;  // configuration folder with '/'
+
+const json = require('json-file');
 let log4js = require('log4js');
-log4js.configure(CONFIG + 'loggerConfig.json');
+const LOG = process.env.LOG;
+const LOGGER_CONFIGFILE = process.env.LOGGER_CONFIGFILE;
+const LOGGER_OUTFILE = process.env.LOGGER_OUTFILE;
+let logCf = new json.read(CONFIG + LOGGER_CONFIGFILE).data;
+logCf.appenders.file.filename = LOG + currency + '/' + LOGGER_OUTFILE;
+log4js.configure(logCf);
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,
     format: '(@name:@line:@column)'
 });
-
 let logger = log4js.getLogger('crawler:' + currency);
 
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/' + CURRENCY;
@@ -74,6 +79,7 @@ let crawl = () => {
 };
 
 function getNewCoins(body) {
+
     writeLogRaw(body);
 
     let coinMap = new Map();

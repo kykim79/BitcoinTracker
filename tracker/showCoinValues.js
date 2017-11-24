@@ -13,23 +13,16 @@ const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 const npadBlank = (number) => pad(NPAD_SIZE + 7, numeral((number)).format('0,0'));
 const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
-const CONFIG_FILENAME = '/trackerConfig.json';  // should start with '/'
+const CONFIG_FILENAME = 'trackerConfig.json';
 
-// LOGGER
-// let log4js = require('log4js');
-// log4js.configure(CONFIG + 'loggerConfig.json');
-// let log4js_extend = require('log4js-extend');
-// log4js_extend(log4js, {
-//     path: __dirname,
-//     format: '(@name:@line:@column)'
-// });
-// const logger = log4js.getLogger('showCoinValues');
+let log4js = require('log4js');
+const logger = log4js.getLogger('showCoinValues');
 
 exports.attach = (nv) => buildAttach(nv);
 
 function buildAttach(nv) {
     try {
-        const cf = JSON.parse(fs.readFileSync(CONFIG + currency + CONFIG_FILENAME));
+        const cf = JSON.parse(fs.readFileSync(CONFIG + currency + '/' + CONFIG_FILENAME));
         return new coinConfig(CURRENCY)
             .addField('Buy:     ', npercent((nv.close - cf.buyPrice ) / nv.close), npadBlank(cf.buyPrice) )
             .addField('histo(avr) ', npad(nv.histoAvr), npadBlank(cf.histoPercent * nv.close) + '(' + npercent(cf.histoPercent) + ')')

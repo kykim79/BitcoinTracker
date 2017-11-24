@@ -7,11 +7,18 @@ format.extend(String.prototype);
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
+
+// CONFIGRATION && LOGGER
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
-// LOGGER
+const json = require('json-file');
 let log4js = require('log4js');
-log4js.configure(CONFIG + 'loggerConfig.json');
+const LOG = process.env.LOG;
+const LOGGER_CONFIGFILE = process.env.LOGGER_CONFIGFILE;
+const LOGGER_OUTFILE = process.env.LOGGER_OUTFILE;
+let logCf = new json.read(CONFIG + LOGGER_CONFIGFILE).data;
+logCf.appenders.file.filename = LOG + currency + '/' + LOGGER_OUTFILE;
+log4js.configure(logCf);
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,
