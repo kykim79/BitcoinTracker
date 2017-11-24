@@ -4,21 +4,20 @@ let Map = require('hashmap');
 let CoinInfo = require('./coinInfo.js');
 let CronJob = require('cron').CronJob;
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
+// String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 
-const CRON_SCHEDULE = process.env.CRAWLER_CRON.unquoted();
+const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
 const MAX_COUNT = process.env.MAX_COUNT;
-const DEV_MODE = process.env.DEV_MODE;
 const CONFIG = process.env.CONFIG;
 const LOG = process.env.LOG;
 const TIMEZONE = 'Asia/Seoul';
 
 // LOGGER
 let log4js = require('log4js');
-log4js.configure(CONFIG + '/loggerConfig.json');
+log4js.configure(CONFIG + 'loggerConfig.json');
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
     path: __dirname,
@@ -31,8 +30,8 @@ const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/' + CURR
 
 // Stream Roller
 let rollers = require('streamroller');
-let stream = new rollers.RollingFileStream(LOG + currency + '/crawler.log', 100000, 2);
-let streamRaw = new rollers.RollingFileStream(LOG + currency + '/raw.log', 100000, 2);
+let stream = new rollers.RollingFileStream(LOG + 'crawler.log', 100000, 2);
+let streamRaw = new rollers.RollingFileStream(LOG  + 'raw.log', 100000, 2);
 
 let redisClient = require('./redisClient.js');
 
@@ -75,7 +74,7 @@ let crawl = () => {
 };
 
 function getNewCoins(body) {
-    // writeLogRaw(body);
+    writeLogRaw(body);
 
     let coinMap = new Map();
     body.data.forEach(e => {
@@ -108,7 +107,7 @@ function write(newCoins) {
         if(coinInfo.volume !== 0 && coinInfo.price !== null) {
             redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
             writtenKeys.push(moment(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
-            // writeTradeLog(e, coinInfo);
+            writeTradeLog(e, coinInfo);
         }
     });
 }

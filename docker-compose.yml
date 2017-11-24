@@ -22,6 +22,7 @@ services:
   environment:
    - PRICE_ROUND_RADIX=-1
    - CURRENCY=BCH
+   - CRON_SCHEDULE=0-59/15 * * * * *
   volumes:
    - ./log/bch/:/app/log/
    - ./config/:/app/config/
@@ -35,6 +36,7 @@ services:
   environment:
    - PRICE_ROUND_RADIX=-3
    - CURRENCY=BTC
+   - CRON_SCHEDULE=1-59/15 * * * * *
   volumes:
    - ./log/btc/:/app/log/
    - ./config/:/app/config/
@@ -48,8 +50,9 @@ services:
   environment:
    - PRICE_ROUND_RADIX=-1
    - CURRENCY=ETH
+   - CRON_SCHEDULE=3-59/15 * * * * *
   volumes:
-   - ./log/eth/:/app/log/
+   - ./log/eth.:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
@@ -61,6 +64,7 @@ services:
   environment:
    - PRICE_ROUND_RADIX=0
    - CURRENCY=XRP
+   - CRON_SCHEDULE=4-59/15 * * * * *
   volumes:
    - ./log/xrp/:/app/log/
    - ./config/:/app/config/
