@@ -201,7 +201,7 @@ function updatePrice (sign, amount, price, percentKilo) {
 
 function adjustSellBuy(cointype, value) {
     try {
-        const configFile = CONFIG + cointype.toLowerCase() + CONFIG_FILENAME;
+        const configFile = CONFIG + cointype.toLowerCase() + '/' + CONFIG_FILENAME;
         const cf = JSON.parse(fs.readFileSync(configFile));
         const n = Number(value.body.data[0].price);
         cf.buyPrice = roundTo(n * (1 - cf.gapAllowance * 3),0);

@@ -94,10 +94,10 @@ function listener(ohlcs) {
     nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
     nowValues.histoPercent = config.histoPercent;
     nowValues.lastHistogram = roundTo(macds[tableSize - 2].histogram, 3);
-    nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d, 3);
-    nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 3);
-    nowValues.dLast = (stochastic[stochastic.length - 2].d) ? roundTo(stochastic[stochastic.length - 2].d, 3): 0;
-    nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 3): 0;
+    nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d, 0);
+    nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 0);
+    nowValues.dLast = (stochastic[stochastic.length - 2].d) ? roundTo(stochastic[stochastic.length - 2].d, 0): 0;
+    nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 0): 0;
     nowValues.tradeType = '';
     nowValues.msgText = '';
     nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 3);
