@@ -52,7 +52,7 @@ services:
    - CURRENCY=ETH
    - CRON_SCHEDULE=3-59/15 * * * * *
   volumes:
-   - ./log/eth.:/app/log/
+   - ./log/eth/:/app/log/
    - ./config/:/app/config/
   image: devilica/coin_crawler
 

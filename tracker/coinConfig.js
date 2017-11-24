@@ -25,8 +25,8 @@ module.exports = class coinConfig {
         this.fields.push({ title: titleKey + titleKey2, value: value, short: true});
         return this;
     }
-    addFieldLong(title, value, short=false) {
-        this.fields.push({ title: title, value: value, short: short });
-        return this;
-    }
+    // addFieldLong(title, value, short=false) {
+    //     this.fields.push({ title: title, value: value, short: short });
+    //     return this;
+    // }
 };

@@ -4,8 +4,6 @@ let CronJob = require('cron').CronJob;
 let format = require('string-format');
 format.extend(String.prototype);
 
-String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
-
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();

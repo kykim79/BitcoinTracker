@@ -342,13 +342,11 @@ function appendMsg(nv, msg) {
  *
  *
  * @param nv(nowValues) {Object} : gathered and calculated current values
- * @param msg {text} : header message
  * @return none
  */
 
 function informTrade(nv) {
 
-    logger.log(nv.msgText);
     replier.sendAttach(currency, nv.msgText, [show.attach(nv)]);
 
 }
