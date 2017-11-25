@@ -4,11 +4,7 @@ format.extend(String.prototype);
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const LOG = process.env.LOG;
-const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 
-// let fs = require('fs');
-
-const pad = require('pad');
 const numeral = require('numeral');
 const roundTo = require('round-to');
 const show = require('./showCoinValues.js');
@@ -38,10 +34,7 @@ const CONFIG_FILE = CONFIG + currency + '/' + process.env.CONFIG_FILENAME;
 let log4js = require('log4js');
 const logger = log4js.getLogger('analyzer:' + currency);
 
-const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
-
 const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
-const note = require('./notifier.js');
 const TradeType = require('./tradeType.js');
 const EOL = require('os').EOL;
 const replaceall = require('replaceall');
@@ -98,6 +91,8 @@ function listener(ohlcs) {
     nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 0);
     nowValues.dLast = (stochastic[stochastic.length - 2].d) ? roundTo(stochastic[stochastic.length - 2].d, 0): 0;
     nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 0): 0;
+    nowValues.sellTarget =  config.sellPrice * (1 - config.gapAllowance);
+    nowValues.buyTarget =  config.buyPrice * (1 + config.gapAllowance);
     nowValues.tradeType = '';
     nowValues.msgText = '';
     nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 3);
@@ -109,7 +104,7 @@ function listener(ohlcs) {
     nowValues.volumeLast = roundTo(volumes.slice(volumes.length - volumeCount).reduce((e1, e2) => e1 + e2) / volumeCount,3);
 
     if (isFirstTime) {
-        justStarted(nowValues, config, tableSize);
+        nowValues.msgText = '\nJust Started .. tblSize [' + tableSize + ']';
         isFirstTime = false;
     }
 
@@ -178,36 +173,6 @@ function calculateStochastic(highs, lows, closes) {
 }
 
 /**
- * justStarted : inform to slack that this analytic program has been started
- *
- *
- * @param nowValues {Object} : gathered and calculated current values
- * @param config {Object} : current configuration setting
- * @param tableSize {var} : length of MACD array
- * @return none
- */
-
-function justStarted(nowValues, config, tableSize) {
-
-    // nowValues : current price info, calcualted analytic values
-    // config    : trackerConfig.json values
-    // tableSize : MACD array count
-
-    const v = {
-        sell: npad(config.sellPrice),
-        buy: npad(config.buyPrice),
-        size: tableSize,
-        gap: npercent(config.gapAllowance),
-        now: npad(nowValues.close),
-        histo: npercent(config.histoPercent)
-    };
-    const m = format('Buy  :{buy}   tblSz :{size}\n' +
-        'Now  :{now}   gap   :{gap}\n' +
-        'Sell:{sell}   h(div):{histo}', v);
-    note.info(m, 'Analyzing Started');
-}
-
-/**
  * analyzeHistogram : annalyze histogram values against configuration setting and then alert if right time
  *
  *
@@ -225,11 +190,11 @@ function analyzeHistogram(nv) {
     // if histogram now has different sign, alert
 
     if (nv.histoSign) {
-        if (nv.close >= config.sellPrice * (1 - config.gapAllowance)) {
+        if (nv.close >= nv.sellTarget) {
             nv.tradeType = TradeType.SELL;
             msg = (nv.close >= config.sellPrice) ? 'SELL, histo sign Changed' : 'Histo says sell';
         }
-        else if (nv.close <= config.buyPrice * (1 + config.gapAllowance)) {
+        else if (nv.close <= nv.buyTarget) {
             nv.tradeType = TradeType.BUY;
             msg = (nv.close <= config.buyPrice) ? 'BUY, histo sign changed' : 'Histo says buy';
         }
@@ -239,11 +204,11 @@ function analyzeHistogram(nv) {
     // very similar analysis with above nv.histoSign
 
     else if (nv.histoAvr > config.histogram) {
-        if (nv.lastHistogram >= 0 && nv.histogram <= 0 && (Math.abs(config.sellPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        if (nv.lastHistogram >= 0 && nv.histogram <= 0 && nv.close >= nv.sellTarget) {
             nv.tradeType = TradeType.SELL;
             msg = (nv.close >= config.sellPrice) ? 'Over, Should SELL' : 'may be SELL POINT';
         }
-        else if (nv.lastHistogram <= 0 && nv.histogram >= 0 && (Math.abs(config.buyPrice - nv.close) / nv.close) <= config.gapAllowance) {
+        else if (nv.lastHistogram <= 0 && nv.histogram >= 0 && nv.close <= nv.buyTarget) {
             nv.tradeType = TradeType.BUY;
             msg = (nv.close <= config.buyPrice) ? 'Under, Should BUY' : 'may be BUY POINT';
         }
@@ -265,11 +230,11 @@ function analyzeHistogram(nv) {
 function analyzeStochastic(nv) {
 
     let msg = '';
-    if ((nv.dLast >= 80 && nv.kLast >= 80) && (nv.dNow < 80 || nv.kNow < 80) && nv.close >= config.sellPrice * (1 - config.gapAllowance)) {
+    if ((nv.dLast >= 80 && nv.kLast >= 80) && (nv.dNow < 80 || nv.kNow < 80) && nv.close >= nv.sellTarget) {
         nv.tradeType = TradeType.SELL;
         msg = 'Stochastic SELL SELL';
     }
-    else if ((nv.dLast <= 20 && nv.kLast <= 20) && (nv.dNow > 20 || nv.kNow > 20) && nv.close <= config.buyPrice * (1 + config.gapAllowance)) {
+    else if ((nv.dLast <= 20 && nv.kLast <= 20) && (nv.dNow > 20 || nv.kNow > 20) && nv.close <= nv.buyTarget) {
         nv.tradeType = TradeType.BUY;
         msg = 'Stochastic BUY BUY';
     }
@@ -289,11 +254,11 @@ function analyzeBoundary(nv) {
     let msg = '';
     if (nv.close > config.sellPrice) {
         nv.tradeType = TradeType.SELL;
-        msg = 'Going Over SELL boundary';
+        msg = 'Passing SELL boundary';
     }
     else if (nv.close < config.buyPrice) {
         nv.tradeType = TradeType.BUY;
-        msg = 'Going Under BUY boundary';
+        msg = 'Passing BUY boundary';
     }
     return appendMsg(nv,msg);
 }
@@ -311,11 +276,11 @@ function analyzeVolume(nv) {
 
     let msg = '';
     if (nv.volumeLast > nv.volumeAvr * 2) {
-        if (nv.close >= config.sellPrice * (1 - config.gapAllowance)) {
+        if (nv.close >= nv.sellTarget) {
             nv.tradeType = TradeType.SELL;
             msg = 'Volume goes up rapidly, SELL ?';
         }
-        else if (nv.close <= config.buyPrice * (1 + config.gapAllowance)) {
+        else if (nv.close <= nv.buyTarget) {
             nv.tradeType = TradeType.BUY;
             msg = 'Volume goes up rapidly, BUY ?';
         }
@@ -340,7 +305,9 @@ function appendMsg(nv, msg) {
 
 function informTrade(nv) {
 
-    replier.sendAttach(currency, nv.msgText, [show.attach(nv)]);
+    let attach = show.attach(nv);
+    attach.title += moment(new Date(nv.epoch)).tz('Asia/Seoul').format('    YYYY-MM-DD HH:mm');
+    replier.sendAttach(currency, nv.msgText, [attach]);
 
 }
 
