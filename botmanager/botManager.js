@@ -48,7 +48,7 @@ const BOT_NAME = process.env.BOT_NAME;
 const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
 
 function showUsage() {
-    const header =  'Monitor CrytoCoins _[' + process.env.COINS_KEY + ']_';
+    const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
     const usage = '*USAGE*             _(Ver. 2017-11-25)_\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
         '      {' + coins_cmd + 'n}  {bsaghn}  {(+/-)123(k%)}\n' +
@@ -86,7 +86,7 @@ let updateConfig = (match) => {
         coin: COINS_KEY[COINS_CMD.indexOf(match[1])],
         command: match[2],
         sign: match[3],
-        amount: match[4],
+        amount: Number(match[4]),
         percentKilo: match[5]
     };
 
