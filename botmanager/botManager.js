@@ -49,10 +49,10 @@ const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
 
 function showUsage() {
     const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
-    const usage = '*USAGE*             _(Ver. 2017-11-25)_\n' +
+    const usage = '*USAGE*             _(Ver. 2017-11-27)_\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
         '      {' + coins_cmd + 'n}  {bsaghn}  {(+/-)123(k%)}\n' +
-        '_Refer github_ README.md _for more detail_\nhttps://goo.gl/dkEUaR';    // => 'https://github.com/kykim79/BitcoinTracker'
+        '_Refer github_ README.md _for more detail_\nhttps://goo.gl/vKF1vk'; // https://github.com/kykim79/BitcoinTracker#usage';
 
     replier.sendSlack(usage, header, 'https://github.com/kykim79/BitcoinTracker');
     logger.debug(header);

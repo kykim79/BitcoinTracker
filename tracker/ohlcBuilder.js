@@ -1,15 +1,13 @@
-let events = require('events');
-let splitArray = require('split-array');
+const events = require('events');
+const splitArray = require('split-array');
 
-let format = require('string-format');
+const format = require('string-format');
 format.extend(String.prototype);
 
-let SPLIT_SIZE = Number(process.env.SPLIT_SIZE);
+const SPLIT_SIZE = Number(process.env.SPLIT_SIZE);
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
-
-const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
 let log4js = require('log4js');
 const logger = log4js.getLogger('ohlcbuilder:' + currency);
@@ -18,10 +16,10 @@ let moment = require('moment');
 require('moment-timezone');
 let minuteString = (epoch) => moment(new Date(epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm');
 
-let selector = require('./selector.js');
+const selector = require('./selector.js');
 selector.getEmitter().on('event', listener);
 
-let emitter = new events.EventEmitter();
+const emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
 let lastHeadCoins = [];
@@ -88,6 +86,12 @@ function makeOHLCfield(coins) {
 }
 
 function validateDates(ohlcInfos) {
+    let nowTime = ohlcInfos[ohlcInfos.length - 1].date.substring(5);    // last value
+    if (nowTime === lastTime) {
+        logger.debug('Same TimeStamp as before ' + nowTime);
+        return false;
+    }
+    lastTime = nowTime;
     // to verify dates
     if (ohlcInfos.length > 4) {
         logger.debug('table[{0}], ({1} ~ {2}, {3}, {4})'
@@ -97,11 +101,5 @@ function validateDates(ohlcInfos) {
                 ohlcInfos[ohlcInfos.length - 2].date.substring(8),
                 ohlcInfos[ohlcInfos.length - 1].date.substring(8)));
     }
-    let nowTime = ohlcInfos[ohlcInfos.length - 1].date.substring(8);    // last value
-    if (nowTime === lastTime) {
-        logger.debug('Same TimeStamp as before ' + nowTime);
-        return false;
-    }
-    lastTime = nowTime;
     return true;
 }

@@ -1,5 +1,6 @@
 
 const request = require('request');
+const replaceall = require('replaceall');
 const querystring = require('querystring');
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
@@ -11,7 +12,6 @@ const CHANNEL = process.env.CHANNEL;
 // const WEB_HOOK = process.env.WEB_HOOK;
 // const BOT_ICON = process.env.BOT_ICON;
 const BOT_NAME = process.env.BOT_NAME;
-const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
 let log4js = require('log4js');
 const logger = log4js.getLogger('replier:' + currency);
@@ -27,7 +27,7 @@ exports.sendAttach = (iconName, text, attachs) => sendWithAttach(iconName, text,
 
 function sendWithAttach(iconName, text, attachs) {
     requestMessage(buildMessage(iconName, text, attachs));
-    logger.debug(text);
+    logger.debug(replaceall('\n', '; ', text));
 }
 
 function buildMessage(iconName, text, attachs = null) {
@@ -48,25 +48,6 @@ function buildMessage(iconName, text, attachs = null) {
     }
     return msg;
 }
-//
-// function sendMarkDownedText(line, title, url) {
-//     try {
-//
-//         let post = slackPost.post(WEB_HOOK);
-//         post
-//             .setUsername(BOT_NAME)
-//             .enableFieldMarkdown()
-//             .setColor(slackPost.COLOR_LIST['GOOD'])
-//             .setTitle(title, url)
-//             .setRichText(line,true)
-//             .setIconURL(ICON_URL + BOT_ICON + '.png')
-//             .enableUnfurlLinks()
-//             .send((err) => { if (err) throw err; });
-//         logger.debug(title);
-//     } catch(e) {
-//         logger.error(e);
-//     }
-// }
 
 function requestMessage(msg) {
     let webMsg = 'http://slack.com/api/chat.postMessage?' + querystring.stringify(msg);

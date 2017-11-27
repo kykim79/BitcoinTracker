@@ -1,8 +1,8 @@
-let fs = require('fs');
-let json2csv = require('json2csv');
-let events = require('events');
+const fs = require('fs');
+const json2csv = require('json2csv');
+const events = require('events');
 
-let emitter = new events.EventEmitter();
+const emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
 const CURRENCY = process.env.CURRENCY;
@@ -15,10 +15,8 @@ const CHART_FILENAME = process.env.CHART_DATA + currency + '/CandleData.csv';
 let log4js = require('log4js');
 const logger = log4js.getLogger('chartfeeder:' + currency);
 
-let ohlcBuilder = require('./ohlcBuilder.js');
+const ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
-
-logger.debug('chart file ' + CHART_FILENAME);
 
 function listener(args) {
     try {

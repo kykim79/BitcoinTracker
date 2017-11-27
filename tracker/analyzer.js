@@ -18,11 +18,11 @@ const Stochastic = require('technicalindicators').Stochastic;
 
 // Stream Roller
 const rollers = require('streamroller');
-const stream = new rollers.RollingFileStream(LOG + currency + '/' + process.env.TREND_FILENAME, 200000, 3);
+const stream = new rollers.RollingFileStream(LOG + currency + '/' + process.env.TREND_FILENAME, 500000, 5);
 
 const Watcher = require('watch-files');
 const watcher = Watcher({
-    interval: '0.1s'
+    interval: '0.5s'
 });
 const json = require('json-file');
 let readConfigFile = (path) => new json.read(path);
@@ -35,7 +35,6 @@ let log4js = require('log4js');
 const logger = log4js.getLogger('analyzer:' + currency);
 
 const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
-const TradeType = require('./tradeType.js');
 const EOL = require('os').EOL;
 const replaceall = require('replaceall');
 let isFirstTime = true; // inform current setting when this module is started
@@ -52,6 +51,9 @@ const volumeCount = 4;   // if recent volume goes high then...
 
 const ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
+
+const SELL = 'S';
+const BUY = 'B';
 
 /**
  * lister : main
@@ -82,7 +84,9 @@ function listener(ohlcs) {
 
     let nowValues = ohlcs[ohlcs.length - 1];    // last value
 
-    // nowValues.MACD = macds[tableSize - 1].MACD;
+    nowValues.closeLast1 = closes[ohlcs.length - 4];
+    nowValues.closeLast2 = closes[ohlcs.length - 7];
+    nowValues.closeLast3 = closes[ohlcs.length - 10];
     // nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
     nowValues.histoPercent = config.histoPercent;
@@ -191,12 +195,12 @@ function analyzeHistogram(nv) {
 
     if (nv.histoSign) {
         if (nv.close >= nv.sellTarget) {
-            nv.tradeType = TradeType.SELL;
-            msg = (nv.close >= config.sellPrice) ? 'SELL, histo sign Changed' : 'Histo says sell';
+            nv.tradeType = SELL;
+            msg = (nv.close >= config.sellPrice) ? 'Histo SIGN CHANGED, SELL' : 'Histo sign changed, Sell';
         }
         else if (nv.close <= nv.buyTarget) {
-            nv.tradeType = TradeType.BUY;
-            msg = (nv.close <= config.buyPrice) ? 'BUY, histo sign changed' : 'Histo says buy';
+            nv.tradeType = BUY;
+            msg = (nv.close <= config.buyPrice) ? 'Histo SIGN CHANGED, BUY' : 'Histo sign changed, Buy';
         }
     }
 
@@ -205,11 +209,11 @@ function analyzeHistogram(nv) {
 
     else if (nv.histoAvr > config.histogram) {
         if (nv.lastHistogram >= 0 && nv.histogram <= 0 && nv.close >= nv.sellTarget) {
-            nv.tradeType = TradeType.SELL;
+            nv.tradeType = SELL;
             msg = (nv.close >= config.sellPrice) ? 'Over, Should SELL' : 'may be SELL POINT';
         }
         else if (nv.lastHistogram <= 0 && nv.histogram >= 0 && nv.close <= nv.buyTarget) {
-            nv.tradeType = TradeType.BUY;
+            nv.tradeType = BUY;
             msg = (nv.close <= config.buyPrice) ? 'Under, Should BUY' : 'may be BUY POINT';
         }
     }
@@ -231,11 +235,11 @@ function analyzeStochastic(nv) {
 
     let msg = '';
     if ((nv.dLast >= 80 && nv.kLast >= 80) && (nv.dNow < 80 || nv.kNow < 80) && nv.close >= nv.sellTarget) {
-        nv.tradeType = TradeType.SELL;
+        nv.tradeType = SELL;
         msg = 'Stochastic SELL SELL';
     }
     else if ((nv.dLast <= 20 && nv.kLast <= 20) && (nv.dNow > 20 || nv.kNow > 20) && nv.close <= nv.buyTarget) {
-        nv.tradeType = TradeType.BUY;
+        nv.tradeType = BUY;
         msg = 'Stochastic BUY BUY';
     }
     return appendMsg(nv,msg);
@@ -253,12 +257,18 @@ function analyzeBoundary(nv) {
 
     let msg = '';
     if (nv.close > config.sellPrice) {
-        nv.tradeType = TradeType.SELL;
+        nv.tradeType = SELL;
         msg = 'Passing SELL boundary';
     }
     else if (nv.close < config.buyPrice) {
-        nv.tradeType = TradeType.BUY;
+        nv.tradeType = BUY;
         msg = 'Passing BUY boundary';
+    }
+    else if (nv.close < nv.closeLast3 * 0.99) {
+        msg = 'Warning! goes DOWN Very Fast';
+    }
+    else if (nv.close > nv.closeLast3 * 1.01) {
+        msg = 'Warning! goes UP Very Fast';
     }
     return appendMsg(nv,msg);
 }
@@ -277,11 +287,11 @@ function analyzeVolume(nv) {
     let msg = '';
     if (nv.volumeLast > nv.volumeAvr * 2) {
         if (nv.close >= nv.sellTarget) {
-            nv.tradeType = TradeType.SELL;
+            nv.tradeType = SELL;
             msg = 'Volume goes up rapidly, SELL ?';
         }
         else if (nv.close <= nv.buyTarget) {
-            nv.tradeType = TradeType.BUY;
+            nv.tradeType = BUY;
             msg = 'Volume goes up rapidly, BUY ?';
         }
     }
@@ -331,6 +341,7 @@ function keepLog(nv) {
             nv.volumeLast,
             nv.histogram,
             nv.histoAvr,
+            nv.histoSign,
             nv.dNow,
             nv.kNow,
             nv.tradeType,
@@ -344,7 +355,7 @@ function keepLog(nv) {
     // sometimes write value header
     let d = new Date(nv.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
-        const head = 'coin, date and time  ,   close,   vol, volAvr, volLast, histogram, hisAvr, dNow, kNow, B/S, msgText';
+        const head = 'coin, date and time  ,   close,   vol, volAvr, volLast, histogram, hisAvr, hisSign, dNow, kNow, B/S, msgText';
         stream.write(head + EOL);
     }
 }

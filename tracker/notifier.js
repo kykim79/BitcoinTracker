@@ -1,6 +1,6 @@
-let replaceall = require('replaceall');
+const replaceall = require('replaceall');
 
-let format = require('string-format');
+const format = require('string-format');
 format.extend(String.prototype);
 
 const CURRENCY = process.env.CURRENCY;
@@ -23,7 +23,7 @@ exports.warn = (line, title) => sendToSlack(line, title, true, notiType.WARN);
 exports.danger = (line, title) => sendToSlack(line, title, true, notiType.DANGER);
 exports.attach = (line, title) => sendToSlack(line, title, false);
 
-let slackPost = require('slackpost');
+const slackPost = require('slackpost');
 let post = slackPost.post(WEB_HOOK);
 post.setUsername(TRACKER_NAME + ' : ' + CURRENCY + ' (' +  COINS_CMD[COINS_KEY.indexOf(CURRENCY)] + ')').enableFieldMarkdown();
 const EOL = require('os').EOL;

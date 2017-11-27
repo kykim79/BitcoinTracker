@@ -2,6 +2,7 @@
 const request = require('request');
 const querystring = require('querystring');
 const slackPost = require('slackpost');
+const replaceall = require('replaceall');
 
 // environment variables
 const WEB_TOKEN = process.env.WEB_TOKEN;
@@ -21,12 +22,12 @@ exports.sendSlack = (line, title, url) => sendMarkDownedText(line, title, url);
 
 function sendTextOnly(text) {
     requestMessage(buildMessage(BOT_ICON, text));
-    logger.debug(text);
+    logger.debug(replaceall('\n', '; ', text));
 }
 
 function sendWithAttach(iconName, text, attachs) {
     requestMessage(buildMessage(iconName, text, attachs));
-    logger.debug(text);
+    logger.debug(replaceall('\n', '; ', text));
 }
 
 function buildMessage(iconName, text, attachs = null) {
@@ -61,7 +62,7 @@ function sendMarkDownedText(line, title, url) {
             .setIconURL(ICON_URL + BOT_ICON + '.png')
             .enableUnfurlLinks()
             .send((err) => { if (err) throw err; });
-        logger.debug(title);
+        logger.debug(replaceall('\n', '; ', title));
     } catch(e) {
         logger.error(e);
     }

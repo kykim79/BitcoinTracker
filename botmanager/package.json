@@ -19,6 +19,7 @@
     "mocha": "^4.0.1",
     "numeral": "^2.0.6",
     "pad": "^1.1.0",
+    "replaceall": "^0.1.6",
     "request": "^2.81.0",
     "round-to": "^2.0.0",
     "slackbots": "^1.1.0",

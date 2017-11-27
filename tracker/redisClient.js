@@ -1,6 +1,6 @@
-let redis = require('redis');
+const redis = require('redis');
 
-let format = require('string-format');
+const format = require('string-format');
 format.extend(String.prototype);
 
 const CURRENCY = process.env.CURRENCY;
@@ -24,7 +24,7 @@ let option = {
     }
 };
 
-let client = redis.createClient(option);
+const client = redis.createClient(option);
 
 client.on('connect', () => {
     logger.info('redis connected.');

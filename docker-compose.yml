@@ -56,20 +56,6 @@ services:
    - ./config/:/app/config/
   image: devilica/coin_crawler
 
- crawler_xrp:
-  build:
-   context: ./crawler
-  env_file:
-   - ./crawler.env
-  environment:
-   - PRICE_ROUND_RADIX=0
-   - CURRENCY=XRP
-   - CRON_SCHEDULE=4-59/15 * * * * *
-  volumes:
-   - ./log/:/app/log/
-   - ./config/:/app/config/
-  image: devilica/coin_crawler
-
  crawler_btg:
   build:
    context: ./crawler
@@ -130,21 +116,6 @@ services:
    - ./chartData/:/app/chartData/
   image: devilica/coin_tracker
 
- tracker_xrp:
-  build:
-   context: ./tracker
-  env_file:
-   - tracker.env
-   - ./config/xrp/tracker.env
-  environment:
-   - CURRENCY=XRP
-   - PRICE_ROUND_RADIX=0
-  volumes:
-   - ./log/:/app/log/
-   - ./config/:/app/config/
-   - ./chartData/:/app/chartData/
-  image: devilica/coin_tracker
-
  tracker_btg:
   build:
    context: ./tracker
@@ -189,20 +160,11 @@ services:
    - ./chartData/eth/:/app/public/data/
   image: devilica/coin_chart
 
- chart_xrp:
-  build:
-   context: ./chart
-  ports:
-   - "4003:3000"
-  volumes:
-   - ./chartData/xrp/:/app/public/data/
-  image: devilica/coin_chart
-
  chart_btg:
   build:
    context: ./chart
   ports:
-   - "4004:3000"
+   - "4003:3000"
   volumes:
    - ./chartData/btg/:/app/public/data/
   image: devilica/coin_chart

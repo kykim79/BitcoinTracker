@@ -20,7 +20,7 @@
   - [botManager start/stop] <- to be documented later
 
 - [Analyzing Files Explanation](#analyzing-files-explanation)
-- [Configuration Files](#configuration-files)
+- [Configuration Files](#configuration-and-environment-files)
 
 - [Variables control by Slack](#variables-control-by-slack)
 
@@ -89,7 +89,7 @@ kill -9 9114
 ----
 
 ## Tracker Operation
-- load and execute selector.js ohlcBuilder.js, candleFeeder.js, analyzer.js
+- load and execute selector.js ohlcBuilder.js, chartFeeder.js, analyzer.js
 
 ### start
 ```
@@ -104,6 +104,23 @@ ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto tracker
 kill -9 9340
 ```
 
+----
+
+## BotManager Operation
+- load and execute botManager.js
+
+### start
+```
+cd ~/workspace
+node botManager.js &
+```
+### stop
+```
+ps -ef | grep botManager
+ubuntu      9340    7659  0 13:08 pts/9    00:00:01 node botManager.js
+ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto tracker
+kill -9 9340
+```
 
 ## Analyzing Files Explanation
 
@@ -141,9 +158,21 @@ kill -9 9340
 
 ----
 
-# Configuration Files
-- file location: ./config
-- format : .json
+# Configuration and Environment Files
+
+## crawler
+
+- ./crawler.env
+
+```
+REDIS_HOST=locahost
+REDIS_PORT=6379
+MAX_COUNT=1000
+CONFIG=./config/
+LOG=./log/
+LOGGER_CONFIGFILE=loggerConfig.json
+LOGGER_OUTFILE=coinhistory.log
+```
 
 ## crawlerConfig.json
 - Crawler.js external parameters
@@ -235,20 +264,22 @@ kill -9 9340
 
 ###_{currency}_
 
--   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *n*:Now
+-   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *g*BTG, .. 
+-   *n*:Now
    
 ###_{subcommand}_
 
 -   *b*: buyPrice,           *s*: sellPrice
--   *a*: adjust based on nowPrice
+-   *a*: adjust buy,sell based on nowPrice, gapAllowance
 -   *g*: gapAllowance,    *h*: histoPercent
 -   *n*: nowPrice
    
 ###_{amount}_
 
 -   *1234000* : set to 1,234,000
--   *1234k* : set to 12,340,000
+-   *12340k* : set to 12,340,000
 -   *+100* : add 100 to current set
 -   *-3k* : subtract 3000 from current set
+-   *+3%* : add 3% on current set
 -   *1.03* : set to 1.03% (gap or histo only)
 -   (note) Uppercase accepted, spaces allowed

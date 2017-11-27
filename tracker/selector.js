@@ -1,7 +1,7 @@
-let events = require('events');
-let CronJob = require('cron').CronJob;
+const events = require('events');
+const CronJob = require('cron').CronJob;
 
-let format = require('string-format');
+const format = require('string-format');
 format.extend(String.prototype);
 
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
@@ -25,34 +25,29 @@ log4js_extend(log4js, {
     format: '(@name:@line:@column)'
 });
 const logger = log4js.getLogger('selector:' + currency);
+const moment = require('moment');
+const note = require('./notifier.js');
 
 let emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 
-let redisClient = require('./redisClient.js');
+const redisClient = require('./redisClient.js');
 
 const TIMEZONE = 'Asia/Seoul';
-const TWENTY_MINUTES = 1200000;
+const THIRTY_MINUTES = 1800000;     // 30 min * 60 sec * 1000 milsec
 
 let lastepoch = 0;
 
-// String.prototype.unquoted = function (){return this.replace (/(^")|("$)/g, '');};
-
 let heartbeat = (res) => {
     const epoch = Date.now();
-    if (epoch - lastepoch > TWENTY_MINUTES) {
+    if (epoch - lastepoch > THIRTY_MINUTES) {
         lastepoch = epoch;
-        logger.debug('running. cron: {}, res size {}'.format(CRON_SCHEDULE, res.length));
-        let redisEpoch = JSON.parse(res[res.length-1]).epoch;
-
-        if (epoch - redisEpoch > TWENTY_MINUTES) {
-            let moment = require('moment');
-            let note = require('./notifier.js');
-            const v= {
-                lastTime : moment(new Date(redisEpoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm')
-            };
-            const f = 'Latest date in db is {lastTime}';
-            note.danger(f.format(v), 'Check Database Status');
+        const redisEpoch = JSON.parse(res[res.length-1]).epoch;
+        const lastTime =  moment(new Date(redisEpoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm');
+        logger.debug('running. cron: {}, res size {}, {}'.format(CRON_SCHEDULE, res.length, lastTime));
+        if (epoch - redisEpoch > THIRTY_MINUTES) {
+            const f = 'Latest date in db is {}';
+            note.danger(f.format(lastTime), 'Check Database Status');
         }
     }
 };

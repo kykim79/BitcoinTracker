@@ -10,7 +10,7 @@ const replier = require('./replier.js');
 
 const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
-const npercent = (number) => numeral(number * 100).format('0,0.000') + '%';
+const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
 
 // CONFIGRATION && LOGGER
@@ -28,7 +28,6 @@ function showCoinStatus(coin, msg) {
     Promise.try(() => bhttp.get(BITHUMB_URL +  coin))
         .then(response)
         .then(attach => {
-            // return replier.sendAttach(coin, msg, [attach]);
             replier.sendAttach(coin, msg, [attach]);
         })
         .catch(e => logger.error(e));
@@ -41,12 +40,12 @@ function buildAttach(coin, value) {
         const volume = value.body.data.map(_ => Number(_.units_traded)).reduce((e1, e2) => e1 + e2);
         const blank = '       ';
         return new coinConfig(coin)
-            .addField('Buy:     ', npercent((nowPrice - cf.buyPrice ) / nowPrice), blank + npad(cf.buyPrice))
-            .addField('gapAllow ', npercent(cf.gapAllowance), blank + npad(cf.gapAllowance * nowPrice))
-            .addField('Now:', '',  blank + npad(nowPrice))
-            .addField('histo(div) ', npercent(cf.histoPercent), blank + npad(cf.histoPercent * nowPrice))
-            .addField('Sell:     ', npercent((cf.sellPrice - nowPrice) / nowPrice),  blank + npad(cf.sellPrice))
-            .addField('volume ', '', blank + numeral(volume).format('0,0.000'))
+            .addField('Buy:     ' + npercent((nowPrice - cf.buyPrice ) / nowPrice), blank + npad(cf.buyPrice))
+            .addField('gapAllow ' + npercent(cf.gapAllowance), blank + npad(cf.gapAllowance * nowPrice))
+            .addField('Now:', blank + npad(nowPrice))
+            .addField('histo(div) ' + npercent(cf.histoPercent), blank + npad(cf.histoPercent * nowPrice))
+            .addField('Sell:     ' + npercent((cf.sellPrice - nowPrice) / nowPrice),  blank + npad(cf.sellPrice))
+            .addField('volume ', blank + numeral(volume).format('0,0.00'))
         ;
     } catch (e) {
         throw new Error(e);
