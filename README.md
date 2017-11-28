@@ -21,8 +21,7 @@
 
 - [Analyzing Files Explanation](#analyzing-files-explanation)
 - [Configuration Files](#configuration-and-environment-files)
-
-- [Variables control by Slack](#variables-control-by-slack)
+- [Usage at Slack](#usage)
 
 # Workspace Operation
 
@@ -260,21 +259,21 @@ LOGGER_OUTFILE=coinhistory.log
 
 # Usage
 
-##sb _{currency}{subcommand}{amount}_
+## sb _{currency}{subcommand}{amount}_
 
-###_{currency}_
+### _{currency}_
 
--   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *g*BTG, .. 
+-   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *g*BTG, .. (as you defiend)
 -   *n*:Now
    
-###_{subcommand}_
+### _{subcommand}_
 
 -   *b*: buyPrice,           *s*: sellPrice
--   *a*: adjust buy,sell based on nowPrice, gapAllowance
 -   *g*: gapAllowance,    *h*: histoPercent
+-   *a*: adjust buy,sell based on nowPrice +/- gapAllowance * 3 %
 -   *n*: nowPrice
    
-###_{amount}_
+### _{amount}_
 
 -   *1234000* : set to 1,234,000
 -   *12340k* : set to 12,340,000
@@ -282,4 +281,9 @@ LOGGER_OUTFILE=coinhistory.log
 -   *-3k* : subtract 3000 from current set
 -   *+3%* : add 3% on current set
 -   *1.03* : set to 1.03% (gap or histo only)
--   (note) Uppercase accepted, spaces allowed
+
+### _(note)_
+ 
+- Uppercase accepted
+- Spaces between _currency_, _subcommand_ and _amount_ are allowed
+  

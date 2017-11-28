@@ -84,9 +84,12 @@ function listener(ohlcs) {
 
     let nowValues = ohlcs[ohlcs.length - 1];    // last value
 
-    nowValues.closeLast1 = closes[ohlcs.length - 4];
-    nowValues.closeLast2 = closes[ohlcs.length - 7];
-    nowValues.closeLast3 = closes[ohlcs.length - 10];
+    nowValues.closeLast1 = closes[closes.length - 3];
+    nowValues.closeLast2 = closes[closes.length - 5];
+    nowValues.closeLast3 = closes[closes.length - 7];
+    nowValues.closeLast1epoch = ohlcs[ohlcs.length-3].epoch;
+    nowValues.closeLast2epoch = ohlcs[ohlcs.length-5].epoch;
+    nowValues.closeLast3epoch = ohlcs[ohlcs.length-7].epoch;
     // nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
     nowValues.histoPercent = config.histoPercent;
@@ -210,11 +213,11 @@ function analyzeHistogram(nv) {
     else if (nv.histoAvr > config.histogram) {
         if (nv.lastHistogram >= 0 && nv.histogram <= 0 && nv.close >= nv.sellTarget) {
             nv.tradeType = SELL;
-            msg = (nv.close >= config.sellPrice) ? 'Over, Should SELL' : 'may be SELL POINT';
+            msg = (nv.close >= config.sellPrice) ? 'Histo: Over, Should SELL' : 'Histo: may be SELL POINT';
         }
         else if (nv.lastHistogram <= 0 && nv.histogram >= 0 && nv.close <= nv.buyTarget) {
             nv.tradeType = BUY;
-            msg = (nv.close <= config.buyPrice) ? 'Under, Should BUY' : 'may be BUY POINT';
+            msg = (nv.close <= config.buyPrice) ? 'Histo: Under, Should BUY' : 'Histo: may be BUY POINT';
         }
     }
     else {  // below log will be removed when analytic logic become stable
@@ -264,10 +267,12 @@ function analyzeBoundary(nv) {
         nv.tradeType = BUY;
         msg = 'Passing BUY boundary';
     }
-    else if (nv.close < nv.closeLast3 * 0.99) {
+    else if (nv.close < nv.closeLast3 * 0.985) {
+        nv.tradeType = SELL;
         msg = 'Warning! goes DOWN Very Fast';
     }
-    else if (nv.close > nv.closeLast3 * 1.01) {
+    else if (nv.close > nv.closeLast3 * 1.015) {
+        nv.tradeType = BUY;
         msg = 'Warning! goes UP Very Fast';
     }
     return appendMsg(nv,msg);
@@ -317,7 +322,7 @@ function informTrade(nv) {
 
     let attach = show.attach(nv);
     attach.title += moment(new Date(nv.epoch)).tz('Asia/Seoul').format('    YYYY-MM-DD HH:mm');
-    replier.sendAttach(currency, nv.msgText, [attach]);
+    replier.sendAttach(CURRENCY, nv.msgText, [attach]);
 
 }
 
