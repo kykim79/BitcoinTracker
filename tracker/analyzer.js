@@ -29,6 +29,7 @@ let readConfigFile = (path) => new json.read(path);
 
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILE = CONFIG + currency + '/' + process.env.CONFIG_FILENAME;
+const UPDOWN_PERCENT = Number(process.env.UPDOWN_PERCENT) / 100;
 
 // LOGGER
 let log4js = require('log4js');
@@ -267,17 +268,16 @@ function analyzeBoundary(nv) {
         nv.tradeType = BUY;
         msg = 'Passing BUY boundary';
     }
-    else if (nv.close < nv.closeLast3 * 0.97) {
+    else if (nv.close < nv.closeLast3 * (1 - UPDOWN_PERCENT)) {
         nv.tradeType = SELL;
         msg = 'Warning! goes DOWN Very Fast';
     }
-    else if (nv.close > nv.closeLast3 * 1.03) {
+    else if (nv.close > nv.closeLast3 * (1 + UPDOWN_PERCENT)) {
         nv.tradeType = BUY;
         msg = 'Warning! goes UP Very Fast';
     }
     return appendMsg(nv,msg);
 }
-
 
 /**
  * analyzeVolume : compare lastest volumes against volume average
@@ -346,7 +346,7 @@ function keepLog(nv) {
             nv.volumeLast,
             nv.histogram,
             nv.histoAvr,
-            nv.histoSign,
+            (nv.histoSign) ? 'C' : '',
             nv.dNow,
             nv.kNow,
             nv.tradeType,
