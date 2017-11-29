@@ -267,11 +267,11 @@ function analyzeBoundary(nv) {
         nv.tradeType = BUY;
         msg = 'Passing BUY boundary';
     }
-    else if (nv.close < nv.closeLast3 * 0.985) {
+    else if (nv.close < nv.closeLast3 * 0.97) {
         nv.tradeType = SELL;
         msg = 'Warning! goes DOWN Very Fast';
     }
-    else if (nv.close > nv.closeLast3 * 1.015) {
+    else if (nv.close > nv.closeLast3 * 1.03) {
         nv.tradeType = BUY;
         msg = 'Warning! goes UP Very Fast';
     }
