@@ -1,5 +1,6 @@
 
 module.exports = class commandHelper {
+
     constructor() {
         try {
             this.commandMap = [];
@@ -7,6 +8,12 @@ module.exports = class commandHelper {
         catch (e) {
             throw new Error(e);
         }
+        this.invalidHandler = () => [];
+    }
+
+    addInvalidHandler(func) {
+        this.invalidHandler = func;
+        return this;
     }
 
     addCommand(regex, func, params = []) {
@@ -23,6 +30,13 @@ module.exports = class commandHelper {
     }
 
     execute(line) {
-        return this.commandMap.filter(e => e.regex.exec(line)).map((e) => e.func(e.regex.exec(line), e.params));
+        const result = this.commandMap.filter(e => e.regex.exec(line)).map((e) => e.func(e.regex.exec(line), e.params));
+        if(result.length === 0) {
+            return this.invalidHandler();
+        } else {
+            return result;
+        }
     }
 };
+
+

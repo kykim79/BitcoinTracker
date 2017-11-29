@@ -61,19 +61,38 @@ function showUsage() {
 let showAllCoins = (match, params) => COINS_KEY.forEach(_ => show.info(_, params[0]));
 
 let updateCoin = (match, params) => {
-    updateConfig(match);
-    showCoin(match, params);
+    const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
+    if (cointype) {
+        updateConfig(match);
+        showCoin(match, params);
+    }
+    else {
+        sayInvalidCoin();
+    }
 };
 
-let showCoin = (match, params) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], params[0]);
+let showCoin = (match, params) => {
+    const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
+    if (cointype) {
+        show.info(cointype, params[0]);
+    }
+    else {
+        sayInvalidCoin();
+    }
+};
 
 let adjustConfig = (match, params) => {
     const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
-    const response = (value) => adjustSellBuy(cointype, value);
-    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
-        .then(response)
-        .then(attach => replier.sendAttach(cointype, params[0], [attach]))
-        .catch(e => logger.error(e));
+    if (cointype) {
+        const response = (value) => adjustSellBuy(cointype, value);
+        Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
+            .then(response)
+            .then(attach => replier.sendAttach(cointype, params[0], [attach]))
+            .catch(e => logger.error(e));
+    }
+    else {
+        sayInvalidCoin();
+    }
 };
 
 /**
@@ -117,12 +136,19 @@ let updateConfig = (match) => {
     logger.debug('Update configration completed..');
 };
 
+let invalidHandler = () => {
+    replier.sendText('Command syntax error ..');
+    showUsage();
+};
+
 const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*$/, showUsage)
     .addCommand(/^sb\s*n$/, showAllCoins, ['Current Config'])
-    .addCommand(/^sb\s*([bxce])n$/, showCoin, ['Current Configuration Values'])
-    .addCommand(/^sb\s*([bxce])a$/, adjustConfig, ['Sell, Buy Price Adjusted'])
-    .addCommand(/^sb\s*([bxce])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, ['New Configuration']);
+    .addCommand(/^sb\s*([a-z])n$/, showCoin, ['Current Configuration Values'])
+    .addCommand(/^sb\s*([a-z])a$/, adjustConfig, ['Sell, Buy Price Adjusted'])
+    .addCommand(/^sb\s*([a-z])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, ['New Configuration'])
+    .addInvalidHandler(invalidHandler);
+
 
 // create a bot
 const settings = {
@@ -212,4 +238,9 @@ function adjustSellBuy(cointype, value) {
     catch (e) {
         logger.error(e);
     }
+}
+
+function sayInvalidCoin() {
+    replier.sendText('Invalid coin ..');
+    showUsage();
 }

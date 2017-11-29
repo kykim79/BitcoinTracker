@@ -93,4 +93,18 @@ describe('CommandHelper Test', function() {
             assert.deepEqual(commandHelper.execute('test'), []);
         });
     });
+
+    describe('명령어가 제대로 들어가는지 확인', function () {
+
+        let invalidHander = () => true;
+
+        it('InvalidHandler가 있고 실제 입력 코맨드가 명령어 리스트에 업는 경우 인밸리드 로직을 탄다 ', function () {
+            commandHelper.addInvalidHandler(invalidHander);
+            assert.equal(commandHelper.execute('sb test'), true);
+        });
+
+        it('InvalidHandler가 없는 경우라서 아무런 응답이 없어야 함.', function () {
+            assert.deepEqual(commandHelper.execute('sb test'), []);
+        });
+    });
 });
