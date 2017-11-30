@@ -12,7 +12,7 @@ const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 const npadBlank = (number) => pad(NPAD_SIZE + 5, numeral((number)).format('0,0'));
 const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
-const ndiff = (nbase, number) => npad(number) + '(' + numeral((nbase - number) / nbase * 100).format('0.0')+'%)';
+const oldPrice = (epoch, nbase, number) => moment(new Date(epoch)).tz('Asia/Seoul').format('HH:mm') + '   ' + npad(number) + ' (' + numeral((nbase - number) / nbase * 100).format('0.0')+'%)';
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILENAME = process.env.CONFIG_FILENAME;
 
@@ -22,14 +22,14 @@ function buildAttach(nv) {
     try {
         const cf = JSON.parse(fs.readFileSync(CONFIG + currency + '/' + CONFIG_FILENAME));
         return new coinConfig(CURRENCY)
-            // .addField('Now : ' + npad(nv.close) + '    < ' + ndiff(nv.close, nv.closeLast1),
-            //     '< ' + ndiff(nv.close, nv.closeLast2) + ' < ' + ndiff(nv.close, nv.closeLast3), false) // false means long
 
-            .addField('Now : ' + npad(nv.close) + ' ' + moment(new Date(nv.epoch)).tz('Asia/Seoul').format('HH:mm'),
-                '< ' + ndiff(nv.close, nv.closeLast1) + ' ' + moment(new Date(nv.closeLast1epoch)).tz('Asia/Seoul').format('HH:mm') + '\n' +
-                '< ' + ndiff(nv.close, nv.closeLast2) + ' ' + moment(new Date(nv.closeLast2epoch)).tz('Asia/Seoul').format('HH:mm') + '\n'  +
-                '< ' + ndiff(nv.close, nv.closeLast3) + ' ' + moment(new Date(nv.closeLast3epoch)).tz('Asia/Seoul').format('HH:mm'), false) // false means long
-
+            .addField('Now : ' + npad(nv.close),
+                oldPrice(nv.closeLast1epoch, nv.close, nv.closeLast1) + '\n' +
+                oldPrice(nv.closeLast2epoch, nv.close, nv.closeLast2) + '\n' +
+                oldPrice(nv.closeLast3epoch, nv.close, nv.closeLast3) + '\n' +
+                oldPrice(nv.closeLast4epoch, nv.close, nv.closeLast4) + '\n' +
+                oldPrice(nv.closeLast5epoch, nv.close, nv.closeLast5)
+                , false)
             .addField('Buy:     ' + npercent((nv.close - cf.buyPrice ) / nv.close), npadBlank(cf.buyPrice) )
             .addField('histo(avr) ' + npad(nv.histoAvr),
                 ((nv.histoSign) ? '+/-' : '') + '  ' + numeral(cf.histoPercent * nv.close).format('0,0') + ' (' + npercent(cf.histoPercent) + ')')

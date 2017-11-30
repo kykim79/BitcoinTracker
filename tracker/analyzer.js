@@ -88,9 +88,13 @@ function listener(ohlcs) {
     nowValues.closeLast1 = closes[closes.length - 3];
     nowValues.closeLast2 = closes[closes.length - 5];
     nowValues.closeLast3 = closes[closes.length - 7];
+    nowValues.closeLast4 = closes[closes.length / 2];
+    nowValues.closeLast5 = closes[0];
     nowValues.closeLast1epoch = ohlcs[ohlcs.length-3].epoch;
     nowValues.closeLast2epoch = ohlcs[ohlcs.length-5].epoch;
     nowValues.closeLast3epoch = ohlcs[ohlcs.length-7].epoch;
+    nowValues.closeLast4epoch = ohlcs[ohlcs.length / 2].epoch;
+    nowValues.closeLast5epoch = ohlcs[0].epoch;
     // nowValues.signal = macds[tableSize - 1].signal;
     nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
     nowValues.histoPercent = config.histoPercent;
