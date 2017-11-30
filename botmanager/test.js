@@ -72,7 +72,7 @@ describe('CommandHelper Test', function() {
         });
 
         it('Regex에 매치되지 않으면 undefined를 리턴한다', function () {
-            commandHelper.addCommand(/sb/, testParamFunc2, [TEST_PARAM1, TEST_PARAM2]);
+            commandHelper.addCommand(/sb/, testParamFunc1);
             assert.deepEqual(commandHelper.execute('test'), []);
         });
     });
