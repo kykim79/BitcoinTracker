@@ -32,10 +32,7 @@ module.exports = class commandHelper {
     execute(line) {
         const result = this.commandMap.filter(e => e.regex.exec(line)).map((e) => {
             const match = e.regex.exec(line);
-            if(!e.validator(match)) {
-                return false;
-            }
-            return e.func(match);
+            return e.validator(match) ? e.func(match) : false;
         });
         return  result.length === 0 ? this.invalidHandler() : result;
     }

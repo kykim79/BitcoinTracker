@@ -71,24 +71,16 @@ describe('CommandHelper Test', function() {
             assert.deepEqual(commandHelper.execute('sb test'), [TEST_PARAM1]);
         });
 
-        it('Regex에 매치되지 않으면 undefined를 리턴한다', function () {
+        it('실행할 명령어가 아닌경우  빈 array를 리턴한다', function () {
             commandHelper.addCommand(/sb/, testParamFunc1);
             assert.deepEqual(commandHelper.execute('test'), []);
         });
-    });
-
-    describe('함수 실행 with params included match result', function () {
-
-        let testParamFunc = (match) =>  match[1];
 
         it('정상적으로 실행되면 regex에 매치된 결과에서 capture된 부분을 리턴한다.', function () {
+            let testParamFunc = (match) =>  match[1];
+
             commandHelper.addCommand(/sb (test)/, testParamFunc);
             assert.deepEqual(commandHelper.execute('sb test'), ['test']);
-        });
-
-        it('Regex에 매치되지 않으면 undefined를 리턴한다', function () {
-            commandHelper.addCommand(/sb/, testParamFunc);
-            assert.deepEqual(commandHelper.execute('test'), []);
         });
     });
 
