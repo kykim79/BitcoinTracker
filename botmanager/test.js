@@ -103,7 +103,7 @@ describe('CommandHelper Test', function() {
             assert.equal(commandHelper.execute('sb test'), true);
         });
 
-        it('InvalidHandler가 없는 경우라서 아무런 응답이 없어야 함.', function () {
+        it('기본 InvalidHandler가 동작하는 경우 결과값은 빈어레이가 반환된다', function () {
             assert.deepEqual(commandHelper.execute('sb test'), []);
         });
     });

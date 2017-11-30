@@ -73,12 +73,7 @@ let updateCoin = (match, params) => {
 
 let showCoin = (match, params) => {
     const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
-    if (cointype) {
-        show.info(cointype, params[0]);
-    }
-    else {
-        sayInvalidCoin();
-    }
+    (cointype) ? show.info(cointype, params[0]) : sayInvalidCoin();
 };
 
 let adjustConfig = (match, params) => {

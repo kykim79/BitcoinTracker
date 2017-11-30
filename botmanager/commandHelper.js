@@ -31,11 +31,7 @@ module.exports = class commandHelper {
 
     execute(line) {
         const result = this.commandMap.filter(e => e.regex.exec(line)).map((e) => e.func(e.regex.exec(line), e.params));
-        if(result.length === 0) {
-            return this.invalidHandler();
-        } else {
-            return result;
-        }
+        return  result.length === 0 ? this.invalidHandler() : result;
     }
 };
 
