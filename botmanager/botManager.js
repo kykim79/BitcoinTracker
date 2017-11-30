@@ -51,7 +51,7 @@ function showUsage() {
     const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
     const usage = '*USAGE*             _(Ver. 2017-11-27)_\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
-        '      {' + coins_cmd + 'n}  {bsaghn}  {(+/-)123(k%)}\n' +
+        '      {' + coins_cmd + 'n}  {bsaghn}  {(+-)123(k%)}\n' +
         '_Refer github_ README.md _for more detail_\nhttps://goo.gl/vKF1vk'; // https://github.com/kykim79/BitcoinTracker#usage';
 
     replier.sendSlack(usage, header, 'https://github.com/kykim79/BitcoinTracker');
@@ -118,8 +118,7 @@ let updateConfig = (match) => {
 };
 
 let invalidHandler = () => {
-    replier.sendText('Command syntax error ..');
-    showUsage();
+    replier.sendText('Command syntax error. Enter sb for help');
 };
 
 let coinTypeValidator = (match) => {
@@ -136,7 +135,7 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*n$/, showAllCoins)
     .addCommand(/^sb\s*([a-z])n$/, showCoin, coinTypeValidator)
     .addCommand(/^sb\s*([a-z])a$/, adjustConfig, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z])\s*([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
 
 
@@ -231,6 +230,5 @@ function adjustSellBuy(cointype, value) {
 }
 
 function sayInvalidCoin() {
-    replier.sendText('Invalid coin ..');
-    showUsage();
+    replier.sendText('Invalid coin. Enter sb for help');
 }
