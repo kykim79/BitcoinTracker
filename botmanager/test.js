@@ -36,15 +36,22 @@ describe('CommandHelper Test', function() {
     });
 
     describe('함수 실행 without param', function () {
-        let testNoParamFunc = () => THIS_IS_TEST_RESULT;
+        let testNoParamFunc1 = () => THIS_IS_TEST_RESULT;
+        let testNoParamFunc2 = () => THIS_IS_TEST_RESULT;
 
         it('정상적으로 실행되면 함수의 실행 결과를 리턴한다', function () {
-            commandHelper.addCommand(/sb/, testNoParamFunc);
+            commandHelper.addCommand(/sb/, testNoParamFunc1);
             assert.deepEqual(commandHelper.execute('sb'), [THIS_IS_TEST_RESULT]);
         });
 
+        it('명령2가 실행되면 2개의 실행결과를 리턴한다.', function () {
+            commandHelper.addCommand(/sb/, testNoParamFunc1);
+            commandHelper.addCommand(/sb/, testNoParamFunc2)
+            assert.deepEqual(commandHelper.execute('sb'), [THIS_IS_TEST_RESULT, THIS_IS_TEST_RESULT]);
+        });
+
         it('Regex에 매치되지 않으면 undefined를 리턴한다', function () {
-            commandHelper.addCommand(/sb/, testNoParamFunc);
+            commandHelper.addCommand(/sb/, testNoParamFunc1);
             assert.deepEqual(commandHelper.execute('test'), []);
         });
 
@@ -57,20 +64,11 @@ describe('CommandHelper Test', function() {
     });
 
     describe('함수 실행 with params', function () {
-        let testParamFunc1 = (match, params) => params[0];
+        let testParamFunc1 = (match) => TEST_PARAM1;
 
         it('정상적으로 실행되면 함수의 실행 결과(param array의 첫번째 값)를 리턴한다', function () {
-            commandHelper.addCommand(/sb (test)$/, testParamFunc1, [TEST_PARAM1]);
+            commandHelper.addCommand(/sb (test)$/, testParamFunc1);
             assert.deepEqual(commandHelper.execute('sb test'), [TEST_PARAM1]);
-        });
-
-        let testParamFunc2 = (match, params) => {
-            return THIS_IS_TEST_RESULT + ': ' + params[0] + ', ' + params[1];
-        };
-
-        it('정상적으로 실행되면 함수의 실행 결과를 리턴한다', function () {
-            commandHelper.addCommand(/sb/, testParamFunc2, [TEST_PARAM1, TEST_PARAM2]);
-            assert.deepEqual(commandHelper.execute('sb'), [THIS_IS_TEST_RESULT + ': ' + TEST_PARAM1 + ', ' + TEST_PARAM2]);
         });
 
         it('Regex에 매치되지 않으면 undefined를 리턴한다', function () {
@@ -81,30 +79,52 @@ describe('CommandHelper Test', function() {
 
     describe('함수 실행 with params included match result', function () {
 
-        let testParamFunc = (match, params) =>  match[1];
+        let testParamFunc = (match) =>  match[1];
 
         it('정상적으로 실행되면 regex에 매치된 결과에서 capture된 부분을 리턴한다.', function () {
-            commandHelper.addCommand(/sb (test)/, testParamFunc, [TEST_PARAM1, TEST_PARAM2]);
+            commandHelper.addCommand(/sb (test)/, testParamFunc);
             assert.deepEqual(commandHelper.execute('sb test'), ['test']);
         });
 
         it('Regex에 매치되지 않으면 undefined를 리턴한다', function () {
-            commandHelper.addCommand(/sb/, testParamFunc, [TEST_PARAM1, TEST_PARAM2]);
+            commandHelper.addCommand(/sb/, testParamFunc);
             assert.deepEqual(commandHelper.execute('test'), []);
         });
     });
 
-    describe('명령어가 제대로 들어가는지 확인', function () {
+    describe('명령어를 처리할 수 없는 경우 invalidHandler를 처리하는지 확인', function () {
 
-        let invalidHander = () => true;
-
-        it('InvalidHandler가 있고 실제 입력 코맨드가 명령어 리스트에 업는 경우 인밸리드 로직을 탄다 ', function () {
-            commandHelper.addInvalidHandler(invalidHander);
+        it('실제 입력 코맨드가 명령어 리스트에 없는 경우 invalidHandler의 결과가 반환된다. ', function () {
+            let invalidHandler = () => true;
+            commandHelper.addInvalidHandler(invalidHandler);
             assert.equal(commandHelper.execute('sb test'), true);
         });
 
-        it('기본 InvalidHandler가 동작하는 경우 결과값은 빈어레이가 반환된다', function () {
+        it('InvalidHandler를 설정하지 않는 경우 기본 invalidHandler의 결과값(empty array)이 반환된다', function () {
             assert.deepEqual(commandHelper.execute('sb test'), []);
+        });
+    });
+
+
+    describe('execute 실행시 설정된 validator가 실행되는지 확인', function () {
+        let falseValidator = () => false;
+        let testParamFunc = (match) =>  match[1];
+
+        it('validator가 false를 return하는 경우 command가 수행되지 않고 false를 return하게 된다. ', function () {
+            commandHelper.addCommand(/sb (test)/, testParamFunc, falseValidator);
+            assert.deepEqual(commandHelper.execute('sb test'), [false]);
+        });
+
+        it('validator를 설정하지 않은 경우에는 command가 수행결과를 return하게 된다.', function () {
+            commandHelper.addCommand(/sb (test)/, testParamFunc);
+            assert.deepEqual(commandHelper.execute('sb test'), ['test']);
+        });
+
+
+        it('2개의 명령어를 실행하는 경우 validator의 결과는 각각 반환된다.', function () {
+            commandHelper.addCommand(/sb (test)/, testParamFunc, falseValidator);
+            commandHelper.addCommand(/sb (test)/, testParamFunc);
+            assert.deepEqual(commandHelper.execute('sb test'), [false, 'test']);
         });
     });
 });

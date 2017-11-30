@@ -4,11 +4,11 @@ module.exports = class commandHelper {
     constructor() {
         try {
             this.commandMap = [];
+            this.invalidHandler = () => [];
         }
         catch (e) {
             throw new Error(e);
         }
-        this.invalidHandler = () => [];
     }
 
     addInvalidHandler(func) {
@@ -16,8 +16,8 @@ module.exports = class commandHelper {
         return this;
     }
 
-    addCommand(regex, func, params = []) {
-        this.commandMap.push({ regex: regex, func: func, params: params });
+    addCommand(regex, func, validator = () => true) {
+        this.commandMap.push({ regex: regex, func: func, validator: validator });
         return this;
     }
 
@@ -30,7 +30,13 @@ module.exports = class commandHelper {
     }
 
     execute(line) {
-        const result = this.commandMap.filter(e => e.regex.exec(line)).map((e) => e.func(e.regex.exec(line), e.params));
+        const result = this.commandMap.filter(e => e.regex.exec(line)).map((e) => {
+            const match = e.regex.exec(line);
+            if(!e.validator(match)) {
+                return false;
+            }
+            return e.func(match);
+        });
         return  result.length === 0 ? this.invalidHandler() : result;
     }
 };

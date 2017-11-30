@@ -58,36 +58,22 @@ function showUsage() {
     logger.debug(header);
 }
 
-let showAllCoins = (match, params) => COINS_KEY.forEach(_ => show.info(_, params[0]));
+let showAllCoins = (match) => COINS_KEY.forEach(_ => show.info(_, 'Current Config'));
 
-let updateCoin = (match, params) => {
-    const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
-    if (cointype) {
-        updateConfig(match);
-        showCoin(match, params);
-    }
-    else {
-        sayInvalidCoin();
-    }
+let updateCoin = (match) => {
+    updateConfig(match);
+    showCoin(match);
 };
 
-let showCoin = (match, params) => {
-    const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
-    (cointype) ? show.info(cointype, params[0]) : sayInvalidCoin();
-};
+let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Current Configuration Values');
 
-let adjustConfig = (match, params) => {
+let adjustConfig = (match) => {
     const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
-    if (cointype) {
-        const response = (value) => adjustSellBuy(cointype, value);
-        Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
-            .then(response)
-            .then(attach => replier.sendAttach(cointype, params[0], [attach]))
-            .catch(e => logger.error(e));
-    }
-    else {
-        sayInvalidCoin();
-    }
+    const response = (value) => adjustSellBuy(cointype, value);
+    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
+        .then(response)
+        .then(attach => replier.sendAttach(cointype, 'Sell, Buy Price Adjusted', [attach]))
+        .catch(e => logger.error(e));
 };
 
 /**
@@ -136,12 +122,21 @@ let invalidHandler = () => {
     showUsage();
 };
 
+let coinTypeValidator = (match) => {
+    let valid = COINS_KEY[COINS_CMD.indexOf(match[1])];
+    if (!valid) {
+        sayInvalidCoin();
+    }
+
+    return valid;
+}
+
 const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*$/, showUsage)
-    .addCommand(/^sb\s*n$/, showAllCoins, ['Current Config'])
-    .addCommand(/^sb\s*([a-z])n$/, showCoin, ['Current Configuration Values'])
-    .addCommand(/^sb\s*([a-z])a$/, adjustConfig, ['Sell, Buy Price Adjusted'])
-    .addCommand(/^sb\s*([a-z])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, ['New Configuration'])
+    .addCommand(/^sb\s*n$/, showAllCoins)
+    .addCommand(/^sb\s*([a-z])n$/, showCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z])a$/, adjustConfig, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z])([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
 
 
