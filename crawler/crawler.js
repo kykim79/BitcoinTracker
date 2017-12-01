@@ -1,3 +1,4 @@
+require('dotenv').load();
 let moment = require('moment');
 let Map = require('hashmap');
 
@@ -35,8 +36,8 @@ const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/' + CURR
 
 // Stream Roller
 let rollers = require('streamroller');
-let stream = new rollers.RollingFileStream(LOG + currency + '/crawler.log', 100000, 2);
-let streamRaw = new rollers.RollingFileStream(LOG  + currency + '/raw.log', 100000, 2);
+let stream = new rollers.RollingFileStream(LOG + currency + '/crawler.log', 5000000, 2);
+let streamRaw = new rollers.RollingFileStream(LOG  + currency + '/raw.log', 5000000, 2);
 
 let redisClient = require('./redisClient.js');
 
@@ -60,17 +61,26 @@ let heartbeat = () => {
     }
 };
 
-let writtenKeys = [];
-let isFirst = true;
+let coinMap = new Map();
 
 let Promise = require('bluebird');
 let bhttp = require('bhttp');
 
+/**
+ * 분단위로 데이터를 모아서 저장
+ * 데이터를 15초간격으로 crawl하여 모인 데이터의 마지각 시각이 '현재시각-1분'인 경우 저장
+ */
 let crawl = () => {
     Promise.try(() => bhttp.get(BITHUMB_URL))
-        .then((response) => {
-            write(getNewCoins(response.body));
-            resize(MAX_COUNT);
+        .then(response => response)
+        .then(response => {
+            writeLogRaw(response.body);
+            const key = getNewCoins(response.body);
+            const stableKey = key - 60;
+            if(coinMap.has(stableKey)) {
+                write(stableKey);
+                resize(MAX_COUNT);
+            }
         }).catch((e) => {
             logger.error(e);
         });
@@ -78,44 +88,32 @@ let crawl = () => {
     heartbeat();
 };
 
+const contains = (list, obj) => list.some(e => (new CoinInfo([e])).toString() === (new CoinInfo([obj])).toString());
+
 function getNewCoins(body) {
-
-    writeLogRaw(body);
-
-    let coinMap = new Map();
+    let minuteKey = 0;
+    //분 단위로 나눠서 저장 (저장시 key는 분단위 epoch)
     body.data.forEach(e => {
-        const minuteKey = moment(new Date(e.transaction_date)).second(0).milliseconds(0).unix();
+        minuteKey = moment(new Date(e.transaction_date)).seconds(0).milliseconds(0).unix();
         if(coinMap.has(minuteKey)){
-            coinMap.get(minuteKey).push(e);
+            if(!contains(coinMap.get(minuteKey), e)) {
+                coinMap.get(minuteKey).push(e);
+            }
         } else {
             coinMap.set(minuteKey, [e]);
         }
     });
-
-    let coins = [];
-    coins = coinMap.keys();
-    coins.sort();
-    if(isFirst) {
-        coins.shift();
-        isFirst = false;
-    } else {
-        writtenKeys = writtenKeys.filter(e => e >= coins[0]);
-        coins = coins.filter(e => !writtenKeys.includes(e));
-    }
-
-    coins.pop();
-    return coins.map(e => coinMap.get(e));
+    return minuteKey;
 }
 
-function write(newCoins) {
-    newCoins.forEach(e => {
-        const coinInfo = new CoinInfo(e);
-        if(coinInfo.volume !== 0 && coinInfo.price !== null) {
-            redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
-            writtenKeys.push(moment(new Date(coinInfo.epoch)).second(0).milliseconds(0).unix());
-            writeTradeLog(e, coinInfo);
-        }
-    });
+function write(key) {
+    const coins = coinMap.get(key);
+    const coinInfo = new CoinInfo(coins);
+    if(coinInfo.volume !== 0 && coinInfo.price !== null) {
+        redisClient.zadd(CURRENCY, coinInfo.epoch, JSON.stringify(coinInfo));
+        writeTradeLog(coins, coinInfo);
+    }
+    coinMap.delete(key);
 }
 
 new CronJob(CRON_SCHEDULE, crawl, null, true, TIMEZONE);
