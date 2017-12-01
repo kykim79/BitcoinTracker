@@ -16,13 +16,13 @@ exports.attach = (nv, cf) => buildAttach(nv, cf);
 function buildAttach(nv, cf) {
     try {
         let prev = '';
-        nv.closeLast.map (_ => {
+        nv.prevValues.map (_ => {
             prev += moment(new Date(_.epoch)).tz('Asia/Seoul').format('HH:mm') + '  ' + npad(_.close) +
                 ' (' + numeral((nv.close - _.close) / nv.close * 100).format('0.0')+'%)  ' + _.volume + '\n';
         });
         return new coinConfig(CURRENCY)
 
-            .addField('Now : ' + npad(nv.close) + '         +/-%      vol', prev, false)
+            .addField('Now : ' + npad(nv.close) + '     +/-%      vol', prev, false)
             .addField('Buy:     ' + npercent((nv.close - cf.buyPrice ) / nv.close), npadBlank(cf.buyPrice) )
             .addField('histo(avr) ' + npad(nv.histoAvr),
                 ((nv.histoSign) ? '+/-' : '') + '  ' + numeral(cf.histoPercent * nv.close).format('0,0') + ' (' + npercent(cf.histoPercent) + ')')

@@ -93,8 +93,7 @@ function listener(ohlcs) {
 
     nowValues = ohlcs[ohlcs.length - 1];
 
-    nowValues.closeLast = [ohlcs[ohlcs.length - 3], ohlcs[ohlcs.length - 5], ohlcs[ohlcs.length - 7],
-        ohlcs[ohlcs.length / 2], ohlcs[0]];
+    nowValues.prevValues = [ohlcs[ohlcs.length - 3], ohlcs[ohlcs.length - 5], ohlcs[ohlcs.length - 7], ohlcs[ohlcs.length / 2], ohlcs[0]];
 
     nowValues.histoPercent = config.histoPercent;
     nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
@@ -123,10 +122,10 @@ function listener(ohlcs) {
         isFirstTime = false;
     }
 
-    nowValues = analyzeHistogram(nowValues);
-    nowValues = analyzeStochastic(nowValues);
-    nowValues = analyzeBoundary(nowValues);
-    nowValues = analyzeVolume(nowValues);
+    analyzeHistogram();
+    analyzeStochastic();
+    analyzeBoundary();
+    analyzeVolume();
 
     if (nowValues.msgText) {
         informTrade(nowValues);
@@ -191,138 +190,138 @@ function calculateStochastic(highs, lows, closes) {
  * analyzeHistogram : annalyze histogram values against configuration setting and then alert if right time
  *
  *
- * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @param none
  * @return nv.msgText if any
  */
 
-function analyzeHistogram(nv) {
+function analyzeHistogram() {
 
-    // nv(nowValues) : current price info, calcualted analytic values
+    // nowValues(nowValues) : current price info, calcualted analytic values
 
     // based on calculated MACD histogram
 
     let msg = '';
     // if histogram now has different sign, alert
 
-    if (nv.histoSign) {
-        if (nv.close >= nv.sellTarget) {
-            nv.tradeType = SELL;
-            msg = (nv.close >= config.sellPrice) ? 'Histo SIGN CHANGED, SELL' : 'Histo sign changed, Sell';
+    if (nowValues.histoSign) {
+        if (nowValues.close >= nowValues.sellTarget) {
+            nowValues.tradeType = SELL;
+            msg = (nowValues.close >= config.sellPrice) ? 'Histo SIGN CHANGED, SELL' : 'Histo sign changed, Sell';
         }
-        else if (nv.close <= nv.buyTarget) {
-            nv.tradeType = BUY;
-            msg = (nv.close <= config.buyPrice) ? 'Histo SIGN CHANGED, BUY' : 'Histo sign changed, Buy';
+        else if (nowValues.close <= nowValues.buyTarget) {
+            nowValues.tradeType = BUY;
+            msg = (nowValues.close <= config.buyPrice) ? 'Histo SIGN CHANGED, BUY' : 'Histo sign changed, Buy';
         }
     }
 
     // if histogram average is not too small and histogram sign has been changed, alert
-    // very similar analysis with above nv.histoSign
+    // very similar analysis with above nowValues.histoSign
 
-    else if (nv.histoAvr > config.histogram) {
-        if (nv.lastHistogram >= 0 && nv.histogram <= 0 && nv.close >= nv.sellTarget) {
-            nv.tradeType = SELL;
-            msg = (nv.close >= config.sellPrice) ? 'Histo: Over, Should SELL' : 'Histo: may be SELL POINT';
+    else if (nowValues.histoAvr > config.histogram) {
+        if (nowValues.lastHistogram >= 0 && nowValues.histogram <= 0 && nowValues.close >= nowValues.sellTarget) {
+            nowValues.tradeType = SELL;
+            msg = (nowValues.close >= config.sellPrice) ? 'Histo: Over, Should SELL' : 'Histo: may be SELL POINT';
         }
-        else if (nv.lastHistogram <= 0 && nv.histogram >= 0 && nv.close <= nv.buyTarget) {
-            nv.tradeType = BUY;
-            msg = (nv.close <= config.buyPrice) ? 'Histo: Under, Should BUY' : 'Histo: may be BUY POINT';
+        else if (nowValues.lastHistogram <= 0 && nowValues.histogram >= 0 && nowValues.close <= nowValues.buyTarget) {
+            nowValues.tradeType = BUY;
+            msg = (nowValues.close <= config.buyPrice) ? 'Histo: Under, Should BUY' : 'Histo: may be BUY POINT';
         }
     }
     else {  // below log will be removed when analytic logic become stable
-        logger.debug('last [' + histoCount + '] histoAvr ' + nv.histoAvr + ' < histogram ' + config.histogram + '(' + npercent(config.histoPercent) + ')');
+        logger.debug('last [' + histoCount + '] histoAvr ' + nowValues.histoAvr + ' < histogram ' + config.histogram + '(' + npercent(config.histoPercent) + ')');
     }
-    return appendMsg(nv,msg);
+    appendMsg(nowValues,msg);
 }
 
 /**
  * analyzeStochastic : annalyze Stochastic values against configuration setting and then alert if right time
  *
  *
- * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @param none
  * @return nv.msgText if any
  */
 
-function analyzeStochastic(nv) {
+function analyzeStochastic() {
 
     let msg = '';
-    if ((nv.dLast >= 80 && nv.kLast >= 80) && (nv.dNow < 80 || nv.kNow < 80) && nv.close >= nv.sellTarget) {
-        nv.tradeType = SELL;
+    if ((nowValues.dLast >= 80 && nowValues.kLast >= 80) && (nowValues.dNow < 80 || nowValues.kNow < 80) && nowValues.close >= nowValues.sellTarget) {
+        nowValues.tradeType = SELL;
         msg = 'Stochastic SELL SELL';
     }
-    else if ((nv.dLast <= 20 && nv.kLast <= 20) && (nv.dNow > 20 || nv.kNow > 20) && nv.close <= nv.buyTarget) {
-        nv.tradeType = BUY;
+    else if ((nowValues.dLast <= 20 && nowValues.kLast <= 20) && (nowValues.dNow > 20 || nowValues.kNow > 20) && nowValues.close <= nowValues.buyTarget) {
+        nowValues.tradeType = BUY;
         msg = 'Stochastic BUY BUY';
     }
-    return appendMsg(nv,msg);
+    appendMsg(nowValues,msg);
 }
 
 /**
  * analyzeBoundary : review if current prices goes out of configured buy,sell prices
  *
  *
- * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @param none
  * @return nv.msgText if any
  */
 
-function analyzeBoundary(nv) {
+function analyzeBoundary() {
 
     let msg = '';
-    if (nv.close > config.sellPrice) {
-        nv.tradeType = SELL;
+    if (nowValues.close > config.sellPrice) {
+        nowValues.tradeType = SELL;
         msg = 'Passing SELL boundary (' + sellBoundaryCount + ')';
-        if (++sellBoundaryCount > 4) {   // if goes over boundary several times, then adjust boundary temperary
-            config.sellPrice = roundTo(nv.close * (1 + config.gapAllowance),PRICE_ROUND_RADIX);
+        if (sellBoundaryCount++ > 4) {   // if goes over boundary several times, then adjust boundary temperary
+            config.sellPrice = roundTo(nowValues.close * (1 + config.gapAllowance),PRICE_ROUND_RADIX);
             sellBoundaryCount = 0;
-            msg += '\nSELLPRICE adjusted temperary';
+            msg += '\nSELL PRICE adjusted temperary';
         }
     }
-    else if (nv.close < config.buyPrice) {
-        nv.tradeType = BUY;
+    else if (nowValues.close < config.buyPrice) {
+        nowValues.tradeType = BUY;
         msg = 'Passing BUY boundary (' + buyBoundaryCount + ')';
-        if (++buyBoundaryCount > 4) {
-            config.buyPrice = roundTo(nv.close * (1 - config.gapAllowance),PRICE_ROUND_RADIX);
+        if (buyBoundaryCount++ > 4) {
+            config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance),PRICE_ROUND_RADIX);
             buyBoundaryCount = 0;
-            msg += '\nBUYPRICE adjusted temperary';
+            msg += '\nBUY PRICE adjusted temperary';
         }
     }
     if (msg) {
-        nv = appendMsg(nv,msg);
+        appendMsg(nowValues,msg);
         msg = '';
     }
 
-    if (nv.close < nv.closeLast3 * (1 - UPDOWN_PERCENT)) {
-        nv.tradeType = SELL;
+    if (nowValues.close < nowValues.prevValues[2].close * (1 - UPDOWN_PERCENT)) {
+        nowValues.tradeType = SELL;
         msg = 'Warning! goes DOWN Very Fast';
     }
-    else if (nv.close > nv.closeLast3 * (1 + UPDOWN_PERCENT)) {
-        nv.tradeType = BUY;
+    else if (nowValues.close > nowValues.prevValues[2].close * (1 + UPDOWN_PERCENT)) {
+        nowValues.tradeType = BUY;
         msg = 'Warning! goes UP Very Fast';
     }
-    return appendMsg(nv,msg);
+    appendMsg(nowValues,msg);
 }
 
 /**
  * analyzeVolume : compare lastest volumes against volume average
  *
  *
- * @param nv(nowValues) {Object} : gathered and calculated current values
+ * @param none
  * @return nv.msgText if any
  */
 
-function analyzeVolume(nv) {
+function analyzeVolume() {
 
     let msg = '';
-    if (nv.volumeLast > nv.volumeAvr * 2) {
-        if (nv.close >= nv.sellTarget) {
-            nv.tradeType = SELL;
+    if (nowValues.volumeLast > nowValues.volumeAvr * 1.5) {
+        if (nowValues.close >= nowValues.sellTarget) {
+            nowValues.tradeType = SELL;
             msg = 'Volume goes up rapidly, SELL ?';
         }
-        else if (nv.close <= nv.buyTarget) {
-            nv.tradeType = BUY;
+        else if (nowValues.close <= nowValues.buyTarget) {
+            nowValues.tradeType = BUY;
             msg = 'Volume goes up rapidly, BUY ?';
         }
     }
-    return appendMsg(nv,msg);
+    appendMsg(nowValues,msg);
 
 }
 
@@ -330,7 +329,6 @@ function appendMsg(nv, msg) {
     if (msg) {
         nv.msgText += '\n' + msg;
     }
-    return nv;
 }
 /**
  * informTrade : send message to slack via web-hook
