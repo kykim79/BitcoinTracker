@@ -1,5 +1,6 @@
 const events = require('events');
 const splitArray = require('split-array');
+const roundTo = require('round-to');
 
 const format = require('string-format');
 format.extend(String.prototype);
@@ -81,7 +82,7 @@ function makeOHLCfield(coins) {
     coinInfo.low = prices.reduce((e1, e2) => Math.min(e1, e2));
     coinInfo.close = prices[prices.length - 1];
     coinInfo.open = prices[0];
-    coinInfo.volume = volumes.reduce((e1, e2) => (e1 + e2));
+    coinInfo.volume = roundTo(volumes.reduce((e1, e2) => (e1 + e2)),1);
     return coinInfo;
 }
 

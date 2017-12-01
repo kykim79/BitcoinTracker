@@ -4,6 +4,7 @@ format.extend(String.prototype);
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const LOG = process.env.LOG;
+const PRICE_ROUND_RADIX = Number(process.env.PRICE_ROUND_RADIX);
 
 const numeral = require('numeral');
 const roundTo = require('round-to');
@@ -41,10 +42,17 @@ const replaceall = require('replaceall');
 let isFirstTime = true; // inform current setting when this module is started
 
 let config = readConfigFile(CONFIG_FILE).data;
+let sellBoundaryCount = 0;
+let buyBoundaryCount = 0;
+let nowValues;
 
 watcher.add(CONFIG_FILE);
 watcher.on('change', (info) => {
     config = readConfigFile(info.path).data;
+    logger.debug('configration changed');
+    sellBoundaryCount = 0;
+    buyBoundaryCount = 0;
+
 });
 
 const histoCount = 8;   // variable for ignoring if too small changes
@@ -83,37 +91,32 @@ function listener(ohlcs) {
         return null;
     }
 
-    let nowValues = ohlcs[ohlcs.length - 1];    // last value
+    nowValues = ohlcs[ohlcs.length - 1];
 
-    nowValues.closeLast1 = closes[closes.length - 3];
-    nowValues.closeLast2 = closes[closes.length - 5];
-    nowValues.closeLast3 = closes[closes.length - 7];
-    nowValues.closeLast4 = closes[closes.length / 2];
-    nowValues.closeLast5 = closes[0];
-    nowValues.closeLast1epoch = ohlcs[ohlcs.length-3].epoch;
-    nowValues.closeLast2epoch = ohlcs[ohlcs.length-5].epoch;
-    nowValues.closeLast3epoch = ohlcs[ohlcs.length-7].epoch;
-    nowValues.closeLast4epoch = ohlcs[ohlcs.length / 2].epoch;
-    nowValues.closeLast5epoch = ohlcs[0].epoch;
-    // nowValues.signal = macds[tableSize - 1].signal;
-    nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
+    nowValues.closeLast = [ohlcs[ohlcs.length - 3], ohlcs[ohlcs.length - 5], ohlcs[ohlcs.length - 7],
+        ohlcs[ohlcs.length / 2], ohlcs[0]];
+
     nowValues.histoPercent = config.histoPercent;
+    nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
+    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 3);
+    nowValues.histoSign = isSignChanged(macds[tableSize - 2].histogram,macds[tableSize-1].histogram)
+        || isSignChanged(macds[tableSize - 3].histogram,macds[tableSize-1].histogram)
+        || isSignChanged(macds[tableSize - 4].histogram,macds[tableSize-1].histogram);
     nowValues.lastHistogram = roundTo(macds[tableSize - 2].histogram, 3);
+
     nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d, 0);
     nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 0);
     nowValues.dLast = (stochastic[stochastic.length - 2].d) ? roundTo(stochastic[stochastic.length - 2].d, 0): 0;
     nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 0): 0;
-    nowValues.sellTarget =  config.sellPrice * (1 - config.gapAllowance);
-    nowValues.buyTarget =  config.buyPrice * (1 + config.gapAllowance);
+
+    nowValues.volumeAvr = roundTo(volumes.reduce((e1, e2) => e1 + e2) / (volumes.length - 1),1);
+    nowValues.volumeLast = roundTo(volumes.slice(volumes.length - volumeCount).reduce((e1, e2) => e1 + e2) / volumeCount,1);
+
+    nowValues.sellTarget = config.sellPrice * (1 - config.gapAllowance);
+    nowValues.buyTarget = config.buyPrice * (1 + config.gapAllowance);
+
     nowValues.tradeType = '';
     nowValues.msgText = '';
-    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 3);
-    nowValues.histoSign = isSignChanged(macds[tableSize - 2].histogram,macds[tableSize-1].histogram) ||
-                        isSignChanged(macds[tableSize - 3].histogram,macds[tableSize-1].histogram) ||
-                        isSignChanged(macds[tableSize - 4].histogram,macds[tableSize-1].histogram);
-
-    nowValues.volumeAvr = roundTo(volumes.reduce((e1, e2) => e1 + e2) / (volumes.length - 1),3);
-    nowValues.volumeLast = roundTo(volumes.slice(volumes.length - volumeCount).reduce((e1, e2) => e1 + e2) / volumeCount,3);
 
     if (isFirstTime) {
         nowValues.msgText = '\nJust Started .. tblSize [' + tableSize + ']';
@@ -266,13 +269,28 @@ function analyzeBoundary(nv) {
     let msg = '';
     if (nv.close > config.sellPrice) {
         nv.tradeType = SELL;
-        msg = 'Passing SELL boundary';
+        msg = 'Passing SELL boundary (' + sellBoundaryCount + ')';
+        if (++sellBoundaryCount > 4) {   // if goes over boundary several times, then adjust boundary temperary
+            config.sellPrice = roundTo(nv.close * (1 + config.gapAllowance),PRICE_ROUND_RADIX);
+            sellBoundaryCount = 0;
+            msg += '\nSELLPRICE adjusted temperary';
+        }
     }
     else if (nv.close < config.buyPrice) {
         nv.tradeType = BUY;
-        msg = 'Passing BUY boundary';
+        msg = 'Passing BUY boundary (' + buyBoundaryCount + ')';
+        if (++buyBoundaryCount > 4) {
+            config.buyPrice = roundTo(nv.close * (1 - config.gapAllowance),PRICE_ROUND_RADIX);
+            buyBoundaryCount = 0;
+            msg += '\nBUYPRICE adjusted temperary';
+        }
     }
-    else if (nv.close < nv.closeLast3 * (1 - UPDOWN_PERCENT)) {
+    if (msg) {
+        nv = appendMsg(nv,msg);
+        msg = '';
+    }
+
+    if (nv.close < nv.closeLast3 * (1 - UPDOWN_PERCENT)) {
         nv.tradeType = SELL;
         msg = 'Warning! goes DOWN Very Fast';
     }
@@ -324,7 +342,7 @@ function appendMsg(nv, msg) {
 
 function informTrade(nv) {
 
-    let attach = show.attach(nv);
+    let attach = show.attach(nv,config);
     attach.title += moment(new Date(nv.epoch)).tz('Asia/Seoul').format('    YYYY-MM-DD HH:mm');
     replier.sendAttach(CURRENCY, nv.msgText, [attach]);
 
@@ -345,7 +363,7 @@ function keepLog(nv) {
             CURRENCY,
             moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
             nv.close,
-            roundTo(nv.volume, 3),
+            nv.volume,
             nv.volumeAvr,
             nv.volumeLast,
             nv.histogram,
