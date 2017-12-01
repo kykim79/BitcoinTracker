@@ -118,7 +118,7 @@ function listener(ohlcs) {
     nowValues.msgText = '';
 
     if (isFirstTime) {
-        nowValues.msgText = '\nJust Started .. tblSize [' + tableSize + ']';
+        nowValues.msgText = '\nJust Started, with size [' + tableSize + ']';
         isFirstTime = false;
     }
 
@@ -190,7 +190,6 @@ function calculateStochastic(highs, lows, closes) {
  * analyzeHistogram : annalyze histogram values against configuration setting and then alert if right time
  *
  *
- * @param none
  * @return nv.msgText if any
  */
 
@@ -237,7 +236,6 @@ function analyzeHistogram() {
  * analyzeStochastic : annalyze Stochastic values against configuration setting and then alert if right time
  *
  *
- * @param none
  * @return nv.msgText if any
  */
 
@@ -259,7 +257,6 @@ function analyzeStochastic() {
  * analyzeBoundary : review if current prices goes out of configured buy,sell prices
  *
  *
- * @param none
  * @return nv.msgText if any
  */
 
@@ -304,7 +301,6 @@ function analyzeBoundary() {
  * analyzeVolume : compare lastest volumes against volume average
  *
  *
- * @param none
  * @return nv.msgText if any
  */
 
@@ -359,7 +355,7 @@ function keepLog(nv) {
     try {
         let str = [
             CURRENCY,
-            moment(new Date(nv.epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm'),
+            nv.date,
             nv.close,
             nv.volume,
             nv.volumeAvr,

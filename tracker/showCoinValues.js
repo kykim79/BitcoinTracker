@@ -1,7 +1,6 @@
 
 const pad = require('pad');
 const numeral = require('numeral');
-const moment = require('moment');
 
 const coinConfig = require('./coinConfig.js');
 const CURRENCY = process.env.CURRENCY;
@@ -17,7 +16,7 @@ function buildAttach(nv, cf) {
     try {
         let prev = '';
         nv.prevValues.map (_ => {
-            prev += moment(new Date(_.epoch)).tz('Asia/Seoul').format('HH:mm') + '  ' + npad(_.close) +
+            prev += _.date.substring(11) + '  ' + npad(_.close) +
                 ' (' + numeral((nv.close - _.close) / nv.close * 100).format('0.0')+'%)  ' + _.volume + '\n';
         });
         return new coinConfig(CURRENCY)
