@@ -55,8 +55,8 @@ watcher.on('change', (info) => {
 
 });
 
-const histoCount = 8;   // variable for ignoring if too small changes
-const volumeCount = 4;   // if recent volume goes high then...
+const histoCOUNT = 8;   // variable for ignoring if too small changes
+const volumeCOUNT = 4;   // if recent volume goes high then...
 
 const ohlcBuilder = require('./ohlcBuilder.js');
 ohlcBuilder.getEmitter().on('event', listener);
@@ -87,21 +87,21 @@ function listener(ohlcs) {
     let stochastic = calculateStochastic(highs, lows, closes);
 
     let tableSize = macds.length;
-    if (tableSize < histoCount) {
+    if (tableSize < histoCOUNT) {
         return null;
     }
 
     nowValues = ohlcs[ohlcs.length - 1];
 
-    nowValues.prevValues = [ohlcs[ohlcs.length - 3], ohlcs[ohlcs.length - 5], ohlcs[ohlcs.length - 7], ohlcs[ohlcs.length / 2], ohlcs[0]];
+    nowValues.prevValues = [ohlcs[ohlcs.length - 3], ohlcs[ohlcs.length - 5], ohlcs[ohlcs.length - 7], ohlcs[Math.trunc(ohlcs.length / 2)], ohlcs[0]];
 
     nowValues.histoPercent = config.histoPercent;
-    nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 3);
-    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCount).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCount, 3);
+    nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 1);
+    nowValues.lastHistogram = roundTo(macds[tableSize - 2].histogram, 1);
+    nowValues.histoAvr = roundTo((macds.slice(tableSize - histoCOUNT).map(_ => _.histogram).reduce((e1, e2) => e1 + Math.abs(e2))) / histoCOUNT, 3);
     nowValues.histoSign = isSignChanged(macds[tableSize - 2].histogram,macds[tableSize-1].histogram)
         || isSignChanged(macds[tableSize - 3].histogram,macds[tableSize-1].histogram)
         || isSignChanged(macds[tableSize - 4].histogram,macds[tableSize-1].histogram);
-    nowValues.lastHistogram = roundTo(macds[tableSize - 2].histogram, 3);
 
     nowValues.dNow = roundTo(stochastic[stochastic.length - 1].d, 0);
     nowValues.kNow = roundTo(stochastic[stochastic.length - 1].k, 0);
@@ -109,7 +109,7 @@ function listener(ohlcs) {
     nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 0): 0;
 
     nowValues.volumeAvr = roundTo(volumes.reduce((e1, e2) => e1 + e2) / (volumes.length - 1),1);
-    nowValues.volumeLast = roundTo(volumes.slice(volumes.length - volumeCount).reduce((e1, e2) => e1 + e2) / volumeCount,1);
+    nowValues.volumeLast = roundTo(volumes.slice(volumes.length - volumeCOUNT).reduce((e1, e2) => e1 + e2) / volumeCOUNT,1);
 
     nowValues.sellTarget = config.sellPrice * (1 - config.gapAllowance);
     nowValues.buyTarget = config.buyPrice * (1 + config.gapAllowance);
@@ -203,13 +203,13 @@ function analyzeHistogram() {
     // if histogram now has different sign, alert
 
     if (nowValues.histoSign) {
-        if (nowValues.close >= nowValues.sellTarget) {
+        if (nowValues.close > nowValues.sellTarget) {
             nowValues.tradeType = SELL;
-            msg = (nowValues.close >= config.sellPrice) ? 'Histo SIGN CHANGED, SELL' : 'Histo sign changed, Sell';
+            msg = (nowValues.close > config.sellPrice) ? 'Histo SIGN CHANGED, SELL' : 'Histo sign changed, Sell';
         }
-        else if (nowValues.close <= nowValues.buyTarget) {
+        else if (nowValues.close < nowValues.buyTarget) {
             nowValues.tradeType = BUY;
-            msg = (nowValues.close <= config.buyPrice) ? 'Histo SIGN CHANGED, BUY' : 'Histo sign changed, Buy';
+            msg = (nowValues.close < config.buyPrice) ? 'Histo SIGN CHANGED, BUY' : 'Histo sign changed, Buy';
         }
     }
 
@@ -217,17 +217,17 @@ function analyzeHistogram() {
     // very similar analysis with above nowValues.histoSign
 
     else if (nowValues.histoAvr > config.histogram) {
-        if (nowValues.lastHistogram >= 0 && nowValues.histogram <= 0 && nowValues.close >= nowValues.sellTarget) {
+        if (nowValues.lastHistogram > 0 && nowValues.histogram <= 0 && nowValues.close >= nowValues.sellTarget) {
             nowValues.tradeType = SELL;
-            msg = (nowValues.close >= config.sellPrice) ? 'Histo: Over, Should SELL' : 'Histo: may be SELL POINT';
+            msg = (nowValues.close > config.sellPrice) ? 'Histo: OVER, Should SELL' : 'Histo: may be SELL point';
         }
-        else if (nowValues.lastHistogram <= 0 && nowValues.histogram >= 0 && nowValues.close <= nowValues.buyTarget) {
+        else if (nowValues.lastHistogram < 0 && nowValues.histogram >= 0 && nowValues.close <= nowValues.buyTarget) {
             nowValues.tradeType = BUY;
-            msg = (nowValues.close <= config.buyPrice) ? 'Histo: Under, Should BUY' : 'Histo: may be BUY POINT';
+            msg = (nowValues.close < config.buyPrice) ? 'Histo: UNDER, Should BUY' : 'Histo: may be BUY point';
         }
     }
     else {  // below log will be removed when analytic logic become stable
-        logger.debug('last [' + histoCount + '] histoAvr ' + nowValues.histoAvr + ' < histogram ' + config.histogram + '(' + npercent(config.histoPercent) + ')');
+        logger.debug('last [' + histoCOUNT + '] histoAvr ' + nowValues.histoAvr + ' < histogram ' + config.histogram + '(' + npercent(config.histoPercent) + ')');
     }
     appendMsg(nowValues,msg);
 }
@@ -307,14 +307,15 @@ function analyzeBoundary() {
 function analyzeVolume() {
 
     let msg = '';
-    if (nowValues.volumeLast > nowValues.volumeAvr * 1.5) {
-        if (nowValues.close >= nowValues.sellTarget) {
+    const volumeRATE = 1.5;
+    if (nowValues.volumeLast > nowValues.volumeAvr * volumeRATE) {
+        if (nowValues.close > nowValues.sellTarget) {
             nowValues.tradeType = SELL;
-            msg = 'Volume goes up rapidly, SELL ?';
+            msg = 'Big Volume transaction ( > ' + volumeRATE * 100 + '%), SELL ?';
         }
-        else if (nowValues.close <= nowValues.buyTarget) {
+        else if (nowValues.close < nowValues.buyTarget) {
             nowValues.tradeType = BUY;
-            msg = 'Volume goes up rapidly, BUY ?';
+            msg = 'Big Volume transaction ( > ' + volumeRATE * 100 + '%), BUY ?';
         }
     }
     appendMsg(nowValues,msg);
@@ -376,7 +377,7 @@ function keepLog(nv) {
     // sometimes write value header
     let d = new Date(nv.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
-        const head = 'coin, date and time  ,   close,   vol, volAvr, volLast, histogram, hisAvr, hisSign, dNow, kNow, B/S, msgText';
+        const head = 'coin, date and time  ,   close,  vol, volAvr, volLast, histo, hisAvr, Sign, dNow, kNow, B/S, msgText';
         stream.write(head + EOL);
     }
 }
