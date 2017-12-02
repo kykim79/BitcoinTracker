@@ -85,7 +85,7 @@ class CandleStickChartWithMACDIndicator extends React.Component {
         } = xScaleProvider(calculatedData);
 
         return (
-            <ChartCanvas height={600}
+            <ChartCanvas height={700}
                 width={width}
                 ratio={ratio}
                 margin={{ left: 70, right: 70, top: 20, bottom: 30 }}
@@ -96,17 +96,22 @@ class CandleStickChartWithMACDIndicator extends React.Component {
                 xAccessor={xAccessor}
                 displayXAccessor={displayXAccessor}
             >
-                <Chart id={1} height={400}
-                    yExtents={[d => [d.high, d.low], ema26.accessor(), ema12.accessor()]}
-                    padding={{ top: 10, bottom: 20 }}
+                <Chart id={1} height={400} // candle chart
+                    yExtents={[d => [d.high  , d.low ], ema26.accessor(), ema12.accessor()]}
+                    padding={{ top: 0, bottom: 20 }}
                 >
                     <XAxis axisAt="bottom" orient="bottom" showTicks={false} outerTickSize={0} />
-                    <YAxis axisAt="right" orient="right" ticks={5} />
+                    <YAxis axisAt="right" orient="right" ticks={10} />
+
+                    <MouseCoordinateX
+                        at="top"
+                        orient="top"
+                        displayFormat={timeFormat('%m-%d %H:%M')} />
 
                     <MouseCoordinateY
-                        at="right"
-                        orient="right"
-                        displayFormat={format('.2f')} />
+                        at="left"
+                        orient="left"
+                        displayFormat={format(',d')} />
 
                     <CandlestickSeries />
                     <LineSeries yAccessor={ema26.accessor()} stroke={ema26.stroke()}/>
@@ -118,29 +123,29 @@ class CandleStickChartWithMACDIndicator extends React.Component {
                     <EdgeIndicator itemType="last" orient="right" edgeAt="right"
                         yAccessor={d => d.close} fill={d => d.close > d.open ? '#6BA583' : '#FF0000'}/>
 
-                    <OHLCTooltip origin={[-40, 0]}/>
-                    <MovingAverageTooltip
-                        onClick={e => console.log(e)}
-                        origin={[-38, 15]}
-                        options={[
-                            {
-                                yAccessor: ema26.accessor(),
-                                type: 'EMA',
-                                stroke: ema26.stroke(),
-                                windowSize: ema26.options().windowSize,
-                            },
-                            {
-                                yAccessor: ema12.accessor(),
-                                type: 'EMA',
-                                stroke: ema12.stroke(),
-                                windowSize: ema12.options().windowSize,
-                            },
-                        ]}
-                    />
+                    {/*<OHLCTooltip origin={[-40, 0]}/>*/}
+                    {/*<MovingAverageTooltip*/}
+                        {/*onClick={e => console.log(e)}*/}
+                        {/*origin={[-38, 15]}*/}
+                        {/*options={[*/}
+                            {/*{*/}
+                                {/*yAccessor: ema26.accessor(),*/}
+                                {/*type: 'EMA',*/}
+                                {/*stroke: ema26.stroke(),*/}
+                                {/*windowSize: ema26.options().windowSize,*/}
+                            {/*},*/}
+                            {/*{*/}
+                                {/*yAccessor: ema12.accessor(),*/}
+                                {/*type: 'EMA',*/}
+                                {/*stroke: ema12.stroke(),*/}
+                                {/*windowSize: ema12.options().windowSize,*/}
+                            {/*},*/}
+                        {/*]}*/}
+                    {/*/>*/}
                 </Chart>
-                <Chart id={2} height={150}
+                <Chart id={2} height={100}  // volume bar chart
                     yExtents={[d => d.volume, smaVolume50.accessor()]}
-                    origin={(w, h) => [0, h - 300]}
+                    origin={(w, h) => [0, h - 250]}
                 >
                     <YAxis axisAt="left" orient="left" ticks={5} tickFormat={format('.0s')}/>
 
@@ -148,13 +153,18 @@ class CandleStickChartWithMACDIndicator extends React.Component {
                         at="left"
                         orient="left"
                         displayFormat={format('.4s')} />
+                    <MouseCoordinateX
+                        at="top"
+                        orient="top"
+                        displayFormat={timeFormat('%m-%d %H:%M')} />
 
                     <BarSeries yAccessor={d => d.volume} fill={d => d.close > d.open ? '#6BA583' : '#FF0000'} />
                     <AreaSeries yAccessor={smaVolume50.accessor()} stroke={smaVolume50.stroke()} fill={smaVolume50.fill()}/>
                 </Chart>
-                <Chart id={3} height={150}
+
+                <Chart id={3} height={100}  // histogram chart
                     yExtents={macdCalculator.accessor()}
-                    origin={(w, h) => [0, h - 150]} padding={{ top: 10, bottom: 10 }}
+                    origin={(w, h) => [0, h - 100]} padding={{ top: 0, bottom: 0 }}
                 >
                     <XAxis axisAt="bottom" orient="bottom"/>
                     <YAxis axisAt="right" orient="right" ticks={2} />
@@ -166,7 +176,7 @@ class CandleStickChartWithMACDIndicator extends React.Component {
                     <MouseCoordinateY
                         at="right"
                         orient="right"
-                        displayFormat={format('.2f')} />
+                        displayFormat={format(',d')} />
 
                     <MACDSeries yAccessor={d => d.macd}
                         {...macdAppearance} />
