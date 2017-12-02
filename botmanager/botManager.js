@@ -84,7 +84,7 @@ let adjustConfig = (match) => {
 let updateConfig = (match) => {
     const c = {
         coin: COINS_KEY[COINS_CMD.indexOf(match[1])],
-        command: match[2],
+        command: match[2].toLowerCase(),
         sign: match[3],
         amount: Number(match[4]),
         percentKilo: match[5]
@@ -133,9 +133,9 @@ let coinTypeValidator = (match) => {
 const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*$/, showUsage)
     .addCommand(/^sb\s*n$/, showAllCoins)
-    .addCommand(/^sb\s*([a-z])n$/, showCoin, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z])a$/, adjustConfig, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z])\s*([bsgh])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z|A-Z])n$/, showCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z|A-Z])a$/, adjustConfig, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z|A-Z])\s*([bsghBSGH])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
 
 
@@ -161,7 +161,7 @@ bot.on('message', function(data) {
         return;
     }
 
-    const text = data.text.trim().toLowerCase();
+    const text = data.text.trim();
 
     logger.debug('command = [' + text + ']');
 
