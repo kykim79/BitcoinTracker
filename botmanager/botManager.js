@@ -58,7 +58,7 @@ function showUsage() {
     logger.debug(header);
 }
 
-let showAllCoins = (match) => COINS_KEY.forEach(_ => show.info(_, 'Current Config'));
+let showActiveCoins = () => COINS_KEY.forEach(_ => show.info(_, 'Current Config'));
 
 let updateCoin = (match) => {
     updateConfig(match);
@@ -128,13 +128,13 @@ let coinTypeValidator = (match) => {
     }
 
     return valid;
-}
+};
 
 const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*$/, showUsage)
-    .addCommand(/^sb\s*n$/, showAllCoins)
-    .addCommand(/^sb\s*([a-z|A-Z])n$/, showCoin, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z|A-Z])a$/, adjustConfig, coinTypeValidator)
+    .addCommand(/^sb\s*[nN]$/, showActiveCoins)
+    .addCommand(/^sb\s*([a-z|A-Z])[nN]$/, showCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z|A-Z])[aA]$/, adjustConfig, coinTypeValidator)
     .addCommand(/^sb\s*([a-z|A-Z])\s*([bsghBSGH])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
 
