@@ -122,30 +122,10 @@ class CandleStickChartWithMACDIndicator extends React.Component {
 
                     <EdgeIndicator itemType="last" orient="right" edgeAt="right"
                         yAccessor={d => d.close} fill={d => d.close > d.open ? '#6BA583' : '#FF0000'}/>
-
-                    {/*<OHLCTooltip origin={[-40, 0]}/>*/}
-                    {/*<MovingAverageTooltip*/}
-                        {/*onClick={e => console.log(e)}*/}
-                        {/*origin={[-38, 15]}*/}
-                        {/*options={[*/}
-                            {/*{*/}
-                                {/*yAccessor: ema26.accessor(),*/}
-                                {/*type: 'EMA',*/}
-                                {/*stroke: ema26.stroke(),*/}
-                                {/*windowSize: ema26.options().windowSize,*/}
-                            {/*},*/}
-                            {/*{*/}
-                                {/*yAccessor: ema12.accessor(),*/}
-                                {/*type: 'EMA',*/}
-                                {/*stroke: ema12.stroke(),*/}
-                                {/*windowSize: ema12.options().windowSize,*/}
-                            {/*},*/}
-                        {/*]}*/}
-                    {/*/>*/}
                 </Chart>
                 <Chart id={2} height={100}  // volume bar chart
                     yExtents={[d => d.volume, smaVolume50.accessor()]}
-                    origin={(w, h) => [0, h - 250]}
+                    origin={(w, h) => [0, h - 280]}
                 >
                     <YAxis axisAt="left" orient="left" ticks={5} tickFormat={format('.0s')}/>
 
@@ -162,9 +142,9 @@ class CandleStickChartWithMACDIndicator extends React.Component {
                     <AreaSeries yAccessor={smaVolume50.accessor()} stroke={smaVolume50.stroke()} fill={smaVolume50.fill()}/>
                 </Chart>
 
-                <Chart id={3} height={100}  // histogram chart
+                <Chart id={3} height={80}  // histogram chart
                     yExtents={macdCalculator.accessor()}
-                    origin={(w, h) => [0, h - 100]} padding={{ top: 0, bottom: 0 }}
+                    origin={(w, h) => [0, h - 150]} padding={{ top: 0, bottom: 0 }}
                 >
                     <XAxis axisAt="bottom" orient="bottom"/>
                     <YAxis axisAt="right" orient="right" ticks={2} />
@@ -180,12 +160,6 @@ class CandleStickChartWithMACDIndicator extends React.Component {
 
                     <MACDSeries yAccessor={d => d.macd}
                         {...macdAppearance} />
-                    <MACDTooltip
-                        origin={[-38, 15]}
-                        yAccessor={d => d.macd}
-                        options={macdCalculator.options()}
-                        appearance={macdAppearance}
-                    />
                 </Chart>
                 <CrossHairCursor />
             </ChartCanvas>

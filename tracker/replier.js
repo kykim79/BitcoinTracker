@@ -35,7 +35,7 @@ function buildMessage(iconName, text, attachs = null) {
         token: WEB_TOKEN,
         channel: CHANNEL,
         as_user: false,
-        username: BOT_NAME, // + iconName,
+        username: BOT_NAME + iconName,
         icon_url: ICON_URL + iconName + '.png',
         text: ''
     };
