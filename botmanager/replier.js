@@ -14,7 +14,7 @@ const BOT_NAME = process.env.BOT_NAME;
 
 // LOGGER
 let log4js = require('log4js');
-const logger = log4js.getLogger('replier');
+const logger = log4js.getLogger('replier:bot');
 
 exports.sendText = (text) => sendTextOnly(text);
 exports.sendAttach = (iconName, text, attachs) => sendWithAttach(iconName, text, attachs);
