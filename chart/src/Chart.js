@@ -23,11 +23,6 @@ import {
 } from 'react-stockcharts/lib/coordinates';
 
 import { discontinuousTimeScaleProvider } from 'react-stockcharts/lib/scale';
-import {
-    OHLCTooltip,
-    MovingAverageTooltip,
-    MACDTooltip,
-} from 'react-stockcharts/lib/tooltip';
 import { ema, macd, sma } from 'react-stockcharts/lib/indicator';
 import { fitWidth } from 'react-stockcharts/lib/helper';
 
@@ -46,21 +41,21 @@ class CandleStickChartWithMACDIndicator extends React.Component {
         const { type, data: initialData, width, ratio } = this.props;
         const ema26 = ema()
             .id(0)
-            .options({ windowSize: 26 })
+            .options({ windowSize: 17 })
             .merge((d, c) => { d.ema26 = c; })
             .accessor(d => d.ema26);
 
         const ema12 = ema()
             .id(1)
-            .options({ windowSize: 12 })
+            .options({ windowSize: 8 })
             .merge((d, c) => {d.ema12 = c;})
             .accessor(d => d.ema12);
 
         const macdCalculator = macd()
             .options({
-                fast: 12,
-                slow: 26,
-                signal: 9,
+                fast: 8,
+                slow: 17,
+                signal: 5,
             })
             .merge((d, c) => {d.macd = c;})
             .accessor(d => d.macd);
@@ -68,7 +63,7 @@ class CandleStickChartWithMACDIndicator extends React.Component {
         const smaVolume50 = sma()
             .id(3)
             .options({
-                windowSize: 50,
+                windowSize: 17,
                 sourcePath: 'volume',
             })
             .merge((d, c) => {d.smaVolume50 = c;})
@@ -125,7 +120,7 @@ class CandleStickChartWithMACDIndicator extends React.Component {
                 </Chart>
                 <Chart id={2} height={100}  // volume bar chart
                     yExtents={[d => d.volume, smaVolume50.accessor()]}
-                    origin={(w, h) => [0, h - 280]}
+                    origin={(w, h) => [0, h - 260]}
                 >
                     <YAxis axisAt="left" orient="left" ticks={5} tickFormat={format('.0s')}/>
 
@@ -144,10 +139,10 @@ class CandleStickChartWithMACDIndicator extends React.Component {
 
                 <Chart id={3} height={80}  // histogram chart
                     yExtents={macdCalculator.accessor()}
-                    origin={(w, h) => [0, h - 150]} padding={{ top: 0, bottom: 0 }}
+                    origin={(w, h) => [0, h - 160]} padding={{ top: 0, bottom: 0 }}
                 >
                     <XAxis axisAt="bottom" orient="bottom"/>
-                    <YAxis axisAt="right" orient="right" ticks={2} />
+                    <YAxis axisAt="right" orient="right" ticks={4} />
 
                     <MouseCoordinateX
                         at="bottom"
@@ -167,16 +162,16 @@ class CandleStickChartWithMACDIndicator extends React.Component {
     }
 }
 
-CandleStickChartWithMACDIndicator.propTypes = {
-    data: PropTypes.array.isRequired,
-    width: PropTypes.number.isRequired,
-    ratio: PropTypes.number.isRequired,
-    type: PropTypes.oneOf(['svg', 'hybrid']).isRequired,
-};
+// CandleStickChartWithMACDIndicator.propTypes = {
+//     data: PropTypes.array.isRequired,
+//     width: PropTypes.number.isRequired,
+//     ratio: PropTypes.number.isRequired,
+//     // type: PropTypes.oneOf(['svg', 'hybrid']).isRequired,
+// };
 
-CandleStickChartWithMACDIndicator.defaultProps = {
-    type: 'svg',
-};
+// CandleStickChartWithMACDIndicator.defaultProps = {
+//     type: 'svg',
+// };
 
 CandleStickChartWithMACDIndicator = fitWidth(CandleStickChartWithMACDIndicator);
 

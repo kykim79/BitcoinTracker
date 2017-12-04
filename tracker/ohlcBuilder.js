@@ -78,8 +78,8 @@ function makeOHLCfield(coins) {
     const volumes = coinInfos.map(_ => _.volume);
 
     coinInfo.date = minuteString(coinInfo.epoch);
-    coinInfo.high = prices.reduce((e1, e2) => Math.max(e1, e2));
-    coinInfo.low = prices.reduce((e1, e2) => Math.min(e1, e2));
+    coinInfo.high = Math.max(...prices);
+    coinInfo.low = Math.min(...prices);
     coinInfo.close = prices[prices.length - 1];
     coinInfo.open = prices[0];
     coinInfo.volume = roundTo(volumes.reduce((e1, e2) => (e1 + e2)),1);
@@ -87,18 +87,16 @@ function makeOHLCfield(coins) {
 }
 
 function validateDates(ohlcInfos) {
-    let nowTime = ohlcInfos[ohlcInfos.length - 1].date.substring(5);    // last value
+    const nowTime = ohlcInfos[ohlcInfos.length - 1].date.substring(5);    // last value
     if (nowTime === lastTime) {
-        logger.debug('Same TimeStamp as before ' + nowTime);
+        logger.debug('Same TimeStamp, ignored');
         return false;
     }
     lastTime = nowTime;
     // to verify dates
     if (ohlcInfos.length > 4) {
-        logger.debug('table[{0}], ({1} ~ {2}, {3}, {4})'
-            .format(ohlcInfos.length,
-                ohlcInfos[0].date,
-                ohlcInfos[ohlcInfos.length - 3].date.substring(8),
+        logger.debug('({0} ~ {1}, {2})'
+            .format(ohlcInfos[0].date,
                 ohlcInfos[ohlcInfos.length - 2].date.substring(8),
                 ohlcInfos[ohlcInfos.length - 1].date.substring(8)));
     }

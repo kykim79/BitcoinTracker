@@ -269,7 +269,7 @@ LOGGER_OUTFILE=coinhistory.log
 ### _{subcommand}_
 
 -   *b*: buyPrice,           *s*: sellPrice
--   *g*: gapAllowance,    *h*: histoPercent
+-   *g*: gapAllowance
 -   *a*: adjust buy,sell based on nowPrice +/- gapAllowance * 3 %
 -   *n*: nowPrice
    
@@ -280,10 +280,10 @@ LOGGER_OUTFILE=coinhistory.log
 -   *+100* : add 100 to current set
 -   *-3k* : subtract 3000 from current set
 -   *+3%* : add 3% on current set
--   *1.03* : set to 1.03% (gap or histo only)
+-   *0.03* : set to 0.03% (gap only)
 
 ### _(note)_
  
-- Uppercase accepted
+- Uppercase currency accepted
 - Spaces between _currency_, _subcommand_ and _amount_ are allowed
   

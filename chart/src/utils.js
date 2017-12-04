@@ -4,10 +4,10 @@ import { timeParse } from 'd3-time-format';
 function parseData(parse) {
     return function(d) {
         d.date = parse(d.date);
-        d.open = +d.open;
-        d.high = +d.high;
-        d.low = +d.low;
-        d.close = +d.close;
+        d.open = +(d.open/1000);
+        d.high = +(d.high/1000);
+        d.low = +(d.low/1000);
+        d.close = +(d.close/1000);
         d.volume = +d.volume;
 
         return d;

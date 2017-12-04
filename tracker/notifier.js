@@ -16,7 +16,7 @@ const TRACKER_NAME = process.env.TRACKER_NAME;
 let log4js = require('log4js');
 const logger = log4js.getLogger('notifier:' + currency);
 
-let notiType = require('./notiType.js');
+const notiType = require('./notiType.js');
 
 exports.info = (line, title) => sendToSlack(line, title, true);
 exports.warn = (line, title) => sendToSlack(line, title, true, notiType.WARN);
@@ -37,7 +37,7 @@ let logLine = (line, title) => replaceall(EOL, '; ', title + ', ' + line);
  *
  * @input line : text message which cotains markdown
  * @input title : header message
- * @input markdown : always true
+ * @input markdown : to add ```` or not
  * @input type : one of notiType enum
  * @return none
  */

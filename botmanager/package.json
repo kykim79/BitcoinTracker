@@ -17,6 +17,7 @@
     "log4js": "^2.3.3",
     "log4js-extend": "^0.2.1",
     "mocha": "^4.0.1",
+    "moment-timezone": "^0.5.14",
     "numeral": "^2.0.6",
     "pad": "^1.1.0",
     "replaceall": "^0.1.6",

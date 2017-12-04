@@ -28,6 +28,7 @@ function listener(args) {
 }
 
 function writeChartData(data, firstLine) {
+
     let opts = {
         data: JSON.parse(JSON.stringify(data)),
         fields: CHART_FIELDS,

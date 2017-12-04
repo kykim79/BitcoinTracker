@@ -95,19 +95,12 @@ let updateConfig = (match) => {
     switch (c.command) {
     case 's':   // sellPrice
         cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice, c.percentKilo);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     case 'b':   // buyPrice
         cf.buyPrice = updatePrice(c.sign, c.amount, cf.buyPrice, c.percentKilo);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     case 'g':   // gapAllowance
         cf.gapAllowance = roundTo(c.amount / 100, 5);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
-        break;
-    case 'h':   // histogram
-        cf.histoPercent = roundTo(c.amount / 100, 5);
-        cf.histogram = roundTo((cf.sellPrice + cf.buyPrice) / 2 * cf.histoPercent, 2);
         break;
     default:
         replier.sendText('undefined config field: ' + c.command);   // should not happen
@@ -135,7 +128,7 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*[nN]$/, showActiveCoins)
     .addCommand(/^sb\s*([a-z|A-Z])[nN]$/, showCoin, coinTypeValidator)
     .addCommand(/^sb\s*([a-z|A-Z])[aA]$/, adjustConfig, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z|A-Z])\s*([bsghBSGH])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z|A-Z])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
 
 
