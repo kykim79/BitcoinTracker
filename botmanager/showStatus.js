@@ -45,7 +45,7 @@ function buildAttach(coin, value) {
         let short = true;
         let trendLastTitle = '';
         let trendLastText = '';
-        const stats = fs.statSync(LOG + coin + '/' + TREND_FILENAME);
+        const stats = fs.statSync(LOG + coin.toLowerCase() + '/' + TREND_FILENAME);
         if ((new Date() - stats.mtime) > 600000) {    // if last trend log is before 10 min, then
             trendLastTitle = 'Tracker stopped ' +  + roundTo((new Date() - stats.mtime) / 60000,0) + ' min. ago' ;
             trendLastText = 'Last trend log time is  ' + momenttimezone(new Date(stats.mtime)).tz('Asia/Seoul').format('YY-MM-DD HH:mm');
